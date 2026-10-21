@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Settings — LIFELINK</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body{font-family:'Plus Jakarta Sans',sans-serif;background:#F8FAFC;color:#0F172A}</style>
+  <script src="ll-theme-init.js"></script>
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="LifeLink">
+  <link rel="stylesheet" href="ll-app.css">
+</head>
+<body class="min-h-screen antialiased" data-ll-page="settings" data-ll-role="any">
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+    <div class="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
+      <a id="backLink" href="#" class="text-sm font-extrabold text-slate-500 hover:text-emerald-600">← Back</a>
+      <span class="flex items-center gap-1">
+        <a href="index.html" aria-label="LifeLink home"><img src="images/lifelink-logo.png" alt="LifeLink" class="h-8 w-auto object-contain"></a>
+        <span class="text-xs text-slate-400 font-bold uppercase tracking-wider ml-1">Settings</span>
+      </span>
+      <span class="w-12"></span>
+    </div>
+  </header>
+  <main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
+    <section class="bg-white rounded-3xl border border-slate-200 p-6 space-y-4">
+      <h2 class="text-lg font-extrabold">Profile</h2>
+      <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-wider">Full name
+        <input id="sName" class="mt-1 w-full border border-slate-200 rounded-2xl px-4 py-3 text-sm font-semibold normal-case tracking-normal text-slate-900 outline-none focus:border-emerald-500"></label>
+      <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-wider">Email
+        <input id="sEmail" type="email" class="mt-1 w-full border border-slate-200 rounded-2xl px-4 py-3 text-sm font-semibold normal-case tracking-normal text-slate-900 outline-none focus:border-emerald-500"></label>
+      <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-wider">Phone
+        <input id="sPhone" class="mt-1 w-full border border-slate-200 rounded-2xl px-4 py-3 text-sm font-semibold normal-case tracking-normal text-slate-900 outline-none focus:border-emerald-500"></label>
+      <button id="saveProfile" class="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm px-6 py-3 rounded-2xl">Save changes</button>
+    </section>
+    <section class="bg-white rounded-3xl border border-slate-200 p-6 space-y-4">
+      <h2 class="text-lg font-extrabold">Change password</h2>
+      <input id="pwNew" type="password" placeholder="New password (min 8 characters)" class="w-full border border-slate-200 rounded-2xl px-4 py-3 text-sm font-semibold outline-none focus:border-emerald-500">
+      <button id="savePw" class="bg-slate-900 hover:bg-slate-700 text-white font-extrabold text-sm px-6 py-3 rounded-2xl">Update password</button>
+    </section>
+    <section class="bg-white rounded-3xl border border-rose-200 p-6 space-y-3">
+      <h2 class="text-lg font-extrabold">Account</h2>
+      <div class="flex flex-wrap gap-3">
+        <button id="signOut" class="bg-white border border-slate-200 text-slate-800 font-extrabold text-sm px-6 py-3 rounded-2xl">Sign out</button>
+        <button id="delAcct" class="bg-rose-50 border border-rose-200 text-rose-700 font-extrabold text-sm px-6 py-3 rounded-2xl">Delete account</button>
+      </div>
+    </section>
+  </main>
+  <script src="supabase-config.js"></script>
+  <script src="supabase-client.js"></script>
+  <script src="supabase-auth.js"></script>
+  <script src="ll-api.js"></script>
+  <script src="lifelink.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      function toast(m) { if (window.LL) LL.toast(m); else alert(m); }
+      function waitForAuth(cb, retries) {
+        if (window.LLAuth && typeof window.LLAuth.getProfile === 'function') return cb();
+        if ((retries || 0) <= 0) { toast('Authentication library did not load. Reload the page.'); return; }
+        setTimeout(function () { waitForAuth(cb, (retries == null ? 40 : retries) - 1); }, 150);
+      }
+      waitForAuth(function () {
+        window.LLAuth.getProfile().then(function (r) {
+          if (r.error || !r.profile) { location.href = 'signin.html?next=settings.html'; return; }
+          var profile = r.profile;
+          sName.value = profile.full_name || '';
+          sEmail.value = profile.email || (r.user && r.user.email) || '';
+          sEmail.readOnly = true;
+          sEmail.title = 'Your sign-in email cannot be changed here. Contact support from the Trust & Safety page.';
+          sPhone.value = profile.phone || '';
+          backLink.addEventListener('click', function (e) {
+            e.preventDefault();
+            location.href = profile.role === 'provider' ? 'provider-dashboard.html' : (profile.role === 'admin' ? 'admin.html' : 'dashboard.html');
+          });
+          // Recovery landing: Supabase redirects here with ?type=recovery.
+          if (new URLSearchParams(location.search).get('type') === 'recovery') {
+            toast('Enter a new password below to finish resetting it.');
+          }
+          saveProfile.onclick = function () {
+            window.LLAuth.updateProfile({ full_name: sName.value, phone: sPhone.value }).then(function (u) {
+              toast(u.error ? u.error.message : 'Profile saved.');
+            });
+          };
+          savePw.onclick = function () {
+            if ((pwNew.value || '').length < 8) { toast('New password must be at least 8 characters.'); return; }
+            window.LLSB.getClient().then(function (sb) {
+              return sb.auth.updateUser({ password: pwNew.value });
+            }).then(function (res) {
+              if (res && res.error) { toast(res.error.message); return; }
+              pwNew.value = ''; toast('Password updated.');
+            }).catch(function (err) { toast((err && err.message) || 'Password update failed.'); });
+          };
+          signOut.onclick = function () {
+            window.LLAuth.signOut().then(function () { location.href = 'index.html'; });
+          };
+          delAcct.onclick = function () {
+            LL.confirm({ title: 'Delete your account?', body: 'This permanently removes your account and data. Accounts that have bookings cannot be deleted automatically because booking history must be kept.', confirmText: 'Delete account', danger: true }).then(function (ok) {
+              if (!ok) return;
+              LLApi.deleteAccount().then(function () { return window.LLAuth.signOut().catch(function () {}); }).then(function () { location.href = 'index.html'; }, function (e) { LL.toast(LLApi.friendly(e), true); });
+            });
+          };
+        });
+      });
+    })();
+  </script>
+<script src="ll-app.js" defer></script>
+</body>
+</html>

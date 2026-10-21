@@ -1,0 +1,7 @@
+# Only needed if you deploy with the Supabase CLI (the dashboard has the same switch per function).
+[functions.paystack-init]
+verify_jwt = true
+[functions.paystack-verify]
+verify_jwt = true
+[functions.paystack-webhook]
+verify_jwt = false   # Paystack cannot send a Supabase JWT; the HMAC signature protects this endpoint.

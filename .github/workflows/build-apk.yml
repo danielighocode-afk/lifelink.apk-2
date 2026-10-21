@@ -1,0 +1,31 @@
+name: Build LifeLink APK
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - name: Install dependencies
+        run: npm install
+      - name: Prepare web files
+        run: npm run prepare:www
+      - name: Create Android project
+        run: npx cap add android
+      - name: Apply LifeLink Android settings
+        run: node scripts/android-setup.js
+      - name: Sync web files into the app
+        run: npx cap sync android
+      - name: Build debug APK
+        working-directory: android
+        run: chmod +x gradlew && ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lifelink-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk

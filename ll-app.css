@@ -1,0 +1,328 @@
+/* ==========================================================================
+   LifeLink app shell: design tokens, dark theme, and mobile "app" layout.
+   Purely presentational. Loaded after Tailwind; does not touch any logic.
+   ========================================================================== */
+
+:root {
+  --ll-primary: #07865F;
+  --ll-primary-hover: #066e4e;
+  --ll-primary-soft: #E3F4EC;
+  --ll-bg: #F5F8F6;
+  --ll-surface: #FFFFFF;
+  --ll-surface-2: #EEF3F0;
+  --ll-text: #18332A;
+  --ll-text-2: #66756E;
+  --ll-border: #E1E8E3;
+  --ll-shadow: 0 1px 2px rgba(24, 51, 42, .06), 0 8px 24px rgba(24, 51, 42, .06);
+  --ll-radius: 18px;
+  --ll-tab-h: 64px;
+  --ll-safe-b: env(safe-area-inset-bottom, 0px);
+  --ll-safe-t: env(safe-area-inset-top, 0px);
+}
+html[data-theme="dark"] {
+  --ll-primary: #18B785;
+  --ll-primary-hover: #2fd09c;
+  --ll-primary-soft: rgba(24, 183, 133, .16);
+  --ll-bg: #101A18;
+  --ll-surface: #192723;
+  --ll-surface-2: #22332D;
+  --ll-text: #F0F7F3;
+  --ll-text-2: #A5B9AE;
+  --ll-border: #30463D;
+  --ll-shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 28px rgba(0, 0, 0, .28);
+}
+
+html { -webkit-tap-highlight-color: transparent; }
+body { background-color: var(--ll-bg) !important; color: var(--ll-text); -webkit-font-smoothing: antialiased; }
+body, .bg-white, .bg-slate-50, .bg-slate-100, header, aside { transition: background-color .2s ease, border-color .2s ease, color .2s ease; }
+:focus-visible { outline: 2px solid var(--ll-primary); outline-offset: 2px; }
+
+/* brand green aligned with the palette */
+.bg-emerald-600 { background-color: var(--ll-primary) !important; }
+.hover\:bg-emerald-700:hover { background-color: var(--ll-primary-hover) !important; }
+.field:focus { border-color: var(--ll-primary) !important; }
+
+/* ------------------------------ DARK THEME ------------------------------ */
+html[data-theme="dark"] .bg-white { background-color: var(--ll-surface) !important; }
+html[data-theme="dark"] .bg-white\/95 { background-color: rgba(25, 39, 35, .92) !important; }
+html[data-theme="dark"] .bg-slate-50 { background-color: var(--ll-bg) !important; }
+html[data-theme="dark"] .bg-slate-100 { background-color: var(--ll-surface-2) !important; }
+html[data-theme="dark"] .bg-slate-900 { background-color: #2A3F37 !important; }
+html[data-theme="dark"] .hover\:bg-slate-50:hover,
+html[data-theme="dark"] .hover\:bg-slate-100:hover { background-color: var(--ll-surface-2) !important; }
+html[data-theme="dark"] .hover\:bg-slate-800:hover { background-color: #34503f !important; }
+
+html[data-theme="dark"] .text-slate-900, html[data-theme="dark"] .text-slate-800 { color: var(--ll-text) !important; }
+html[data-theme="dark"] .text-slate-700 { color: #D5E3DB !important; }
+html[data-theme="dark"] .text-slate-600 { color: #BCCEC4 !important; }
+html[data-theme="dark"] .text-slate-500 { color: var(--ll-text-2) !important; }
+html[data-theme="dark"] .text-slate-400 { color: #8AA095 !important; }
+html[data-theme="dark"] .placeholder-slate-400::placeholder, html[data-theme="dark"] ::placeholder { color: #7f9489 !important; }
+
+html[data-theme="dark"] .border-slate-100, html[data-theme="dark"] .border-slate-200,
+html[data-theme="dark"] .border-slate-300, html[data-theme="dark"] .border-slate-200\/80,
+html[data-theme="dark"] .divide-slate-100 > * + *, html[data-theme="dark"] .divide-slate-200 > * + * { border-color: var(--ll-border) !important; }
+
+html[data-theme="dark"] .bg-emerald-50 { background-color: var(--ll-primary-soft) !important; }
+html[data-theme="dark"] .bg-emerald-50\/40 { background-color: rgba(24, 183, 133, .08) !important; }
+html[data-theme="dark"] .bg-emerald-100 { background-color: rgba(24, 183, 133, .24) !important; }
+html[data-theme="dark"] .text-emerald-600, html[data-theme="dark"] .text-emerald-700,
+html[data-theme="dark"] .text-emerald-800, html[data-theme="dark"] .text-emerald-900,
+html[data-theme="dark"] .hover\:text-emerald-600:hover, html[data-theme="dark"] .hover\:text-emerald-700:hover { color: #4fe0b0 !important; }
+html[data-theme="dark"] .border-emerald-200 { border-color: rgba(24, 183, 133, .38) !important; }
+html[data-theme="dark"] .hover\:bg-emerald-50:hover { background-color: var(--ll-primary-soft) !important; }
+
+html[data-theme="dark"] .bg-amber-50 { background-color: rgba(245, 158, 11, .13) !important; }
+html[data-theme="dark"] .border-amber-200 { border-color: rgba(245, 158, 11, .38) !important; }
+html[data-theme="dark"] .text-amber-700, html[data-theme="dark"] .text-amber-800, html[data-theme="dark"] .text-amber-900 { color: #fcd34d !important; }
+html[data-theme="dark"] .bg-rose-50 { background-color: rgba(244, 63, 94, .13) !important; }
+html[data-theme="dark"] .border-rose-200 { border-color: rgba(244, 63, 94, .38) !important; }
+html[data-theme="dark"] .text-rose-600, html[data-theme="dark"] .text-rose-700, html[data-theme="dark"] .text-rose-800 { color: #fda4af !important; }
+html[data-theme="dark"] .bg-blue-50 { background-color: rgba(59, 130, 246, .14) !important; }
+html[data-theme="dark"] .border-blue-200 { border-color: rgba(59, 130, 246, .38) !important; }
+html[data-theme="dark"] .text-blue-700 { color: #93c5fd !important; }
+
+html[data-theme="dark"] .field, html[data-theme="dark"] input:not([type=checkbox]):not([type=radio]):not([type=range]),
+html[data-theme="dark"] select, html[data-theme="dark"] textarea {
+  background-color: var(--ll-surface-2) !important; color: var(--ll-text) !important; border-color: var(--ll-border) !important;
+}
+html[data-theme="dark"] .field:focus { background-color: var(--ll-surface) !important; }
+html[data-theme="dark"] .lbl { color: #BCCEC4 !important; }
+html[data-theme="dark"] .nav-item-active { background-color: var(--ll-primary-soft) !important; color: #4fe0b0 !important; }
+html[data-theme="dark"] img[src$="lifelink-logo.png"] { background: #F0F7F3; border-radius: 12px; padding: 3px 6px; }
+html[data-theme="dark"] .shadow-xs, html[data-theme="dark"] .shadow-sm { box-shadow: 0 1px 2px rgba(0, 0, 0, .35) !important; }
+/* dialogs created by LL.confirm / LL.notePrompt */
+html[data-theme="dark"] [role="dialog"] { background-color: var(--ll-surface) !important; }
+/* map canvases keep their own (light) tiles so streets and labels stay legible */
+
+/* theme control (desktop floating button) */
+.ll-theme-fab {
+  position: fixed; right: 16px; bottom: 16px; z-index: 60; width: 42px; height: 42px; border-radius: 14px;
+  display: none; align-items: center; justify-content: center; cursor: pointer;
+  background: var(--ll-surface); color: var(--ll-text); border: 1px solid var(--ll-border); box-shadow: var(--ll-shadow);
+}
+.ll-theme-fab:hover { color: var(--ll-primary); }
+@media (min-width: 768px) { .ll-theme-fab { display: flex; } }
+
+/* segmented theme selector (inside the More sheet) */
+.ll-seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; background: var(--ll-surface-2); border-radius: 14px; }
+.ll-seg button { min-height: 40px; border-radius: 10px; font-weight: 800; font-size: 13px; color: var(--ll-text-2); border: 0; background: transparent; cursor: pointer; }
+.ll-seg button[aria-pressed="true"] { background: var(--ll-surface); color: var(--ll-primary); box-shadow: 0 1px 3px rgba(0, 0, 0, .15); }
+
+/* ------------------------------ APP SHELL (phones) ------------------------------ */
+.ll-tabbar { display: none; }
+.ll-sheet-wrap { display: none; }
+
+@media (max-width: 767.98px) {
+  body { overscroll-behavior-y: none; }
+  body.ll-has-tabbar { padding-bottom: calc(var(--ll-tab-h) + var(--ll-safe-b) + 8px); }
+
+  /* sticky top bars respect the notch and feel like an app bar */
+  header.sticky, header[class*="sticky"] { padding-top: var(--ll-safe-t); backdrop-filter: saturate(1.4) blur(10px); }
+  main { scroll-margin-top: 72px; }
+
+  /* comfortable touch targets; 16px inputs stop iOS from zooming on focus */
+  button, a[class*="rounded-"], [role="button"], select { min-height: 40px; }
+  input, select, textarea, .field { font-size: 16px !important; }
+  .field, input:not([type=checkbox]):not([type=radio]), select { min-height: 48px; }
+
+  /* cards feel like app surfaces */
+  main .rounded-3xl, main .rounded-2xl { border-radius: var(--ll-radius); }
+  .shadow-xl, .shadow-2xl { box-shadow: var(--ll-shadow) !important; }
+
+  /* section chips under the header (dashboards) become an app-style scroller */
+  #mobileNav { position: sticky; top: calc(56px + var(--ll-safe-t)); z-index: 9; scrollbar-width: none; padding-top: 10px; padding-bottom: 10px; }
+  #mobileNav::-webkit-scrollbar { display: none; }
+  #mobileNav a { white-space: nowrap; border-radius: 999px; min-height: 36px; }
+
+  /* tables scroll inside their card rather than the page */
+  main table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* dialogs (LL.confirm / LL.notePrompt) become bottom sheets */
+  body > div[style*="z-index:99998"] { align-items: flex-end !important; padding: 0 !important; }
+  body > div[style*="z-index:99998"] > [role="dialog"] {
+    max-width: none !important; width: 100% !important; border-radius: 24px 24px 0 0 !important;
+    padding-bottom: calc(24px + var(--ll-safe-b)) !important; animation: llSheetUp .26s cubic-bezier(.2, .8, .2, 1);
+  }
+  body > div[style*="z-index:99998"] > [role="dialog"]::before {
+    content: ""; display: block; width: 40px; height: 4px; border-radius: 4px; background: var(--ll-border); margin: -8px auto 14px;
+  }
+  /* toast above the tab bar */
+  body.ll-has-tabbar [style*="bottom:28px"] { bottom: calc(var(--ll-tab-h) + var(--ll-safe-b) + 16px) !important; }
+
+  /* ---- bottom tab bar ---- */
+  .ll-tabbar {
+    display: grid; position: fixed; left: 0; right: 0; bottom: 0; z-index: 70;
+    grid-template-columns: repeat(5, 1fr); align-items: stretch;
+    height: calc(var(--ll-tab-h) + var(--ll-safe-b)); padding-bottom: var(--ll-safe-b);
+    background: color-mix(in srgb, var(--ll-surface) 94%, transparent); backdrop-filter: saturate(1.4) blur(14px);
+    border-top: 1px solid var(--ll-border); box-shadow: 0 -6px 24px rgba(0, 0, 0, .05);
+  }
+  .ll-tabbar.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .ll-tab {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; position: relative;
+    color: var(--ll-text-2); font: 700 10.5px/1 "Plus Jakarta Sans", system-ui, sans-serif; text-decoration: none;
+    background: none; border: 0; cursor: pointer; min-height: var(--ll-tab-h); transition: color .15s ease;
+  }
+  .ll-tab svg { width: 24px; height: 24px; transition: transform .18s ease; }
+  .ll-tab:active svg { transform: scale(.88); }
+  .ll-tab[aria-current="page"] { color: var(--ll-primary); }
+  .ll-tab[aria-current="page"]::before {
+    content: ""; position: absolute; top: 0; width: 28px; height: 3px; border-radius: 0 0 4px 4px; background: var(--ll-primary);
+  }
+  .ll-tab-cta span.ll-cta {
+    display: flex; align-items: center; justify-content: center; width: 52px; height: 52px; margin-top: -22px; border-radius: 18px;
+    background: var(--ll-primary); color: #fff; box-shadow: 0 8px 20px rgba(7, 134, 95, .4);
+  }
+  .ll-tab-cta { color: var(--ll-text-2); }
+  .ll-tab-cta svg { width: 26px; height: 26px; }
+  .ll-tab-cta em { font-style: normal; margin-top: 1px; }
+
+  /* ---- "More" bottom sheet ---- */
+  .ll-sheet-wrap { position: fixed; inset: 0; z-index: 90; display: none; }
+  .ll-sheet-wrap.open { display: block; }
+  .ll-scrim { position: absolute; inset: 0; background: rgba(8, 20, 16, .5); animation: llFade .2s ease; }
+  .ll-sheet {
+    position: absolute; left: 0; right: 0; bottom: 0; max-height: 86vh; overflow-y: auto; background: var(--ll-surface); color: var(--ll-text);
+    border-radius: 26px 26px 0 0; padding: 10px 18px calc(22px + var(--ll-safe-b)); animation: llSheetUp .28s cubic-bezier(.2, .8, .2, 1);
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  }
+  .ll-grabber { width: 42px; height: 4px; border-radius: 4px; background: var(--ll-border); margin: 0 auto 14px; }
+}
+@keyframes llSheetUp { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes llFade { from { opacity: 0; } to { opacity: 1; } }
+
+/* sheet content (shared) */
+.ll-sheet h3 { font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--ll-text-2); margin: 14px 4px 8px; }
+.ll-sheet-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.ll-sheet-link {
+  display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; background: var(--ll-surface-2); color: var(--ll-text);
+  font-weight: 800; font-size: 14px; text-decoration: none; min-height: 52px; border: 0; cursor: pointer; text-align: left; width: 100%;
+}
+.ll-sheet-link svg { width: 22px; height: 22px; flex: none; color: var(--ll-primary); }
+.ll-sheet-link.danger { color: #e11d48; margin-top: 12px; }
+.ll-sheet-link.danger svg { color: #e11d48; }
+
+/* pages that need the full screen (live map) keep their own layout */
+body[data-ll-page="tracking"] .ll-tabbar, body[data-ll-page="signin"] .ll-tabbar, body[data-ll-page="admin"] .ll-tabbar { display: none !important; }
+body[data-ll-page="tracking"], body[data-ll-page="signin"], body[data-ll-page="admin"] { padding-bottom: 0 !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ll-sheet, .ll-scrim, [role="dialog"] { animation: none !important; }
+  .ll-tab svg, body, .bg-white { transition: none !important; }
+}
+
+/* ---- surfaces that are deliberately light in both themes (homepage hero search + category tiles) ---- */
+html[data-theme="dark"] .hero-search input:not([type=checkbox]):not([type=radio]):not([type=range]), html[data-theme="dark"] .hero-search select {
+  background-color: transparent !important; color: #0f172a !important; border-color: transparent !important; min-height: 0 !important;
+}
+html[data-theme="dark"] .hero-search input::placeholder { color: #64748b !important; }
+html[data-theme="dark"] .hero-search .text-slate-800, html[data-theme="dark"] .hero-search .text-slate-900 { color: #0f172a !important; }
+html[data-theme="dark"] .hero-service-card .text-slate-900, html[data-theme="dark"] .hero-service-card { color: #0f172a !important; }
+html[data-theme="dark"] .hero-service-card .text-slate-500 { color: #64748b !important; }
+html[data-theme="dark"] .hero-search-divider { border-color: transparent !important; }
+
+/* ==========================================================================
+   PREMIUM LAYER: motion, depth and polish (matches the LifeLink app designs)
+   ========================================================================== */
+:root { --ll-ease: cubic-bezier(.2, .8, .2, 1); --ll-deep: #142B27; --ll-shadow-lg: 0 14px 40px rgba(20, 43, 39, .14); }
+@view-transition { navigation: auto; }
+::view-transition-old(root) { animation: llPageOut .16s ease both; }
+::view-transition-new(root) { animation: llPageIn .3s var(--ll-ease) both; }
+@keyframes llPageOut { to { opacity: 0; transform: translateY(-6px); } }
+@keyframes llPageIn { from { opacity: 0; transform: translateY(14px); } }
+@keyframes llRise { from { opacity: 0; transform: translateY(16px) scale(.985); } to { opacity: 1; transform: none; } }
+@keyframes llShimmer { 100% { background-position: -200% 0; } }
+@keyframes llPop { 0% { transform: scale(.4); opacity: 0; } 70% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes llSheen { 0%, 60% { transform: translateX(-130%) skewX(-18deg); } 100% { transform: translateX(260%) skewX(-18deg); } }
+
+/* page content eases in */
+main { animation: llRise .45s var(--ll-ease) both; }
+#app[data-quiet] { animation: none; }
+
+/* cards: soft depth + lift on hover/press */
+main section[class*="rounded-3xl"], main a.block[class*="rounded-2xl"], main div[class*="rounded-2xl"][class*="border"] {
+  transition: transform .22s var(--ll-ease), box-shadow .22s var(--ll-ease), border-color .2s ease;
+}
+main section[class*="rounded-3xl"] { box-shadow: 0 1px 2px rgba(20, 43, 39, .04), 0 8px 24px rgba(20, 43, 39, .05); }
+html[data-theme="dark"] main section[class*="rounded-3xl"] { box-shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .22); }
+@media (hover: hover) {
+  main a.block[class*="rounded-2xl"]:hover { transform: translateY(-3px); box-shadow: var(--ll-shadow-lg); }
+}
+main a.block[class*="rounded-2xl"]:active, .ll-quick a:active { transform: scale(.975); }
+
+/* primary buttons: depth, press feedback, subtle sheen */
+button[class*="bg-emerald-600"], a[class*="bg-emerald-600"] {
+  position: relative; overflow: hidden; box-shadow: 0 8px 18px rgba(7, 134, 95, .28);
+  transition: transform .16s var(--ll-ease), box-shadow .2s ease, background-color .2s ease;
+}
+button[class*="bg-emerald-600"]:active, a[class*="bg-emerald-600"]:active { transform: scale(.965); box-shadow: 0 3px 8px rgba(7, 134, 95, .3); }
+button[class*="bg-emerald-600"]:disabled { box-shadow: none; }
+button[class*="bg-emerald-600"]::after, a[class*="bg-emerald-600"]::after {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 38%; left: 0; pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .28), transparent); transform: translateX(-130%) skewX(-18deg);
+}
+@media (hover: hover) { button[class*="bg-emerald-600"]:hover::after, a[class*="bg-emerald-600"]:hover::after { animation: llSheen .9s ease; } }
+
+/* wallet balance card */
+.rounded-3xl.bg-emerald-600.text-white {
+  background-image: linear-gradient(135deg, #0aa874 0%, #07865F 52%, #0a5d44 100%); position: relative; overflow: hidden;
+  box-shadow: 0 16px 36px rgba(7, 134, 95, .35); animation: llRise .55s var(--ll-ease) both;
+}
+.rounded-3xl.bg-emerald-600.text-white::before {
+  content: ""; position: absolute; right: -40px; top: -50px; width: 190px; height: 190px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, .22), transparent 68%); pointer-events: none;
+}
+.rounded-3xl.bg-emerald-600.text-white::after {
+  content: ""; position: absolute; left: -30px; bottom: -70px; width: 200px; height: 200px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, .10), transparent 70%); pointer-events: none;
+}
+.rounded-3xl.bg-emerald-600.text-white > * { position: relative; z-index: 1; }
+
+/* loading placeholders shimmer instead of plain text */
+[class*="p-8"][class*="text-center"][class*="text-slate-400"] {
+  background-image: linear-gradient(100deg, transparent 30%, rgba(7, 134, 95, .08) 50%, transparent 70%); background-size: 200% 100%; animation: llShimmer 1.4s linear infinite;
+}
+
+/* status chips and badges pop in */
+span[class*="rounded-full"][class*="border"] { animation: llPop .35s var(--ll-ease) both; }
+
+/* quick actions (injected on the dashboards) */
+.ll-quick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 16px 16px 0; max-width: 80rem; }
+@media (min-width: 640px) { .ll-quick { margin: 24px 32px 0; } }
+@media (min-width: 1280px) { .ll-quick { margin: 24px auto 0; } }
+.ll-quick a {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 4px 12px; border-radius: 18px; text-decoration: none;
+  background: var(--ll-surface); border: 1px solid var(--ll-border); color: var(--ll-text); box-shadow: var(--ll-shadow);
+  animation: llRise .5s var(--ll-ease) both; transition: transform .18s var(--ll-ease);
+}
+.ll-quick a span { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 15px; background: var(--ll-primary-soft); color: var(--ll-primary); }
+.ll-quick a svg { width: 22px; height: 22px; }
+.ll-quick a em { font-style: normal; font: 800 11.5px/1.15 "Plus Jakarta Sans", system-ui, sans-serif; text-align: center; }
+
+/* tab bar upgrades */
+.ll-badge {
+  position: absolute; top: 7px; left: calc(50% + 6px); min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; background: #e11d48; color: #fff;
+  font: 800 10px/17px "Plus Jakarta Sans", system-ui, sans-serif; text-align: center; animation: llPop .35s var(--ll-ease) both;
+}
+.ll-badge[hidden] { display: none; }
+@media (max-width: 767.98px) {
+  .ll-tabbar { animation: llTabUp .5s .1s var(--ll-ease) both; }
+  .ll-tab[aria-current="page"] svg { animation: llPop .4s var(--ll-ease) both; }
+  .ll-tab[aria-current="page"]::before { animation: llBar .35s var(--ll-ease) both; }
+}
+@keyframes llTabUp { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes llBar { from { width: 0; } to { width: 28px; } }
+
+/* native app feel (APK only) */
+html.ll-native { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; overscroll-behavior: none; }
+html.ll-native input, html.ll-native textarea, html.ll-native [contenteditable] { -webkit-user-select: text; user-select: text; }
+html.ll-native .ll-theme-fab { display: none; }
+html.ll-native body { padding-top: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  main, .ll-quick a, .ll-tabbar, .ll-badge, span[class*="rounded-full"][class*="border"], [class*="p-8"][class*="text-center"][class*="text-slate-400"],
+  .rounded-3xl.bg-emerald-600.text-white { animation: none !important; }
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none !important; }
+  button[class*="bg-emerald-600"]::after, a[class*="bg-emerald-600"]::after { display: none; }
+}

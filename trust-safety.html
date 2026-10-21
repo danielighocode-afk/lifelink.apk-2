@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Trust & Safety - LIFELINK</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: {
+  colors: { emerald: { 50:'#ecfdf5', 100:'#d1fae5', 500:'#10b981', 600:'#059669', 700:'#047857' },
+            charcoal: { 50:'#f8fafc', 100:'#f1f5f9', 200:'#e2e8f0', 300:'#cbd5e1', 400:'#94a3b8', 500:'#64748b', 600:'#475569', 700:'#334155', 800:'#1e293b', 900:'#0f172a' } },
+  fontFamily: { sans: ['Plus Jakarta Sans','sans-serif'] } } } }
+  </script>
+  <style>
+    body { background-color: #F8FAFC; color: #0F172A; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .nav-item-active { background-color: #ECFDF5; color: #047857; font-weight: 800; }
+    .field { width: 100%; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 1rem; padding: .75rem 1rem; font-size: .875rem; font-weight: 600; color: #0f172a; outline: none; }
+    .field:focus { border-color: #059669; background: #fff; }
+    .lbl { display: block; font-size: .75rem; font-weight: 800; color: #334155; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .375rem; }
+  </style>
+  <script src="ll-theme-init.js"></script>
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="LifeLink">
+  <link rel="stylesheet" href="ll-app.css">
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 antialiased selection:bg-emerald-100 selection:text-emerald-800" data-ll-page="trust-safety" data-ll-role="public">
+<header class="bg-white border-b border-slate-200/80 sticky top-0 z-30"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+    <a href="index.html" aria-label="LifeLink home"><img src="images/lifelink-logo.png" alt="LifeLink" class="h-10 w-auto"></a>
+    <nav class="hidden sm:flex items-center gap-6 text-sm font-extrabold text-slate-600"><a href="discovery.html" class="hover:text-emerald-600">Find providers</a><a href="provider-onboarding.html" class="hover:text-emerald-600">For providers</a><a href="trust-safety.html" class="hover:text-emerald-600">Trust &amp; Safety</a></nav>
+    <div class="flex items-center gap-3"><div data-ll-bell></div><div data-ll-account class="flex items-center gap-2"></div></div></div></header><main class="flex-grow max-w-3xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
+    <div><h1 class="text-3xl font-extrabold">Trust &amp; Safety</h1><p class="text-sm font-semibold text-slate-500">How to stay safe on LifeLink, and how to tell us when something is wrong.</p></div>
+    <section class="bg-white border border-slate-200 rounded-3xl p-6 space-y-3 text-sm text-slate-700">
+      <h2 class="font-extrabold text-lg text-slate-900">What LifeLink does</h2>
+      <ul class="list-disc pl-5 space-y-1.5"><li>Providers apply with an identity or trade document, and an administrator reviews it before they can send quotes.</li><li>Reviews can only be left by the customer of a completed booking.</li><li>Either side of a paid booking can open a dispute, which an administrator reviews.</li></ul>
+      <h2 class="font-extrabold text-lg text-slate-900 pt-2">What is not active yet</h2>
+      <ul class="list-disc pl-5 space-y-1.5"><li>Escrow or payment protection. LifeLink does not hold the job payment, so agree payment terms carefully and never pay for a job before you are comfortable. Your wallet only covers LifeLink's flat fee.</li><li>Live map tracking and an AI assistant.</li></ul>
+      <h2 class="font-extrabold text-lg text-slate-900 pt-2">Staying safe</h2>
+      <ul class="list-disc pl-5 space-y-1.5"><li>Agree the scope and price in writing before work starts. Use the message thread on your request so there is a record.</li><li>Never share passwords, one-time codes or bank PINs. LifeLink will never ask for them.</li><li>Be careful with anyone who asks you to pay or chat outside LifeLink.</li><li>In an emergency, contact local emergency services directly.</li></ul>
+    </section>
+    <section class="bg-white border border-slate-200 rounded-3xl p-6 space-y-4"><div><h2 class="font-extrabold text-lg">Report a provider</h2><p class="text-sm text-slate-500">Tell us about unprofessional, unsafe or misleading behaviour.</p></div><form data-form="provider" class="space-y-4" novalidate></form></section>
+    <section class="bg-white border border-slate-200 rounded-3xl p-6 space-y-4"><div><h2 class="font-extrabold text-lg">Report suspicious activity</h2><p class="text-sm text-slate-500">Scams, phishing, account compromise or harassment.</p></div><form data-form="suspicious" class="space-y-4" novalidate></form></section>
+    <section class="bg-white border border-slate-200 rounded-3xl p-6 space-y-4"><div><h2 class="font-extrabold text-lg">Contact support</h2><p class="text-sm text-slate-500">Questions about your account, a booking or the app.</p></div><form data-form="support" class="space-y-4" novalidate></form></section>
+    <section id="mine" class="hidden space-y-2"><h2 class="font-extrabold">Your recent messages to us</h2><div id="mineList" class="space-y-2"></div></section>
+  </main>
+<script src="supabase-config.js"></script>
+<script src="supabase-client.js"></script>
+<script src="supabase-auth.js"></script>
+<script src="ll-api.js"></script>
+<script src="lifelink.js"></script>
+<script src="ll-chat.js"></script>
+<script src="page-trust-safety.js"></script>
+<script src="ll-app.js" defer></script>
+</body>
+</html>

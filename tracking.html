@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Live tracking - LIFELINK</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: {
+  colors: { emerald: { 50:'#ecfdf5', 100:'#d1fae5', 500:'#10b981', 600:'#059669', 700:'#047857' },
+            charcoal: { 50:'#f8fafc', 100:'#f1f5f9', 200:'#e2e8f0', 300:'#cbd5e1', 400:'#94a3b8', 500:'#64748b', 600:'#475569', 700:'#334155', 800:'#1e293b', 900:'#0f172a' } },
+  fontFamily: { sans: ['Plus Jakarta Sans','sans-serif'] } } } }
+  </script>
+  <style>
+    body { background-color: #F8FAFC; color: #0F172A; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .nav-item-active { background-color: #ECFDF5; color: #047857; font-weight: 800; }
+    .field { width: 100%; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 1rem; padding: .75rem 1rem; font-size: .875rem; font-weight: 600; color: #0f172a; outline: none; }
+    .field:focus { border-color: #059669; background: #fff; }
+    .lbl { display: block; font-size: .75rem; font-weight: 800; color: #334155; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .375rem; }
+  </style>
+  <script src="ll-theme-init.js"></script>
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="LifeLink">
+  <link rel="stylesheet" href="ll-app.css">
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 antialiased selection:bg-emerald-100 selection:text-emerald-800" data-ll-page="tracking" data-ll-role="any">
+<header class="bg-white border-b border-slate-200/80 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <a href="dashboard.html" class="p-2 text-slate-500 hover:text-emerald-600 hover:bg-slate-50 rounded-xl transition" title="Back" id="backLink"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg></a>
+        <div class="flex items-center gap-2.5 border-l border-slate-200 pl-4">
+          <a href="index.html" aria-label="LifeLink home" title="Go to LifeLink homepage"><img src="images/lifelink-logo.png" alt="LifeLink" class="h-10 w-auto object-contain"></a>
+          <span class="text-[10px] font-bold text-slate-400 tracking-wider uppercase">Tracking</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-3"><div data-ll-bell></div><div data-ll-account class="flex items-center gap-2"></div></div>
+    </div>
+  </header>
+  <main class="flex-grow max-w-5xl w-full mx-auto px-4 py-6 space-y-4" id="app"><p class="text-sm font-semibold text-slate-500 text-center py-16">Loading tracking…</p></main>
+  <script>document.addEventListener('DOMContentLoaded',function(){var t=setInterval(function(){if(window.LL&&LL.me){clearInterval(t);var h=LL.home(LL.me.role);document.getElementById('homeLink').href=h;document.getElementById('backLink').href=h;}},100);setTimeout(function(){clearInterval(t)},8000);});</script>
+<script src="supabase-config.js"></script>
+<script src="supabase-client.js"></script>
+<script src="supabase-auth.js"></script>
+<script src="ll-api.js"></script>
+<script src="lifelink.js"></script>
+<script src="ll-chat.js"></script>
+<script src="ll-map.js"></script>
+<script src="page-tracking.js"></script>
+<script src="ll-app.js" defer></script>
+</body>
+</html>

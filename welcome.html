@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Welcome - LIFELINK</title>
+  <script src="ll-theme-init.js"></script>
+  <style>
+    :root { --g:#07865F; --g2:#0aa874; --ink:#142B27; --mut:#66756E; --bg:#F5F8F6; --card:#fff; --line:#E1E8E3; --ease:cubic-bezier(.2,.8,.2,1); }
+    html[data-theme="dark"] { --g:#18B785; --g2:#18B785; --ink:#F0F7F3; --mut:#A5B9AE; --bg:#101A18; --card:#192723; --line:#30463D; }
+    * { box-sizing: border-box; margin: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body { font-family: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--ink); overflow: hidden; }
+    .app { height: 100%; height: 100dvh; display: flex; flex-direction: column; max-width: 520px; margin: 0 auto; position: relative; }
+    /* ---- slides ---- */
+    .track { flex: 1; min-height: 0; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+    .track::-webkit-scrollbar { display: none; }
+    .slide { flex: 0 0 100%; scroll-snap-align: center; display: flex; flex-direction: column; min-height: 0; }
+    .media { position: relative; flex: 1 1 54%; min-height: 0; overflow: hidden; background: linear-gradient(160deg, #0d9b6e, #07865F 55%, #0a5d44); }
+    .media img.ph { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.12); transition: transform 1.6s var(--ease); }
+    .slide.on .media img.ph { transform: scale(1); }
+    .media::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(20,43,39,.0) 55%, rgba(20,43,39,.28)); pointer-events: none; }
+    .wave { position: absolute; left: 0; right: 0; bottom: -1px; width: 100%; height: 56px; z-index: 2; display: block; }
+    .wave path { fill: var(--bg); }
+    .copy { flex: 0 0 auto; padding: 4px 28px 8px; text-align: center; }
+    .copy h1 { font-size: clamp(24px, 6.6vw, 30px); line-height: 1.15; font-weight: 800; letter-spacing: -.02em; }
+    .copy h1 em { font-style: normal; color: var(--g); display: block; }
+    .copy p { margin-top: 12px; font-size: 15px; line-height: 1.55; color: var(--mut); font-weight: 500; }
+    .slide .copy > * { opacity: 0; transform: translateY(16px); }
+    .slide.on .copy > * { animation: up .6s var(--ease) forwards; }
+    .slide.on .copy > p { animation-delay: .1s; }
+    @keyframes up { to { opacity: 1; transform: none; } }
+    /* brand lockup over the first slide */
+    .brand { position: absolute; z-index: 3; top: calc(16px + env(safe-area-inset-top, 0px)); left: 0; right: 0; display: flex; justify-content: center; }
+    .brand span { background: rgba(255,255,255,.96); border-radius: 20px; padding: 8px 16px; box-shadow: 0 10px 30px rgba(0,0,0,.18); animation: drop .8s var(--ease) both; }
+    .brand img { height: 56px; width: auto; display: block; }
+    @keyframes drop { from { opacity: 0; transform: translateY(-24px) scale(.92); } to { opacity: 1; transform: none; } }
+    /* illustration slides */
+    .ill { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+    .ill svg { width: min(78%, 330px); height: auto; overflow: visible; }
+    .pulse { transform-origin: center; transform-box: fill-box; animation: pulse 2.4s ease-out infinite; }
+    .pulse.d2 { animation-delay: 1.2s; }
+    @keyframes pulse { 0% { opacity: .55; transform: scale(.4); } 100% { opacity: 0; transform: scale(2.4); } }
+    .route { stroke-dasharray: 8 10; animation: dash 1.6s linear infinite; }
+    @keyframes dash { to { stroke-dashoffset: -36; } }
+    .float { animation: float 3.4s ease-in-out infinite; }
+    @keyframes float { 50% { transform: translateY(-9px); } }
+    /* ---- footer ---- */
+    .foot { flex: 0 0 auto; padding: 8px 24px calc(20px + env(safe-area-inset-bottom, 0px)); }
+    .dots { display: flex; justify-content: center; gap: 8px; margin: 4px 0 18px; }
+    .dots i { width: 8px; height: 8px; border-radius: 8px; background: var(--line); transition: width .35s var(--ease), background .35s; }
+    .dots i.on { width: 26px; background: var(--g); }
+    .btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 54px; border-radius: 16px; font: 800 16px/1 inherit; font-family: inherit; text-decoration: none; cursor: pointer; transition: transform .15s var(--ease), box-shadow .2s, background .2s; }
+    .btn:active { transform: scale(.97); }
+    .btn.pri { background: var(--g); color: #fff; border: 0; box-shadow: 0 12px 26px rgba(7,134,95,.32); }
+    .btn.pri svg { transition: transform .25s var(--ease); }
+    .btn.pri:hover svg { transform: translateX(4px); }
+    .btn.sec { margin-top: 12px; background: transparent; color: var(--g); border: 1.5px solid var(--g); }
+    .foot { animation: up .7s .25s var(--ease) both; }
+    .skip { position: absolute; z-index: 4; top: calc(18px + env(safe-area-inset-top, 0px)); right: 18px; background: rgba(255,255,255,.92); color: var(--ink); border: 0; border-radius: 999px; padding: 8px 14px; font: 800 12px/1 inherit; font-family: inherit; cursor: pointer; display: none; box-shadow: 0 6px 18px rgba(0,0,0,.15); }
+    .skip.show { display: block; }
+    :focus-visible { outline: 3px solid var(--g); outline-offset: 2px; }
+    @media (max-height: 640px) { .media { flex-basis: 42%; } .copy p { font-size: 14px; margin-top: 8px; } .brand img { height: 44px; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } .slide .copy > * { opacity: 1; transform: none; } .track { scroll-behavior: auto; } }
+  </style>
+</head>
+<body data-ll-page="welcome" data-ll-role="public">
+<main class="app">
+  <button class="skip" id="skip" type="button">Skip</button>
+  <div class="track" id="track" aria-roledescription="carousel" aria-label="Welcome to LifeLink">
+
+    <section class="slide on" aria-roledescription="slide" aria-label="1 of 4">
+      <div class="media">
+        <img class="ph" src="images/hero/lifelink-original-1.jpeg" alt="A cleaning professional washing the windows of a home" decoding="async">
+        <div class="brand"><span><img src="images/lifelink-logo.png" alt="LifeLink"></span></div>
+        <svg class="wave" viewBox="0 0 400 56" preserveAspectRatio="none" aria-hidden="true"><path d="M0 56V30C60 0 120 0 200 24s150 22 200-6v38z"/></svg>
+      </div>
+      <div class="copy"><h1>Trusted Services,<em>Right When You Need Them.</em></h1><p>Find skilled professionals, book services, track in real time and pay securely, all in one app.</p></div>
+    </section>
+
+    <section class="slide" aria-roledescription="slide" aria-label="2 of 4">
+      <div class="media">
+        <img class="ph" src="images/hero/lifelink-carpentry.jpg" alt="A carpenter building wooden furniture" loading="lazy" decoding="async" style="object-position:50% 30%">
+        <svg class="wave" viewBox="0 0 400 56" preserveAspectRatio="none" aria-hidden="true"><path d="M0 56V30C60 0 120 0 200 24s150 22 200-6v38z"/></svg>
+      </div>
+      <div class="copy"><h1>Describe the job,<em>compare real quotes.</em></h1><p>Post a request once. Verified providers send you quotes, and you choose the one that fits your budget.</p></div>
+    </section>
+
+    <section class="slide" aria-roledescription="slide" aria-label="3 of 4">
+      <div class="media">
+        <div class="ill" aria-hidden="true">
+          <svg viewBox="0 0 320 300" fill="none">
+            <rect x="10" y="20" width="300" height="250" rx="26" fill="#fff" opacity=".14"/>
+            <path d="M60 230C60 170 130 190 150 150S120 90 200 80s70 30 70 30" stroke="#fff" stroke-width="5" stroke-linecap="round" class="route"/>
+            <circle cx="60" cy="230" r="11" fill="#fff"/><circle cx="60" cy="230" r="5" fill="#07865F"/>
+            <g class="float"><circle cx="270" cy="110" r="20" fill="#fff" class="pulse"/><circle cx="270" cy="110" r="20" fill="#fff" class="pulse d2"/>
+              <path d="M270 74c-14 0-25 11-25 25 0 19 25 40 25 40s25-21 25-40c0-14-11-25-25-25z" fill="#fff"/><circle cx="270" cy="99" r="9" fill="#07865F"/></g>
+            <circle cx="150" cy="150" r="8" fill="#fff" opacity=".9"/>
+          </svg>
+        </div>
+        <svg class="wave" viewBox="0 0 400 56" preserveAspectRatio="none" aria-hidden="true"><path d="M0 56V30C60 0 120 0 200 24s150 22 200-6v38z"/></svg>
+      </div>
+      <div class="copy"><h1>Know when they<em>are on the way.</em></h1><p>Follow your provider on the map as they travel to you, and confirm the moment they arrive.</p></div>
+    </section>
+
+    <section class="slide" aria-roledescription="slide" aria-label="4 of 4">
+      <div class="media">
+        <div class="ill" aria-hidden="true">
+          <svg viewBox="0 0 320 300" fill="none">
+            <g class="float">
+              <rect x="40" y="70" width="240" height="150" rx="24" fill="#fff"/>
+              <rect x="40" y="70" width="240" height="150" rx="24" fill="url(#wg)"/>
+              <rect x="64" y="96" width="46" height="34" rx="8" fill="#fff" opacity=".9"/>
+              <rect x="64" y="160" width="120" height="12" rx="6" fill="#fff" opacity=".85"/>
+              <rect x="64" y="184" width="76" height="10" rx="5" fill="#fff" opacity=".5"/>
+              <circle cx="244" cy="96" r="14" fill="#fff" opacity=".9"/>
+            </g>
+            <defs><linearGradient id="wg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#12c28a"/><stop offset="1" stop-color="#0a5d44"/></linearGradient></defs>
+            <g class="float" style="animation-delay:.6s"><circle cx="262" cy="214" r="26" fill="#fff"/><path d="M251 214l8 8 15-17" stroke="#07865F" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+          </svg>
+        </div>
+        <svg class="wave" viewBox="0 0 400 56" preserveAspectRatio="none" aria-hidden="true"><path d="M0 56V30C60 0 120 0 200 24s150 22 200-6v38z"/></svg>
+      </div>
+      <div class="copy"><h1>Simple, flat fees.<em>Paid securely.</em></h1><p>Top up your wallet with Paystack. LifeLink charges a flat ₦100 per booking to each side, only once the provider has arrived. You agree the job price directly.</p></div>
+    </section>
+  </div>
+
+  <div class="foot">
+    <div class="dots" id="dots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div>
+    <a class="btn pri" id="start" href="signin.html?mode=signup">Get Started <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+    <a class="btn sec" id="login" href="signin.html">I Already Have an Account</a>
+  </div>
+</main>
+<script>
+(function () {
+  var track = document.getElementById('track'), slides = [].slice.call(track.children), dots = [].slice.call(document.querySelectorAll('#dots i'));
+  var skip = document.getElementById('skip'), cur = 0;
+  function mark() { try { localStorage.setItem('ll-welcomed', '1'); } catch (e) {} }
+  function set(i) {
+    if (i === cur) return; cur = i;
+    slides.forEach(function (s, k) { s.classList.toggle('on', k === i); });
+    dots.forEach(function (d, k) { d.classList.toggle('on', k === i); });
+    skip.classList.toggle('show', i > 0 && i < slides.length - 1);
+  }
+  var raf = 0;
+  track.addEventListener('scroll', function () { cancelAnimationFrame(raf); raf = requestAnimationFrame(function () { set(Math.round(track.scrollLeft / track.clientWidth)); }); }, { passive: true });
+  skip.onclick = function () { track.scrollTo({ left: track.clientWidth * (slides.length - 1), behavior: 'smooth' }); };
+  // tap the dots to advance
+  document.querySelector('.dots').addEventListener('click', function () { var n = Math.min(cur + 1, slides.length - 1); track.scrollTo({ left: track.clientWidth * n, behavior: 'smooth' }); });
+  document.querySelectorAll('.btn').forEach(function (b) { b.addEventListener('click', mark); });
+  // keyboard arrows
+  document.addEventListener('keydown', function (e) { if (e.key === 'ArrowRight') track.scrollBy({ left: track.clientWidth, behavior: 'smooth' }); if (e.key === 'ArrowLeft') track.scrollBy({ left: -track.clientWidth, behavior: 'smooth' }); });
+})();
+</script>
+</body>
+</html>

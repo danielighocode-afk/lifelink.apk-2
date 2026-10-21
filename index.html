@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>LIFELINK — Find. Book. Get It Done.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            emerald: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              200: '#a7f3d0',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+            },
+            slate: {
+              50: '#f8fafc',
+              100: '#f1f5f9',
+              200: '#e2e8f0',
+              300: '#cbd5e1',
+              400: '#94a3b8',
+              500: '#64748b',
+              600: '#475569',
+              700: '#334155',
+              800: '#1e293b',
+              900: '#0f172a',
+            }
+          },
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #F8FAFC;
+      color: #0F172A;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .hero-bg-light {
+      position: relative;
+      isolation: isolate;
+      min-height: 650px;
+      background: #07130f;
+      color: #fff;
+    }
+    .hero-slideshow {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      overflow: hidden;
+      pointer-events: none;
+      background: #07130f;
+    }
+    .hero-slide {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 45%;
+      opacity: 0;
+      transform: scale(1.015);
+      transition: opacity 1.1s ease-in-out;
+      will-change: opacity;
+      image-rendering: auto;
+    }
+    .hero-slide.is-active { opacity: 1; }
+    .hero-slideshow::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(2, 12, 9, .68) 0%, rgba(2, 12, 9, .43) 42%, rgba(2, 12, 9, .16) 100%),
+        linear-gradient(180deg, rgba(2, 12, 9, .12) 0%, rgba(2, 12, 9, .04) 48%, rgba(2, 12, 9, .62) 100%);
+    }
+    .hero-copy {
+      color: #fff;
+      text-shadow: 0 2px 10px rgba(0,0,0,.78), 0 0 2px rgba(0,0,0,.9);
+    }
+    .hero-copy h1 {
+      text-shadow: 0 3px 18px rgba(0,0,0,.8), 0 0 3px rgba(0,0,0,.9);
+    }
+    .hero-copy .hero-highlight {
+      color: #65e88d;
+      text-shadow: 0 2px 16px rgba(0,0,0,.8), 0 0 8px rgba(34,197,94,.25);
+    }
+    .hero-search {
+      background: #f8f8f8;
+      box-shadow: 0 10px 30px rgba(0,0,0,.30), 0 0 0 2px rgba(255,255,255,.22);
+      border: 2px solid rgba(255,255,255,.55);
+    }
+    .hero-search input::placeholder { color: #64748b; font-weight: 600; opacity: 1; }
+    .hero-search input,
+    .hero-search select { color: #0f172a; }
+    .hero-search select {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      padding-right: 1.25rem;
+      background-repeat: no-repeat;
+      background-position: right .15rem center;
+      background-size: .8rem .8rem;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230f172a' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    }
+    .hero-search .hero-search-divider { position: relative; border-color: transparent !important; }
+    @media (min-width: 640px) {
+      .hero-search .hero-search-divider::before {
+        content: "";
+        position: absolute;
+        left: 0; top: 14%; bottom: 14%;
+        width: 1px;
+        background: #e2e5f1;
+      }
+    }
+    .hero-search .hero-search-btn {
+      background: #059669;
+      box-shadow: 0 6px 14px rgba(5,150,105,.35), 0 2px 4px rgba(0,0,0,.18);
+    }
+    .hero-search .hero-search-btn:hover { background: #047857; }
+    /* Search bar: 52px tall on desktop/tablet */
+    @media (min-width: 640px) {
+      .hero-search {
+        height: 52px; box-sizing: border-box;
+        padding: 4px !important; gap: 6px !important;
+        align-items: stretch;
+      }
+      .hero-search > div { padding-top: 0 !important; padding-bottom: 0 !important; height: 40px; min-height: 0; }
+      .hero-search .hero-search-btn {
+        min-height: 0 !important; height: 40px !important;
+        padding-top: 0 !important; padding-bottom: 0 !important;
+      }
+    }
+    /* Services hover dropdown (top nav) */
+    .nav-services { position: relative; display: inline-block; }
+    .nav-services-panel {
+      position: absolute; left: 50%; top: 100%;
+      padding-top: 18px; min-width: 250px;
+      opacity: 0; visibility: hidden; pointer-events: none;
+      transform: translate(-50%, 8px);
+      transition: opacity .18s ease, transform .18s ease, visibility .18s;
+      z-index: 60;
+    }
+    .nav-services:hover .nav-services-panel,
+    .nav-services:focus-within .nav-services-panel {
+      opacity: 1; visibility: visible; pointer-events: auto;
+      transform: translate(-50%, 0);
+    }
+    .nav-services-list {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 18px;
+      box-shadow: 0 18px 40px rgba(15,23,42,.18); padding: 8px;
+    }
+    .nav-services-list a {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 12px;
+      font-size: 13px; font-weight: 800; color: #334155; white-space: nowrap;
+      transition: background .15s ease, color .15s ease;
+    }
+    .nav-services-list a:hover { background: #ecfdf5; color: #047857; }
+    .nav-services-list .nav-svc-all { border-top: 1px solid #f1f5f9; margin-top: 6px; border-radius: 0 0 12px 12px; color: #047857; }
+    .nav-services > a .nav-caret { display: inline-block; width: .7rem; height: .7rem; margin-left: 4px; vertical-align: -1px; transition: transform .18s ease; }
+    .nav-services:hover > a .nav-caret { transform: rotate(180deg); }
+    /* Scroll reveal (How LifeLink Works + Explore services): transform/opacity only, replays up & down */
+    .reveal-ready .step-card[data-reveal] { animation: none; }
+    .reveal-ready [data-reveal]:not(.reveal-done) {
+      transition: opacity .6s ease, transform .8s cubic-bezier(.22, 1, .36, 1);
+      will-change: opacity, transform;
+    }
+    .reveal-ready [data-reveal]:not(.is-visible) { opacity: 0; }
+    .reveal-ready [data-reveal="up"]:not(.is-visible) { transform: translate3d(0, var(--reveal-from, 30px), 0); }
+    .reveal-ready [data-reveal].is-visible:not(.reveal-done) {
+      opacity: 1;
+      transition-delay: var(--reveal-delay, 0s);
+    }
+    .reveal-ready [data-reveal="up"].is-visible:not(.reveal-done) { transform: translate3d(0, 0, 0); }
+    /* Hero headline: letter-by-letter entrance + hover hop (transform/opacity only) */
+    .hl-word { display: inline-block; white-space: nowrap; }
+    .hl-char {
+      display: inline-block;
+      transition: transform .4s cubic-bezier(.34, 1.56, .64, 1), color .25s ease;
+      animation: hl-rise .85s cubic-bezier(.22, 1, .36, 1) backwards;
+      animation-delay: calc(.12s + var(--i, 0) * .045s);
+    }
+    .hl-ready .hl-char { will-change: transform, opacity; }
+    .hl-settled .hl-char { will-change: auto; }
+    .hl-live .hl-char { transition: color .25s ease; will-change: transform; }
+    .hl-char.hl-near { color: #65e88d; }
+    @keyframes hl-rise {
+      from { opacity: 0; transform: translate3d(0, .55em, 0) rotate(9deg) scale(.92); }
+      to   { opacity: 1; transform: translate3d(0, 0, 0) rotate(0) scale(1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .hl-char { animation: none !important; transition: none !important; }
+    }
+    /* Top menu bar: cursor-reactive items + hover animations (transform/opacity only) */
+    .nav-logo { display: inline-block; position: relative; z-index: 60; }
+    .nav-logo img {
+      position: relative; transform-origin: 0 0;
+      transition: transform .5s cubic-bezier(.34, 1.56, .64, 1);
+      will-change: transform;
+    }
+    /* white card + shadow behind the logo: painted once, only fades/scales (no per-frame repaint) */
+    .nav-logo::before {
+      content: ""; position: absolute; inset: -4px; border-radius: 14px;
+      background: #fff; box-shadow: 0 14px 34px rgba(15, 23, 42, .32);
+      transform-origin: 4px 4px; opacity: 0; will-change: transform, opacity;
+      transition: transform .5s cubic-bezier(.34, 1.56, .64, 1), opacity .25s ease;
+    }
+    /* grows diagonally (down and to the right) and spills out of the header into the hero */
+    .nav-logo:hover img, .nav-logo:focus-visible img { transform: scale(2.2); }
+    .nav-logo:hover::before, .nav-logo:focus-visible::before { opacity: 1; transform: scale(2.2); }
+    /* solid header: a live backdrop blur over the moving hero was the main source of jank */
+    header.sticky { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background-color: rgba(255,255,255,.98) !important; }
+
+    header .nav-mag {
+      position: relative; display: inline-block;
+      transform: translate3d(var(--mx, 0px), var(--my, 0px), 0);
+      transition: transform .3s cubic-bezier(.22, 1, .36, 1), color .2s ease, background-color .2s ease, box-shadow .25s ease;
+    }
+    header .nav-mag:hover { transform: translate3d(var(--mx, 0px), calc(var(--my, 0px) - 2px), 0); }
+    header nav .nav-mag { padding: 6px 2px; }
+    header nav .nav-mag::after {
+      content: ""; position: absolute; left: 2px; right: 2px; bottom: 0; height: 2px; border-radius: 2px;
+      background: linear-gradient(90deg, #10b981, #34d399);
+      transform: scaleX(0); transform-origin: right center;
+      transition: transform .35s cubic-bezier(.22, 1, .36, 1);
+    }
+    header nav .nav-mag:hover::after, header nav .nav-mag.text-emerald-600::after { transform: scaleX(1); transform-origin: left center; }
+
+    header .hdr-login:hover { background: #ecfdf5; transform: translate3d(var(--mx, 0px), calc(var(--my, 0px) - 2px), 0) scale(1.05); }
+    header .hdr-cta { overflow: hidden; isolation: isolate; }
+    header .hdr-cta::before {
+      content: ""; position: absolute; inset: 0; z-index: -1; opacity: 0; transition: opacity .25s ease;
+      background: radial-gradient(circle at var(--px, 50%) var(--py, 50%), rgba(255,255,255,.38), rgba(255,255,255,0) 55%);
+    }
+    header .hdr-cta:hover::before { opacity: 1; }
+    header .hdr-cta:hover {
+      transform: translate3d(var(--mx, 0px), calc(var(--my, 0px) - 2px), 0) scale(1.06);
+      box-shadow: 0 12px 26px rgba(5,150,105,.38);
+    }
+
+    .nav-services-list a:hover { transform: translateX(4px); }
+    .nav-services-list a { transition: background .15s ease, color .15s ease, transform .25s cubic-bezier(.22, 1, .36, 1); }
+
+    .hdr-in { animation: hdr-drop .65s cubic-bezier(.22, 1, .36, 1) backwards; animation-delay: calc(.05s + var(--hi, 0) * .07s); }
+    @keyframes hdr-drop { from { opacity: 0; transform: translate3d(0, -14px, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
+    @media (prefers-reduced-motion: reduce) {
+      .hdr-in { animation: none !important; }
+      .nav-logo img, header .nav-mag { transition: none !important; }
+    }
+    /* keep section headings clear of the sticky header when jumping from the menu */
+    #services, #how-lifelink-works { scroll-margin-top: 80px; }
+    /* Scroll smoothness: no live backdrop blur, and decorative infinite animations pause while scrolling */
+    .hero-service-card { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background: rgba(255,255,255,.96) !important; }
+    .hero-service-card:hover { background: #fff !important; }
+    .hero-trust-card { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background: rgba(9,30,22,.84) !important; }
+    @keyframes ai-color-shift {
+      0%, 100% { color: #bbf7d0; }
+      25% { color: #7dd3fc; }
+      50% { color: #ffffff; }
+      75% { color: #0f172a; }
+    }
+    .ai-color-cycle { text-shadow: 0 0 8px rgba(34,197,94,.3); transition: none; }
+    .homepage-icon-glow::before { will-change: transform; }
+    html.is-scrolling .ai-color-cycle,
+    html.is-scrolling .homepage-icon-glow::before,
+    html.is-scrolling .step-arrow span { animation-play-state: paused !important; }
+
+    /* Search button: label turns into a paper plane that flies away on hover */
+    .hero-search .hero-search-btn { position: relative; overflow: hidden; }
+    .hero-search-btn .btn-label { display: inline-block; }
+    .hero-search-btn .btn-plane {
+      position: absolute; left: 50%; top: 50%; width: 20px; height: 20px; margin: -10px 0 0 -10px;
+      opacity: 0; pointer-events: none;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .hero-search-btn:hover .btn-label { animation: btn-label-swap 1.3s ease both; }
+      .hero-search-btn:hover .btn-plane { animation: btn-plane-fly 1.3s linear both; }
+    }
+    @keyframes btn-label-swap {
+      0%   { opacity: 1; transform: translate3d(0, 0, 0); }
+      14%  { opacity: 0; transform: translate3d(0, -8px, 0) scale(.85); }
+      80%  { opacity: 0; transform: translate3d(0, 8px, 0) scale(.85); }
+      100% { opacity: 1; transform: translate3d(0, 0, 0); }
+    }
+    @keyframes btn-plane-fly {
+      0%   { opacity: 0; transform: translate3d(0, 8px, 0) scale(.4) rotate(0deg); animation-timing-function: cubic-bezier(.2, .8, .3, 1); }
+      16%  { opacity: 1; transform: translate3d(0, 0, 0) scale(1.15) rotate(-6deg); animation-timing-function: ease-in-out; }
+      30%  { opacity: 1; transform: translate3d(-5px, 3px, 0) scale(1.05) rotate(-10deg); animation-timing-function: cubic-bezier(.55, 0, 1, .55); }
+      100% { opacity: 0; transform: translate3d(140px, -78px, 0) scale(.7) rotate(-10deg); }
+    }
+    .hero-service-card {
+      background: rgba(255,255,255,.94);
+      backdrop-filter: blur(9px);
+      -webkit-backdrop-filter: blur(9px);
+      box-shadow: 0 8px 25px rgba(0,0,0,.2);
+      transition: transform .2s ease, background .2s ease, box-shadow .2s ease;
+    }
+    .hero-service-card:hover {
+      transform: translateY(-4px);
+      background: #fff;
+      box-shadow: 0 14px 32px rgba(0,0,0,.25);
+    }
+    .hero-trust-card {
+      background: rgba(9, 30, 22, .76);
+      border: 1px solid rgba(255,255,255,.38);
+      box-shadow: 0 8px 25px rgba(0,0,0,.22);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    @media (max-width: 640px) {
+      .hero-bg-light { min-height: 700px; }
+      .hero-slideshow::after {
+        background: linear-gradient(90deg, rgba(2,12,9,.68), rgba(2,12,9,.36)),
+                    linear-gradient(180deg, rgba(2,12,9,.2), rgba(2,12,9,.48));
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .hero-slide { transition: none; }
+    }
+    .input-focus-effect:focus-within {
+      border-color: #059669;
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12);
+    }
+  
+    .steps-flow {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+      align-items: stretch;
+      gap: 12px;
+      position: relative;
+    }
+    .step-card {
+      min-width: 0;
+      padding: 24px 20px;
+      border-radius: 20px;
+      border: 1px solid #dbe5df;
+      background: #fff;
+      box-shadow: 0 5px 16px rgba(15, 23, 42, .05);
+      transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+      opacity: .96;
+      animation: step-rise .7s both;
+    }
+    .step-card:nth-of-type(1) { animation-delay: .05s; }
+    .step-card:nth-of-type(2) { animation-delay: .2s; }
+    .step-card:nth-of-type(3) { animation-delay: .35s; }
+    .step-card:nth-of-type(4) { animation-delay: .5s; }
+    .step-card:hover, .step-card:focus-visible {
+      outline: none;
+      transform: translateY(-5px);
+      border-color: #34d399;
+      box-shadow: 0 0 0 2px rgba(16,185,129,.18), 0 0 26px rgba(16,185,129,.28), 0 12px 30px rgba(15,23,42,.10);
+    }
+    .step-icon {
+      width: 46px;
+      height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      margin-bottom: 18px;
+      background: linear-gradient(135deg, #047857, #34d399);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 900;
+      box-shadow: 0 5px 14px rgba(5,150,105,.25);
+    }
+    .step-card h3 { color: #0f172a; font-weight: 850; font-size: 16px; line-height: 1.35; }
+    .step-card p { color: #64748b; font-size: 13px; line-height: 1.65; margin-top: 9px; }
+    .step-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #059669;
+      font-size: 27px;
+      font-weight: 900;
+      padding: 0 1px;
+    }
+    .step-arrow span { display: inline-block; animation: arrow-nudge 1.4s ease-in-out infinite; }
+    @keyframes step-rise {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes arrow-nudge {
+      0%, 100% { transform: translateX(0); opacity: .65; }
+      50% { transform: translateX(5px); opacity: 1; }
+    }
+    @media (max-width: 900px) {
+      .steps-flow {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 10px;
+      }
+      .step-card { padding: 19px 20px; }
+      .step-card .step-icon { margin-bottom: 10px; }
+      .step-arrow { transform: rotate(90deg); height: 20px; font-size: 23px; }
+      .step-arrow span { animation-name: arrow-nudge-down; }
+      @keyframes arrow-nudge-down {
+        0%, 100% { transform: translateY(0); opacity: .65; }
+        50% { transform: translateY(4px); opacity: 1; }
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .step-card, .step-arrow span { animation: none !important; transition: none !important; }
+    }
+
+
+    /* Green circular halo for homepage icons. */
+    .homepage-icon-glow {
+      position: relative;
+      isolation: isolate;
+      filter: drop-shadow(0 0 5px rgba(34,197,94,.48));
+      transition: filter .25s ease, transform .25s ease;
+    }
+    .homepage-icon-glow::before {
+      content: "";
+      position: absolute;
+      inset: -7px;
+      border-radius: 9999px;
+      pointer-events: none;
+      z-index: -1;
+      background: conic-gradient(from 0deg, transparent 0deg, rgba(74,222,128,.05) 60deg, rgba(34,197,94,.8) 105deg, rgba(125,249,168,.12) 150deg, transparent 220deg, transparent 360deg);
+      animation: icon-green-orbit 2.8s linear infinite;
+      opacity: .82;
+      -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+      mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+    }
+    .homepage-icon-glow:hover, a:hover .homepage-icon-glow, button:hover .homepage-icon-glow {
+      filter: drop-shadow(0 0 9px rgba(34,197,94,.85));
+      transform: scale(1.05);
+    }
+    @keyframes icon-green-orbit { to { transform: rotate(360deg); } }
+    .ai-color-cycle {
+      animation: ai-color-shift 4s linear infinite;
+      transition: color .6s ease, text-shadow .6s ease;
+    }
+    .ai-color-cycle:nth-child(4n + 1) { animation-delay: 0s; }
+    .ai-color-cycle:nth-child(4n + 2) { animation-delay: -.25s; }
+    .ai-color-cycle:nth-child(4n + 3) { animation-delay: -.5s; }
+    .ai-color-cycle:nth-child(4n) { animation-delay: -.75s; }
+    @keyframes ai-color-shift {
+      0%, 100% { color: #bbf7d0; text-shadow: 0 0 9px rgba(34,197,94,.4); }
+      25% { color: #7dd3fc; text-shadow: 0 0 9px rgba(56,189,248,.42); }
+      50% { color: #ffffff; text-shadow: 0 0 8px rgba(255,255,255,.35); }
+      75% { color: #0f172a; text-shadow: 0 0 8px rgba(255,255,255,.9); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .homepage-icon-glow::before, .ai-color-cycle { animation: none !important; }
+    }
+
+</style>
+  <script src="ll-theme-init.js"></script>
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="LifeLink">
+  <link rel="stylesheet" href="ll-app.css">
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 antialiased selection:bg-emerald-100 selection:text-emerald-800" data-ll-page="home" data-ll-role="public">
+
+  <!-- TOP HEADER NAVIGATION -->
+  <header class="bg-white/95 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="nav-logo" aria-label="LifeLink home" title="Go to LifeLink homepage"><img src="images/lifelink-logo.png" alt="LifeLink" class="h-12 w-auto object-contain"></a>
+      </div>
+
+      <!-- Center Navigation Links -->
+      <nav class="hidden md:flex items-center gap-8 text-sm font-extrabold text-slate-600">
+        <a href="#" class="text-emerald-600 hover:text-emerald-700 transition">Home</a>
+        <div class="nav-services">
+          <a href="index.html#services" class="hover:text-emerald-600 transition">Services<svg class="nav-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></a>
+          <div class="nav-services-panel">
+            <div class="nav-services-list">
+              <a href="request.html?category=Repair%20%26%20Maintenance"><span aria-hidden="true">🛠</span>Repair &amp; Maintenance</a>
+              <a href="request.html?category=Cleaning"><span aria-hidden="true">✦</span>Cleaning</a>
+              <a href="request.html?category=Beauty%20%26%20Personal%20Care"><span aria-hidden="true">💇</span>Beauty &amp; Personal Care</a>
+              <a href="request.html?category=Home%20Services"><span aria-hidden="true">🏠</span>Home Services</a>
+              <a href="request.html?category=Auto%20Repair"><span aria-hidden="true">🚘</span>Auto Repair</a>
+              <a href="index.html#services" class="nav-svc-all">View all services <span aria-hidden="true">→</span></a>
+            </div>
+          </div>
+        </div>
+        <a href="#how-lifelink-works" class="hover:text-emerald-600 transition">How It Works</a>
+        <a href="provider-onboarding.html" class="hover:text-emerald-600 transition">For Providers</a>
+        <a href="trust-safety.html" class="hover:text-emerald-600 transition">Trust &amp; Safety</a>
+      </nav>
+
+      <!-- Right Auth Actions (filled by lifelink.js: Log in / Get started, or the signed-in account chip) -->
+      <div class="flex items-center gap-3"><div data-ll-bell></div><div data-ll-account class="flex items-center gap-2"></div></div>
+
+    </div>
+  </header>
+
+  <!-- HERO SECTION: bold, photo-led LifeLink homepage -->
+  <section class="hero-bg-light relative overflow-hidden border-b border-slate-200">
+    <div class="hero-slideshow" aria-hidden="true" data-hero-slideshow>
+      <img class="hero-slide is-active" src="images/hero/lifelink-original-1.jpeg" alt="" loading="eager" decoding="async">
+      <img class="hero-slide" src="images/hero/lifelink-original-2.jpeg" alt="" loading="lazy" decoding="async">
+      <img class="hero-slide" src="images/hero/lifelink-original-3.jpeg" alt="" loading="lazy" decoding="async">
+      <img class="hero-slide" src="images/hero/lifelink-original-4.jpeg" alt="" loading="lazy" decoding="async">
+      <img class="hero-slide" src="images/hero/lifelink-original-5.jpeg" alt="" loading="lazy" decoding="async">
+      <img class="hero-slide" src="images/hero/lifelink-community.jpg" alt="" loading="lazy" decoding="async">
+      <img class="hero-slide" src="images/hero/lifelink-tailoring.jpg" alt="" loading="lazy" decoding="async">
+      <img class="hero-slide" src="images/hero/lifelink-carpentry.jpg" alt="" loading="lazy" decoding="async">
+    </div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-16 sm:pt-20 pb-10 sm:pb-12">
+      <div class="hero-copy max-w-2xl space-y-5">
+        <h1 class="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.02]">
+          Find. Book. Get It Done.
+        </h1>
+        <script>
+          (function () {
+            var h = document.currentScript && document.currentScript.previousElementSibling;
+            if (!h || h.tagName !== 'H1') return;
+            var text = h.textContent.replace(/\s+/g, ' ').trim();
+            h.setAttribute('aria-label', text);
+            h.textContent = '';
+            var n = 0;
+            text.split(' ').forEach(function (word, wi, arr) {
+              var w = document.createElement('span');
+              w.className = 'hl-word';
+              w.setAttribute('aria-hidden', 'true');
+              word.split('').forEach(function (ch) {
+                var c = document.createElement('span');
+                c.className = 'hl-char';
+                c.style.setProperty('--i', n++);
+                c.textContent = ch;
+                w.appendChild(c);
+              });
+              h.appendChild(w);
+              if (wi < arr.length - 1) h.appendChild(document.createTextNode(' '));
+            });
+            h.classList.add('hl-ready');
+            setTimeout(function () { h.classList.remove('hl-ready'); h.classList.add('hl-settled'); }, 2200);
+
+            /* Cursor interaction: letters are pushed away from the mouse, lift and grow, then ease back */
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+            setTimeout(function () {
+              var chars = Array.prototype.slice.call(h.querySelectorAll('.hl-char'));
+              var st = chars.map(function () { return { x: 0, y: 0, r: 0, s: 1, near: false }; });
+              var base = [];                      // un-moved letter centres in page coordinates (cached)
+              var RADIUS = 150, PUSH = 30, LIFT = 12, GROW = 0.28, TILT = 16, EASE = 0.18;
+              var px = 0, py = 0, inside = false, running = false;
+              h.classList.add('hl-live');
+              chars.forEach(function (c) { c.style.animation = 'none'; });
+
+              function measure() {
+                var sx = window.pageXOffset, sy = window.pageYOffset;
+                base = chars.map(function (c, i) {
+                  var r = c.getBoundingClientRect();
+                  return { x: r.left + r.width / 2 - st[i].x + sx, y: r.top + r.height / 2 - st[i].y + sy };
+                });
+              }
+              measure();
+              window.addEventListener('resize', measure);
+              if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+
+              function frame() {
+                var sx = window.pageXOffset, sy = window.pageYOffset, busy = false;
+                for (var i = 0; i < chars.length; i++) {
+                  var o = st[i], cx = base[i].x - sx, cy = base[i].y - sy;
+                  var tx = 0, ty = 0, tr = 0, ts = 1, near = false;
+                  if (inside) {
+                    var dx = cx - px, dy = cy - py, d = Math.sqrt(dx * dx + dy * dy);
+                    if (d < RADIUS) {
+                      var k = 1 - d / RADIUS; k = k * k;
+                      var ux = d > 0.001 ? dx / d : 0, uy = d > 0.001 ? dy / d : -1;
+                      tx = ux * k * PUSH; ty = uy * k * PUSH * 0.6 - k * LIFT;
+                      tr = ux * k * TILT; ts = 1 + k * GROW; near = k > 0.35;
+                    }
+                  }
+                  var nx = o.x + (tx - o.x) * EASE, ny = o.y + (ty - o.y) * EASE;
+                  var nr = o.r + (tr - o.r) * EASE, ns = o.s + (ts - o.s) * EASE;
+                  var moving = Math.abs(nx - o.x) > 0.01 || Math.abs(ny - o.y) > 0.01 || Math.abs(ns - o.s) > 0.0005;
+                  if (moving) {
+                    busy = true;
+                    chars[i].style.transform = 'translate3d(' + nx.toFixed(2) + 'px,' + ny.toFixed(2) + 'px,0) rotate(' + nr.toFixed(2) + 'deg) scale(' + ns.toFixed(3) + ')';
+                  } else if (o.x !== tx || o.s !== ts) {
+                    nx = tx; ny = ty; nr = tr; ns = ts;
+                    chars[i].style.transform = ts === 1 && tx === 0 && ty === 0 ? '' : 'translate3d(' + tx.toFixed(2) + 'px,' + ty.toFixed(2) + 'px,0) rotate(' + tr.toFixed(2) + 'deg) scale(' + ts.toFixed(3) + ')';
+                  }
+                  o.x = nx; o.y = ny; o.r = nr; o.s = ns;
+                  if (near !== o.near) { o.near = near; chars[i].classList.toggle('hl-near', near); }
+                }
+                if (busy || inside) requestAnimationFrame(frame); else running = false;
+              }
+              function wake() { if (!running) { running = true; requestAnimationFrame(frame); } }
+
+              var hr = null;
+              window.addEventListener('pointermove', function (e) {
+                if (e.pointerType === 'touch') return;
+                px = e.clientX; py = e.clientY;
+                hr = h.getBoundingClientRect();
+                var was = inside;
+                inside = py > hr.top - RADIUS && py < hr.bottom + RADIUS && px > hr.left - RADIUS && px < hr.right + RADIUS;
+                if (inside || was) wake();
+              }, { passive: true });
+              document.addEventListener('mouseleave', function () { inside = false; wake(); });
+              window.addEventListener('blur', function () { inside = false; wake(); });
+              window.addEventListener('scroll', function () { if (inside) wake(); }, { passive: true });
+            }, 2000);
+          })();
+        </script>
+        <p class="text-xl sm:text-2xl font-extrabold leading-tight max-w-xl"><span class="text-sky-300">Local services-</span> <span class="text-emerald-300">made simple.</span></p>
+        <p class="hero-ai-copy text-base sm:text-lg font-semibold leading-relaxed max-w-xl" aria-label="LIFELINK helps you find trusted local professionals quickly and safely, powered by AI."><span class="ai-color-cycle">LIFELINK</span> <span class="ai-color-cycle">helps</span> <span class="ai-color-cycle">you</span> <span class="ai-color-cycle">find</span> <span class="ai-color-cycle">trusted</span> <span class="ai-color-cycle">local</span> <span class="ai-color-cycle">professionals</span> <span class="ai-color-cycle">quickly</span> <span class="ai-color-cycle">and</span> <span class="ai-color-cycle">safely,</span> <span class="ai-color-cycle">powered</span> <span class="ai-color-cycle">by</span> <span class="ai-color-cycle">AI.</span></p>
+      </div>
+
+      <div class="hero-search mt-7 sm:mt-8 rounded-full p-1.5 max-w-[640px] grid grid-cols-1 sm:grid-cols-12 gap-1.5">
+        <div class="sm:col-span-6 flex items-center gap-3 px-3 py-1.5 min-w-0">
+          <svg class="homepage-icon-glow w-5 h-5 text-slate-800 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input id="heroQ" type="text" placeholder="What service do you need?" aria-label="What service do you need?" class="w-full min-w-0 bg-transparent text-sm font-bold text-slate-900 placeholder-slate-500 outline-none">
+        </div>
+        <div class="hero-search-divider sm:col-span-3 flex items-center gap-2 px-3 py-1.5 border-t sm:border-t-0 sm:border-l border-slate-200">
+          <svg class="homepage-icon-glow w-5 h-5 text-slate-800 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <input id="heroArea" type="text" aria-label="Service location" placeholder="Area (optional)" class="w-full bg-transparent text-sm font-extrabold text-slate-900 placeholder-slate-500 outline-none">
+        </div>
+        <div class="sm:col-span-3">
+          <button onclick="handleSearch()" class="hero-search-btn w-full h-full min-h-10 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-extrabold py-[15px] px-5 rounded-full shadow-md shadow-emerald-900/25 transition text-sm"><span class="btn-label">Search</span><svg class="btn-plane" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
+        </div>
+      </div>
+
+      <div class="mt-24 sm:mt-28 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 max-w-5xl">
+        <a href="request.html?category=Repair%20%26%20Maintenance" class="hero-service-card rounded-2xl px-3 py-4 text-center text-slate-900">
+          <span class="mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-emerald-600 text-white text-xl" aria-hidden="true">🛠</span>
+          <span class="block text-xs sm:text-sm font-extrabold">Repair &amp; Maintenance</span>
+          <span class="mt-1 block text-[11px] font-semibold text-slate-500">Fixing what matters</span>
+        </a>
+        <a href="request.html?category=Cleaning" class="hero-service-card rounded-2xl px-3 py-4 text-center text-slate-900">
+          <span class="mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-blue-500 text-white text-xl" aria-hidden="true">✦</span>
+          <span class="block text-xs sm:text-sm font-extrabold">Cleaning</span>
+          <span class="mt-1 block text-[11px] font-semibold text-slate-500">A cleaner, healthier space</span>
+        </a>
+        <a href="request.html?category=Beauty%20%26%20Personal%20Care" class="hero-service-card rounded-2xl px-3 py-4 text-center text-slate-900">
+          <span class="mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-violet-500 text-white text-xl" aria-hidden="true">✧</span>
+          <span class="block text-xs sm:text-sm font-extrabold">Beauty &amp; Personal Care</span>
+          <span class="mt-1 block text-[11px] font-semibold text-slate-500">Look good, feel great</span>
+        </a>
+        <a href="request.html?category=Home%20Services" class="hero-service-card rounded-2xl px-3 py-4 text-center text-slate-900">
+          <span class="mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-orange-500 text-white text-xl" aria-hidden="true">⌂</span>
+          <span class="block text-xs sm:text-sm font-extrabold">Home Services</span>
+          <span class="mt-1 block text-[11px] font-semibold text-slate-500">Comfort for your home</span>
+        </a>
+        <a href="request.html?category=Auto%20Repair" class="hero-service-card rounded-2xl px-3 py-4 text-center text-slate-900 col-span-2 sm:col-span-1">
+          <span class="mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-rose-500 text-white text-xl" aria-hidden="true">🚘</span>
+          <span class="block text-xs sm:text-sm font-extrabold">Auto Repair</span>
+          <span class="mt-1 block text-[11px] font-semibold text-slate-500">Keep moving</span>
+        </a>
+      </div>
+
+      <div class="hero-trust-card mt-4 sm:mt-0 sm:absolute sm:right-6 lg:right-8 sm:bottom-12 rounded-2xl px-4 py-4 flex items-center gap-3 max-w-xs text-white">
+        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-2xl" aria-hidden="true">✓</span>
+        <span><strong class="block text-sm font-extrabold">Safe &amp; Secure</strong><span class="block text-xs leading-relaxed text-white/85">Providers are checked by an administrator before they can quote</span></span>
+        <span class="text-2xl ml-1" aria-hidden="true">›</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW LIFELINK WORKS: horizontal four-step flow -->
+  <section id="how-lifelink-works" class="py-16 sm:py-20 bg-slate-50 border-b border-slate-200 overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-2xl mx-auto mb-10">
+        <p class="text-xs sm:text-sm uppercase tracking-[.22em] font-extrabold text-emerald-700">Simple from start to finish</p>
+        <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">How LifeLink Works</h2>
+        <p class="mt-3 text-slate-600 font-medium">Four simple steps to get the help you need.</p>
+      </div>
+      <div class="steps-flow" data-steps-flow>
+        <article class="step-card" tabindex="0">
+          <div class="step-icon">01</div>
+          <h3>Find a Service</h3>
+          <p>Tell us what you need and discover local professionals.</p>
+        </article>
+        <div class="step-arrow" aria-hidden="true"><span>→</span></div>
+        <article class="step-card" tabindex="0">
+          <div class="step-icon">02</div>
+          <h3>Compare &amp; Choose</h3>
+          <p>Review available providers and choose the right fit.</p>
+        </article>
+        <div class="step-arrow" aria-hidden="true"><span>→</span></div>
+        <article class="step-card" tabindex="0">
+          <div class="step-icon">03</div>
+          <h3>Book Your Service</h3>
+          <p>Send your request and arrange the service details.</p>
+        </article>
+        <div class="step-arrow" aria-hidden="true"><span>→</span></div>
+        <article class="step-card" tabindex="0">
+          <div class="step-icon">04</div>
+          <h3>Get It Done</h3>
+          <p>Connect with your chosen professional and get it done.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- REAL SERVICE PHOTOS PROVIDED FOR LIFELINK -->
+  <section id="services" class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-14">
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-7">
+      <div class="space-y-2">
+        <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-emerald-700">Explore services</p>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">What do you need help with?</h2>
+        <p class="text-sm font-semibold text-slate-500">Browse services and start a request when you're ready.</p>
+      </div>
+      <a href="request.html" class="text-sm font-extrabold text-emerald-700 hover:text-emerald-800">Request a service <span aria-hidden="true">→</span></a>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+      <a href="request.html" class="group overflow-hidden rounded-3xl bg-white border border-slate-200 shadow-sm hover:shadow-lg hover:border-emerald-400 transition">
+        <div class="aspect-[4/3] overflow-hidden bg-slate-100"><img src="images/services/repair-maintenance.jpeg" alt="Professional repairing plumbing under a sink" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition duration-300"></div>
+        <div class="p-4"><h3 class="font-extrabold text-slate-900">Repair &amp; Maintenance</h3><p class="mt-1 text-xs font-semibold text-slate-500">Plumbing and household repairs</p></div>
+      </a>
+      <a href="request.html" class="group overflow-hidden rounded-3xl bg-white border border-slate-200 shadow-sm hover:shadow-lg hover:border-emerald-400 transition">
+        <div class="aspect-[4/3] overflow-hidden bg-slate-100"><img src="images/services/cleaning.jpeg" alt="Professionals cleaning the exterior of a building" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition duration-300"></div>
+        <div class="p-4"><h3 class="font-extrabold text-slate-900">Cleaning</h3><p class="mt-1 text-xs font-semibold text-slate-500">Home and exterior cleaning</p></div>
+      </a>
+      <a href="request.html" class="group overflow-hidden rounded-3xl bg-white border border-slate-200 shadow-sm hover:shadow-lg hover:border-emerald-400 transition">
+        <div class="aspect-[4/3] overflow-hidden bg-slate-100"><img src="images/services/beauty-personal-care.jpeg" alt="Personal care and beauty service" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition duration-300"></div>
+        <div class="p-4"><h3 class="font-extrabold text-slate-900">Beauty &amp; Personal Care</h3><p class="mt-1 text-xs font-semibold text-slate-500">Personal grooming and care</p></div>
+      </a>
+      <a href="request.html" class="group overflow-hidden rounded-3xl bg-white border border-slate-200 shadow-sm hover:shadow-lg hover:border-emerald-400 transition">
+        <div class="aspect-[4/3] overflow-hidden bg-slate-100"><img src="images/services/home-services.jpeg" alt="Customer discussing a home-related service in a shop" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition duration-300"></div>
+        <div class="p-4"><h3 class="font-extrabold text-slate-900">Home Services</h3><p class="mt-1 text-xs font-semibold text-slate-500">Help with everyday needs</p></div>
+      </a>
+      <a href="request.html" class="group overflow-hidden rounded-3xl bg-white border border-slate-200 shadow-sm hover:shadow-lg hover:border-emerald-400 transition">
+        <div class="aspect-[4/3] overflow-hidden bg-slate-100"><img src="images/services/auto-repair.jpeg" alt="Mechanic working on a vehicle engine" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition duration-300"></div>
+        <div class="p-4"><h3 class="font-extrabold text-slate-900">Auto Repair</h3><p class="mt-1 text-xs font-semibold text-slate-500">Vehicle checks and repairs</p></div>
+      </a>
+    </div>
+  </section>
+
+  <!-- 4 KEY FEATURE CARDS SECTION -->
+  <section class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      
+      <!-- Feature 1 -->
+      <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-3 hover:border-emerald-500 transition">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg shadow-2xs">
+          🛡️
+        </div>
+        <h3 class="text-base font-extrabold text-slate-900">Verified Professionals</h3>
+        <p class="text-xs font-semibold text-slate-500 leading-relaxed">
+          Every provider applies with documents and is reviewed by an administrator before they can send quotes.
+        </p>
+      </div>
+
+      <!-- Feature 2 -->
+      <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-3 hover:border-emerald-500 transition">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg shadow-2xs">
+          💳
+        </div>
+        <h3 class="text-base font-extrabold text-slate-900">Secure Payments</h3>
+        <p class="text-xs font-semibold text-slate-500 leading-relaxed">
+          LifeLink charges a flat ₦100 fee to each side per booking, from a prepaid wallet. You agree and pay the job price directly with your provider; LifeLink does not hold it.
+        </p>
+      </div>
+
+      <!-- Feature 3 -->
+      <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-3 hover:border-emerald-500 transition">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg shadow-2xs">📍</div>
+        <h3 class="text-base font-extrabold text-slate-900">Direct Messaging</h3>
+        <p class="text-xs font-semibold text-slate-500 leading-relaxed">Message providers about your request and schedule. Live map tracking is coming later.</p>
+      </div>
+      <!-- Feature 4 -->
+      <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-3 hover:border-emerald-500 transition">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg shadow-2xs">⭐</div>
+        <h3 class="text-base font-extrabold text-slate-900">Real Reviews</h3>
+        <p class="text-xs font-semibold text-slate-500 leading-relaxed">Ratings come only from customers whose booking was completed on LifeLink.</p>
+      </div>
+    </div>
+  </section>
+  <!-- HOW IT WORKS -->
+  
+  <!-- PROVIDER CTA -->
+  <section class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-14">
+    <div class="bg-slate-900 rounded-3xl p-8 sm:p-12 flex flex-col sm:flex-row items-center justify-between gap-6">
+      <div class="space-y-2 text-center sm:text-left"><h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Are you a professional?</h2><p class="text-sm font-semibold text-slate-300">Apply to join LIFELINK. Once verified, you can see open requests and send quotes.</p></div>
+      <a href="provider-onboarding.html" class="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm px-7 py-4 rounded-2xl shadow-md shrink-0">Become a Provider</a>
+    </div>
+  </section>
+  <!-- FOOTER -->
+  <footer class="mt-auto bg-white border-t border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold text-slate-500">
+      <span class="font-extrabold text-slate-900">LIFELINK <span class="text-slate-400 font-semibold">© 2026 • Benin City, Nigeria</span></span>
+      <div class="flex items-center gap-5"><a href="trust-safety.html" class="hover:text-emerald-600">Trust &amp; Safety</a><a href="discovery.html" class="hover:text-emerald-600">Find Providers</a><a href="provider-onboarding.html" class="hover:text-emerald-600">For Providers</a></div>
+    </div>
+  </footer>
+<script>
+  /* Scroll reveal: How LifeLink Works + Explore services (replays when scrolling down or up) */
+  (function () {
+    if (!('IntersectionObserver' in window)) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var items = [];
+    function mark(sel, type, base, step) {
+      document.querySelectorAll(sel).forEach(function (el, i) {
+        el.setAttribute('data-reveal', type);
+        el.style.setProperty('--reveal-delay', (base + i * step).toFixed(2) + 's');
+        items.push(el);
+      });
+    }
+    mark('#how-lifelink-works .text-center', 'up', 0, 0);
+    mark('#how-lifelink-works .step-card', 'up', 0.08, 0.12);
+    mark('#how-lifelink-works .step-arrow', 'fade', 0.26, 0.12);
+    mark('#services > div:first-child', 'up', 0, 0);
+    mark('#services .grid > a', 'up', 0.08, 0.08);
+    if (!items.length) return;
+    document.documentElement.classList.add('reveal-ready');
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        var el = e.target;
+        if (e.intersectionRatio >= 0.12) {
+          if (el.classList.contains('is-visible')) return;
+          el.classList.add('is-visible');
+          clearTimeout(el._rt);
+          var delay = parseFloat(el.style.getPropertyValue('--reveal-delay')) || 0;
+          el._rt = setTimeout(function () { el.classList.add('reveal-done'); }, (delay + 0.9) * 1000);
+        } else if (e.intersectionRatio === 0) {
+          clearTimeout(el._rt);
+          el.classList.remove('reveal-done');
+          // leaving through the top -> come back in from above; through the bottom -> from below
+          el.style.setProperty('--reveal-from', e.boundingClientRect.top < 0 ? '-30px' : '30px');
+          el.classList.remove('is-visible');
+        }
+      });
+    }, { threshold: [0, 0.12] });
+    items.forEach(function (el) { io.observe(el); });
+  })();
+</script>
+<script>
+  /* Top menu bar: entrance + cursor-reactive (magnetic) items */
+  (function () {
+    var hdr = document.querySelector('header');
+    if (!hdr) return;
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var entr = hdr.querySelectorAll('.nav-logo, nav > a, nav > .nav-services, .hdr-login, .hdr-cta');
+    var targets = hdr.querySelectorAll('nav > a, nav .nav-services > a, .hdr-login, .hdr-cta');
+    targets.forEach(function (el) { el.classList.add('nav-mag'); });
+    if (reduce) return;
+    entr.forEach(function (el, i) { el.style.setProperty('--hi', i); el.classList.add('hdr-in'); });
+    targets.forEach(function (el) {
+      var raf = 0, ex = 0, ey = 0, rect = null;
+      el.addEventListener('pointerenter', function () { rect = el.getBoundingClientRect(); });
+      el.addEventListener('pointermove', function (e) {
+        if (e.pointerType === 'touch') return;
+        ex = e.clientX; ey = e.clientY;
+        if (raf) return;
+        raf = requestAnimationFrame(function () {
+          raf = 0;
+          var r = rect || (rect = el.getBoundingClientRect());
+          var dx = ex - (r.left + r.width / 2), dy = ey - (r.top + r.height / 2);
+          el.style.setProperty('--mx', Math.max(-8, Math.min(8, dx * 0.28)).toFixed(1) + 'px');
+          el.style.setProperty('--my', Math.max(-6, Math.min(6, dy * 0.4)).toFixed(1) + 'px');
+          if (el.classList.contains('hdr-cta')) {
+            el.style.setProperty('--px', ((ex - r.left) / r.width * 100).toFixed(0) + '%');
+            el.style.setProperty('--py', ((ey - r.top) / r.height * 100).toFixed(0) + '%');
+          }
+        });
+      }, { passive: true });
+      el.addEventListener('pointerleave', function () {
+        if (raf) { cancelAnimationFrame(raf); raf = 0; }
+        rect = null;
+        el.style.setProperty('--mx', '0px'); el.style.setProperty('--my', '0px');
+      });
+    });
+  })();
+</script>
+<script>
+  /* Pause decorative infinite animations while the page is being scrolled */
+  (function () {
+    var root = document.documentElement, t = 0, on = false;
+    window.addEventListener('scroll', function () {
+      if (!on) { on = true; root.classList.add('is-scrolling'); }
+      clearTimeout(t);
+      t = setTimeout(function () { on = false; root.classList.remove('is-scrolling'); }, 160);
+    }, { passive: true });
+  })();
+</script>
+<script src="supabase-config.js"></script>
+<script src="supabase-client.js"></script>
+<script src="supabase-auth.js"></script>
+<script src="ll-api.js"></script>
+<script src="lifelink.js"></script>
+<script src="ll-chat.js"></script>
+<script>
+  function handleSearch() {
+    var q = (document.getElementById('heroQ').value || '').trim(), a = (document.getElementById('heroArea').value || '').trim();
+    var p = []; if (q) p.push('q=' + encodeURIComponent(q)); if (a) p.push('area=' + encodeURIComponent(a));
+    location.href = 'discovery.html' + (p.length ? '?' + p.join('&') : '');
+  }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Enter' && (e.target.id === 'heroQ' || e.target.id === 'heroArea')) handleSearch(); });
+</script>
+
+  <script>
+    (() => {
+      const slideshow = document.querySelector('[data-hero-slideshow]');
+      if (!slideshow) return;
+      const slides = Array.from(slideshow.querySelectorAll('.hero-slide'));
+      if (slides.length < 2) return;
+
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduceMotion) return;
+
+      let activeIndex = Math.max(0, slides.findIndex(slide => slide.classList.contains('is-active')));
+      const intervalMs = 3500;
+
+      slides.forEach((slide, index) => {
+        if (index > 0) {
+          slide.addEventListener('error', () => { slide.dataset.failed = 'true'; });
+        }
+      });
+
+      window.setInterval(async () => {
+        if (document.documentElement.classList.contains('is-scrolling') || document.hidden) return;
+        let nextIndex = (activeIndex + 1) % slides.length;
+        let attempts = 0;
+        while (attempts < slides.length && (slides[nextIndex].dataset.failed === 'true' || !slides[nextIndex].complete || slides[nextIndex].naturalWidth === 0)) {
+          if (slides[nextIndex].complete && slides[nextIndex].naturalWidth === 0) {
+            slides[nextIndex].dataset.failed = 'true';
+          }
+          nextIndex = (nextIndex + 1) % slides.length;
+          attempts++;
+        }
+        if (attempts >= slides.length || nextIndex === activeIndex) return;
+
+        try {
+          if (slides[nextIndex].decode) await slides[nextIndex].decode();
+        } catch (_) {
+          slides[nextIndex].dataset.failed = 'true';
+          return;
+        }
+
+        slides[nextIndex].classList.add('is-active');
+        slides[activeIndex].classList.remove('is-active');
+        activeIndex = nextIndex;
+      }, intervalMs);
+    })();
+  </script>
+
+<script src="ll-app.js" defer></script>
+</body>
+</html>

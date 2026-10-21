@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Sign In — LIFELINK</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            emerald: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              200: '#a7f3d0',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+            },
+            charcoal: {
+              800: '#1e293b',
+              900: '#0f172a',
+            }
+          },
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #F8FAFC;
+      color: #0F172A;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .input-focus-effect:focus-within {
+      border-color: #059669;
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12);
+    }
+  </style>
+  <script src="ll-theme-init.js"></script>
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="LifeLink">
+  <link rel="stylesheet" href="ll-app.css">
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 antialiased selection:bg-emerald-100 selection:text-emerald-800" data-ll-page="signin" data-ll-role="public">
+
+  <!-- TOP BRAND HEADER -->
+  <header class="bg-white border-b border-slate-200/80 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <!-- LIFELINK Logo & Tagline -->
+      <div class="flex items-center gap-3">
+        <a href="index.html" aria-label="LifeLink home" title="Go to LifeLink homepage"><img src="images/lifelink-logo.png" alt="LifeLink" class="h-12 w-auto object-contain"></a>
+        <div>
+          <span class="text-[10px] font-bold text-slate-400 tracking-wider uppercase">Find. Book. Get It Done.</span>
+        </div>
+      </div>
+
+      <!-- Right Support Link & Region -->
+      <div class="flex items-center gap-4 text-xs font-semibold text-slate-500">
+        <div class="hidden sm:flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span class="text-slate-700 font-bold">Nigeria</span>
+        </div>
+        <a href="#" class="hover:text-emerald-600 transition flex items-center gap-1">
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          Need Help?
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN AUTHENTICATION CANVAS -->
+  <main class="flex-grow flex items-center justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+
+      <!-- LEFT COLUMN: CENTERED AUTHENTICATION CARD (7 Cols on LG) -->
+      <div class="lg:col-span-7 flex justify-center">
+        <div class="w-full max-w-md bg-white rounded-3xl p-7 sm:p-10 border border-slate-200 shadow-sm space-y-6">
+          
+          <!-- Welcome Heading & Subtitle -->
+          <div class="space-y-1.5">
+            <div class="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-xs font-extrabold px-3 py-1 rounded-full border border-emerald-200/80 mb-2">
+              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+              Secure account access
+            </div>
+            <h1 id="authTitle" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Welcome back</h1>
+            <p id="authSubtitle" class="text-xs sm:text-sm font-semibold text-slate-500">Sign in to find trusted professionals near you.</p>
+          </div>
+
+          <!-- INPUT FORM -->
+          <form id="authForm" onsubmit="return window.llHandleAuth(event)" class="space-y-4">
+
+            <!-- Full name (registration only) -->
+            <div id="nameWrap" class="space-y-1.5 hidden">
+              <label class="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">Full name</label>
+              <div class="input-focus-effect bg-slate-50 border border-slate-300 rounded-2xl p-1 transition flex items-center">
+                <input id="authFullName" type="text" autocomplete="name" placeholder="Adaeze Okafor" class="w-full bg-transparent text-sm font-semibold text-slate-800 placeholder-slate-400 outline-none px-3 py-2">
+              </div>
+            </div>
+
+            <!-- Phone (registration only) -->
+            <div id="phoneWrap" class="space-y-1.5 hidden">
+              <label class="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">Phone number</label>
+              <div class="input-focus-effect bg-slate-50 border border-slate-300 rounded-2xl p-1 transition flex items-center">
+                <input id="authPhone" type="tel" autocomplete="tel" placeholder="0803 123 4567" class="w-full bg-transparent text-sm font-semibold text-slate-800 placeholder-slate-400 outline-none px-3 py-2">
+              </div>
+            </div>
+            
+            <!-- Phone / Email Input -->
+            <div class="space-y-1.5">
+              <label class="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">Email</label>
+              <div class="input-focus-effect bg-slate-50 border border-slate-300 rounded-2xl p-1 transition flex items-center">
+                <div class="p-3 text-slate-400">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                  </svg>
+                </div>
+                <input id="authIdentifier" type="email" autocomplete="email" required placeholder="name@example.com" class="w-full bg-transparent text-sm font-semibold text-slate-800 placeholder-slate-400 outline-none pr-3 py-2">
+              </div>
+            </div>
+
+            <!-- Password Input with Show/Hide Toggle -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <label class="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">Password</label>
+                <a href="#" id="forgotLink" class="text-xs font-extrabold text-emerald-600 hover:text-emerald-700 hover:underline transition">Forgot password?</a>
+              </div>
+              <div class="input-focus-effect bg-slate-50 border border-slate-300 rounded-2xl p-1 transition flex items-center relative">
+                <div class="p-3 text-slate-400">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                  </svg>
+                </div>
+                <input type="password" id="passwordInput" required placeholder="••••••••••••" class="w-full bg-transparent text-sm font-semibold text-slate-800 placeholder-slate-400 outline-none pr-10 py-2">
+                
+                <!-- Show/Hide Icon Button -->
+                <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 text-slate-400 hover:text-slate-600 p-1 focus:outline-none transition">
+                  <svg id="eyeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                  <svg id="eyeOffIcon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858-5.908a10.018 10.018 0 013.122-.813c4.478 0 8.268 2.943 9.542 7a9.97 9.97 0 01-4.162 5.228m-4.661-4.661a3 3 0 11-4.243-4.243"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Remember Me Row -->
+            <div class="flex items-center pt-1">
+              <label class="flex items-center gap-2 cursor-pointer select-none">
+                <input type="checkbox" checked class="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 accent-emerald-600">
+                <span class="text-xs font-bold text-slate-600">Keep me signed in on this device</span>
+              </label>
+            </div>
+
+            <p id="authError" class="hidden text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3"></p>
+
+            <!-- LARGE EMERALD GREEN SIGN IN BUTTON -->
+            <button id="authSubmit" type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-extrabold py-4 rounded-2xl shadow-md shadow-emerald-600/20 transition text-sm flex items-center justify-center gap-2">
+              <span id="authSubmitLabel">Sign In</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+              </svg>
+            </button>
+
+          </form>
+
+          <!-- DIVIDER WITH "OR" -->
+          <div class="relative flex items-center justify-center my-2">
+            <div class="border-t border-slate-200 w-full"></div>
+            <span class="bg-white px-3 text-xs font-bold text-slate-400 uppercase tracking-widest absolute">OR</span>
+          </div>
+
+          <!-- CONTINUE WITH GOOGLE BUTTON -->
+          <button type="button" class="w-full bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-700 font-extrabold py-3.5 rounded-2xl border border-slate-300 shadow-xs transition text-xs sm:text-sm flex items-center justify-center gap-3">
+            <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            <span>Continue with Google</span>
+          </button>
+
+          <!-- LINK TO CREATE AN ACCOUNT -->
+          <div class="text-center pt-2">
+            <p class="text-xs font-semibold text-slate-500">
+              Don't have a LIFELINK account? 
+              <a href="#" id="modeToggle" class="font-extrabold text-emerald-600 hover:text-emerald-700 hover:underline transition">Create an account</a>
+            </p>
+          </div>
+
+          <!-- TRUST MESSAGE -->
+          <div class="pt-4 border-t border-slate-100 flex items-center justify-center gap-2 text-center text-[11px] font-bold text-slate-400">
+            <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M2.166 11.388a.75.75 0 011.096-.043l2.8 2.8a.75.75 0 001.06 0l8.75-8.75a.75.75 0 111.06 1.06l-8.75 8.75a2.25 2.25 0 01-3.182 0l-2.8-2.8a.75.75 0 01-.034-1.017z" clip-rule="evenodd"/>
+            </svg>
+            <span>Your account is protected by Supabase Authentication.</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: SUBTLE VISUAL SECTION (Hidden on mobile, visible on LG) -->
+      <div class="hidden lg:block lg:col-span-5">
+        <div class="relative bg-slate-900 rounded-3xl overflow-hidden shadow-sm h-[560px] flex flex-col justify-between p-8 border border-slate-200">
+          
+          <!-- Realistic Background Image of a Nigerian Professional Electrician -->
+          <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=800" alt="Illustrative photo of a professional" class="absolute inset-0 w-full h-full object-cover opacity-65 mix-blend-overlay">
+          
+          <!-- Gradient Protection Overlay -->
+          <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/30 to-slate-900/40"></div>
+
+          <!-- Top Floating Badge -->
+          <div class="relative z-10 flex items-center justify-between">
+            <span class="inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-md text-slate-900 text-xs font-extrabold px-3.5 py-1.5 rounded-full shadow-xs">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              Platform preview
+            </span>
+            <span class="text-xs font-bold text-white/80">Initial service area planned: Benin City</span>
+          </div>
+
+          <!-- Bottom Card Content overlay -->
+          <div class="relative z-10 space-y-4 text-white">
+            <div class="space-y-2">
+              <span class="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-extrabold tracking-wider text-white">PLATFORM PREVIEW</span>
+              <blockquote class="text-lg font-bold leading-snug text-white/95">
+                Provider matching will become available after live provider and booking services are connected.
+              </blockquote>
+            </div>
+
+            <!-- Provider Mini Card Feature -->
+            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/15 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=150" class="w-10 h-10 rounded-xl object-cover border border-white/20">
+                <div>
+                  <h4 class="font-extrabold text-sm text-white">Provider profiles</h4>
+                  <p class="text-xs font-semibold text-emerald-300">Live provider records not connected</p>
+                </div>
+              </div>
+              <span class="bg-emerald-500 text-white text-[10px] font-extrabold px-2.5 py-1 rounded-lg">NOT CONNECTED</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Supabase: config -> singleton client -> auth (must precede inline auth logic). -->
+<script src="supabase-config.js"></script>
+<script src="supabase-client.js"></script>
+<script src="supabase-auth.js"></script>
+<script src="lifelink.js"></script>
+  <!-- AUTH LOGIC: genuine Supabase Auth (no demo users, no simulated success). -->
+  <script>
+    (function () {
+      'use strict';
+      var mode = new URLSearchParams(location.search).get('mode') === 'signup' ? 'signup' : 'signin';
+
+      function el(id) { return document.getElementById(id); }
+      function showError(msg) {
+        var box = el('authError');
+        if (!box) { if (window.LL) LL.toast(msg); return; }
+        if (!msg) { box.classList.add('hidden'); box.textContent = ''; return; }
+        box.textContent = msg; box.classList.remove('hidden');
+      }
+      function setBusy(busy, label) {
+        var btn = el('authSubmit');
+        if (!btn) return;
+        btn.disabled = !!busy;
+        btn.classList.toggle('opacity-60', !!busy);
+        var lab = el('authSubmitLabel');
+        if (lab && label) lab.textContent = label;
+      }
+      function applyMode() {
+        var signup = mode === 'signup';
+        var t = el('authTitle'), s = el('authSubtitle'), lab = el('authSubmitLabel'), tg = el('modeToggle');
+        if (t) t.textContent = signup ? 'Create your account' : 'Welcome back';
+        if (s) s.textContent = signup
+          ? 'Enter your name, phone, email and a password to join LifeLink.'
+          : 'Sign in to find trusted professionals near you.';
+        if (lab) lab.textContent = signup ? 'Create account' : 'Sign In';
+        if (tg) tg.textContent = signup ? 'Sign in instead' : 'Create an account';
+        var nw = el('nameWrap'), pw = el('phoneWrap');
+        if (nw) nw.classList.toggle('hidden', !signup);
+        if (pw) pw.classList.toggle('hidden', !signup);
+        var fn = el('authFullName'), ph = el('authPhone');
+        if (fn) fn.required = signup;
+        if (ph) ph.required = signup;
+        showError(null);
+      }
+
+      window.llHandleAuth = function (e) {
+        if (e && e.preventDefault) e.preventDefault();
+        showError(null);
+        if (!window.LLAuth) { showError('Authentication library did not load. Check your connection and reload.'); return false; }
+        var email = el('authIdentifier') ? el('authIdentifier').value : '';
+        var password = el('passwordInput') ? el('passwordInput').value : '';
+        if (mode === 'signup') {
+          var name = el('authFullName') ? el('authFullName').value : '';
+          var phone = el('authPhone') ? el('authPhone').value : '';
+          setBusy(true, 'Creating account…');
+          Promise.resolve().then(function () {
+            return window.LLAuth.signUp({ fullName: name, phone: phone, email: email, password: password });
+          }).then(function (r) {
+            setBusy(false);
+            if (r && r.error) { showError(r.error.message || 'Account creation failed. Please try again.'); return; }
+            if (r && r.data && r.data.session) return afterAuth('Account created. Welcome to LifeLink.');
+            showError(null);
+            if (window.LL) LL.toast('Account created. Check your email to confirm, then sign in.');
+            mode = 'signin'; applyMode();
+          }).catch(function (err) {
+            setBusy(false);
+            showError(err && err.message ? err.message : 'Account creation failed. Check your connection and try again.');
+          });
+        } else {
+          setBusy(true, 'Signing in…');
+          Promise.resolve().then(function () {
+            return window.LLAuth.signIn({ email: email, password: password });
+          }).then(function (r) {
+            setBusy(false);
+            if (r && r.error) { showError(r.error.message || 'Sign-in failed. Please try again.'); return; }
+            afterAuth('Welcome back.');
+          }).catch(function (err) {
+            setBusy(false);
+            showError(err && err.message ? err.message : 'Sign-in failed. Check your connection and try again.');
+          });
+        }
+        return false;
+      };
+
+      function afterAuth(msg) {
+        // Route by live profiles.role — never by localStorage.
+        window.LLAuth.getProfile().then(function (r) {
+          if (r.error || !r.profile) { showError('Signed in, but your profile could not be loaded. Try again.'); return; }
+          var role = r.profile.role;
+          var next = new URLSearchParams(location.search).get('next');
+          if (window.LL) LL.toast(msg);
+
+          // Never redirect back to the sign-in page (this caused an auth loop
+          // when a stale/invalid ?next=signin.html value was present).
+          // Only allow same-site HTML destinations; reject empty, external,
+          // and authentication-page destinations.
+          if (next) {
+            try {
+              var safeNext = decodeURIComponent(next).trim();
+              var isSafePage = /^[a-zA-Z0-9_-]+\.html(?:\?[a-zA-Z0-9_=&%-]*)?$/.test(safeNext);
+              var isAuthPage = /^(signin|signout|signup)\.html(?:\?|$)/i.test(safeNext);
+              if (isSafePage && !isAuthPage) {
+                location.replace(safeNext);
+                return;
+              }
+            } catch (e) { /* ignore malformed next value and use role destination */ }
+          }
+
+          if (role === 'provider') location.replace('provider-dashboard.html');
+          else if (role === 'admin') location.replace('admin.html');
+          else {
+            // Route new customers to the protected dashboard. Onboarding can
+            // be completed from there; this avoids a loop through a stale or
+            // incomplete personalize.html route.
+            location.replace('dashboard.html');
+          }
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        applyMode();
+        var tg = el('modeToggle');
+        if (tg) tg.addEventListener('click', function (e) {
+          e.preventDefault();
+          mode = mode === 'signup' ? 'signin' : 'signup';
+          var u = new URL(location.href);
+          if (mode === 'signup') u.searchParams.set('mode', 'signup'); else u.searchParams.delete('mode');
+          history.replaceState(null, '', u.toString());
+          applyMode();
+        });
+        var fl = el('forgotLink');
+        if (fl) fl.addEventListener('click', function (e) {
+          e.preventDefault();
+          var email = el('authIdentifier') ? el('authIdentifier').value : '';
+          if (!window.LLAuth) { showError('Authentication library did not load.'); return; }
+          if (!email) { showError('Enter your email first, then use Forgot password.'); return; }
+          setBusy(true, 'Sending reset link…');
+          window.LLAuth.resetPassword(email).then(function (r) {
+            setBusy(false); applyMode();
+            if (r.error) { showError(r.error.message); return; }
+            if (window.LL) LL.toast('Password reset link sent. Check your email inbox.');
+          });
+        });
+        // If already signed in, skip the form.
+        if (window.LLAuth) window.LLAuth.getProfile().then(function (r) {
+          if (!r.error && r.profile) afterAuth('Welcome back.');
+        });
+      });
+    })();
+
+    function togglePasswordVisibility() {
+      const input = document.getElementById('passwordInput');
+      const eyeIcon = document.getElementById('eyeIcon');
+      const eyeOffIcon = document.getElementById('eyeOffIcon');
+
+      if (input.type === 'password') {
+        input.type = 'text';
+        eyeIcon.classList.add('hidden');
+        eyeOffIcon.classList.remove('hidden');
+      } else {
+        input.type = 'password';
+        eyeIcon.classList.remove('hidden');
+        eyeOffIcon.classList.add('hidden');
+      }
+    }
+
+    /* Genuine handler is window.llHandleAuth above. */
+  </script>
+<script src="ll-app.js" defer></script>
+</body>
+</html>
