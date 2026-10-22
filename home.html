@@ -17,7 +17,7 @@
     .hm { max-width: 560px; margin: 0 auto; padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 8px; font-family: "Plus Jakarta Sans", system-ui, sans-serif; color: var(--ll-text); }
     .hm * { box-sizing: border-box; }
     .hm a { color: inherit; text-decoration: none; }
-    .hm-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 2px 14px; animation: llRise .5s var(--ll-ease) both; }
+    .hm-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 2px 14px; position: relative; z-index: 5; animation: llRise .5s var(--ll-ease) both; }
     .hm-brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
     .hm-brand img { height: 46px; width: auto; flex: none; }
     .hm-hi { font-size: 14px; font-weight: 600; color: var(--ll-text-2); line-height: 1.2; }
@@ -25,6 +25,7 @@
     .hm-bell button { width: 48px; height: 48px; border-radius: 16px !important; background: var(--ll-primary-soft) !important; border: 0 !important; color: var(--ll-primary) !important; display: flex; align-items: center; justify-content: center; }
     .hm-bell button svg { width: 24px; height: 24px; }
     .hm-bell [data-panel] { right: 0; }
+    .hm-top [hidden] { display: none !important; }
     .hm-signin { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 14px; background: var(--ll-primary); color: #fff !important; font-weight: 800; font-size: 14px; }
 
     /* ---- banner carousel ---- */

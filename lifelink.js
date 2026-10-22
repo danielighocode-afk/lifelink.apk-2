@@ -405,11 +405,20 @@
       var open = !panel.classList.contains('open');
       panel.classList.toggle('open', open);
       if (open) {
-        if (window.innerWidth < 768) panel.style.top = Math.round(btn.getBoundingClientRect().bottom + 8) + 'px'; else panel.style.top = '';
+        if (window.innerWidth < 768) {
+          // Phones: render at <body> level so page animations (which create stacking contexts) can never paint over it.
+          if (panel.parentNode !== document.body) document.body.appendChild(panel);
+          // Bell sits below the status bar, so its bottom edge already clears env(safe-area-inset-top).
+          var t = Math.round(btn.getBoundingClientRect().bottom + 8);
+          panel.style.top = (t > 0 && t < 240) ? t + 'px' : ''; // bell scrolled out of view: use the CSS default instead of opening off-screen
+        } else {
+          if (panel.parentNode !== el) el.appendChild(panel);
+          panel.style.top = '';
+        }
         renderPanel();
       }
     };
-    document.addEventListener('click', function (e) { if (!el.contains(e.target)) panel.classList.remove('open'); });
+    document.addEventListener('click', function (e) { if (!el.contains(e.target) && !panel.contains(e.target)) panel.classList.remove('open'); });
     refreshCount(); setInterval(refreshCount, 45000);
   }
 
