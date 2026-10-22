@@ -353,7 +353,7 @@ html.ll-native body { padding-top: 0; }
 .ll-np-t small { display: block; margin-top: 5px; font-size: 12px; font-weight: 700; color: var(--ll-text-2); opacity: .85; }
 .ll-np-empty { margin: 0; padding: 28px 18px; text-align: center; font-size: 14px; color: var(--ll-text-2); font-weight: 600; }
 @media (max-width: 767px) {
-  .ll-np { position: fixed; left: 12px; right: 12px; width: auto; max-width: none; top: 76px; max-height: calc(100dvh - 76px - var(--ll-tab-h) - env(safe-area-inset-bottom, 0px) - 20px); }
+  .ll-np { position: fixed; left: 12px; right: 12px; width: auto; max-width: none; top: calc(76px + env(safe-area-inset-top, 0px)); z-index: 2000; background: var(--ll-surface); max-height: calc(100dvh - 76px - env(safe-area-inset-top, 0px) - var(--ll-tab-h) - env(safe-area-inset-bottom, 0px) - 20px); }
 }
 @media (prefers-reduced-motion: reduce) { .ll-np.open, .ll-np-i { animation: none !important; } }
 
