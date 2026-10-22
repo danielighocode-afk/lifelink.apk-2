@@ -30,7 +30,7 @@
   /* ---------- 1. overview ---------- */
   function vOverview() {
     var qa = [['Book a Service', I.book, 'request.html'], ['Find Providers', I.search, 'discovery.html'], ['My Bookings', I.jobs, 'dashboard.html?section=bookings'], ['Wallet', I.wallet, 'dashboard.html?section=wallet'], ['Reviews', I.star, 'dashboard.html?section=reviews'], ['Settings', I.gear, '#account']];
-    app.innerHTML = '<div class="pf-v"><section class="pf-top"><div class="pf-row1"><img src="images/lifelink-logo.png" alt="LifeLink"><button type="button" class="pf-gear" id="pfGear" aria-label="Account settings">' + I.gear + '</button></div>' +
+    app.innerHTML = '<div class="pf-v"><section class="pf-top' + (P.banner_url ? ' has-ban' : '') + '"' + (P.banner_url ? ' style="background-image:url(\'' + esc(P.banner_url) + '\')"' : '') + '>' + (P.banner_url ? '<div class="pf-sc"></div>' : '') + '<div class="pf-row1"><img src="images/lifelink-logo.png" alt="LifeLink"><div class="pf-btns"><button type="button" class="pf-bcam" id="pfBan" aria-label="Change banner photo">' + I.img + '</button><button type="button" class="pf-gear" id="pfGear" aria-label="Account settings">' + I.gear + '</button></div></div>' +
       '<div class="pf-who"><div class="pf-av">' + avatar('ph') + '<button type="button" class="pf-cam" id="pfCam" aria-label="Change photo">' + I.cam + '</button></div><div style="min-width:0"><h2 class="pf-name">' + esc(P.full_name || 'Your name') + '</h2><p class="pf-tag">Customer</p>' +
       (P.home_area ? '<p class="pf-loc">' + I.pin + '<span>' + esc(P.home_area) + '</span></p>' : '') + '<button type="button" class="pf-edit" id="pfEdit">' + I.edit + 'Edit Profile</button></div></div></section>' +
       '<div class="pf-body"><section class="pf-card pf-wal"><div><small>Wallet Balance</small><b id="pfBal">—</b><button type="button" class="pf-add" id="pfAdd">+ Add Money</button></div>' +
@@ -39,6 +39,7 @@
       '<h3 class="pf-h">Account</h3><div class="pf-list">' + row(I.user, 'Account Settings', 'Name, phone, date of birth and more', 'rAcc') + row(I.lock, 'Privacy & Security', 'Password and your data', 'rPriv') + row(I.palette, 'Appearance', 'Theme and text size', 'rApp') +
       '<a class="pf-li" href="trust-safety.html"><span class="pf-ic">' + I.shield + '</span><div><b>Trust & Safety</b><small>How LifeLink keeps you safe</small></div>' + I.next + '</a>' +
       '<button type="button" class="pf-li danger" id="rOut"><span class="pf-ic">' + I.out + '</span><div><b>Sign out</b></div></button></div></div></div>';
+    document.getElementById('pfBan').onclick = function () { go('banner'); };
     document.getElementById('pfGear').onclick = function () { go('account'); };
     document.getElementById('pfCam').onclick = function () { go('photo'); };
     document.getElementById('pfEdit').onclick = function () { go('edit'); };
@@ -50,8 +51,11 @@
     document.getElementById('rApp').onclick = function () { go('appearance'); };
     document.getElementById('rOut').onclick = function () { window.LLAuth.signOut().then(function () { location.href = 'index.html'; }); };
     try {
-      LLApi.wallet.me().then(function (w) { var e = document.getElementById('pfBal'); if (e) e.textContent = LL.naira(w.available_kobo); }, function () {});
-      LLApi.customer.bookings().then(function (b) { var e = document.getElementById('pfCnt'); if (e) e.textContent = b.length; }, function () {});
+      var uk = user && user.id ? user.id : (P && P.id), kb = 'pf-bal:' + uk, kc = 'pf-cnt:' + uk;
+      var cb = LL.cache.get(kb), cc = LL.cache.get(kc), eb = document.getElementById('pfBal'), ec = document.getElementById('pfCnt');
+      if (cb != null && eb) eb.textContent = cb; if (cc != null && ec) ec.textContent = cc;
+      LLApi.wallet.me().then(function (w) { var e = document.getElementById('pfBal'), t = LL.naira(w.available_kobo); if (e) e.textContent = t; LL.cache.set(kb, t); }, function () {});
+      LLApi.customer.bookings().then(function (b) { var e = document.getElementById('pfCnt'); if (e) e.textContent = b.length; LL.cache.set(kc, String(b.length)); }, function () {});
     } catch (e) {}
   }
 
@@ -135,6 +139,52 @@
     };
   }
 
+  /* ---------- 4b. change banner ---------- */
+  function shrinkBanner(file) {
+    return new Promise(function (resolve) {
+      var img = new Image(), url = URL.createObjectURL(file);
+      img.onload = function () {
+        try {
+          var W = Math.min(1280, img.width), H = Math.round(W * 0.5), cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+          var r = Math.max(W / img.width, H / img.height), sw = W / r, sh = H / r;
+          cv.getContext('2d').drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, 0, 0, W, H);
+          cv.toBlob(function (b) { URL.revokeObjectURL(url); resolve(b ? new File([b], 'banner.jpg', { type: 'image/jpeg' }) : file); }, 'image/jpeg', 0.84);
+        } catch (e) { URL.revokeObjectURL(url); resolve(file); }
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); resolve(file); };
+      img.src = url;
+    });
+  }
+  function pickBanner(f) {
+    if (!f) return;
+    if (!/^image\//.test(f.type)) { LL.toast('Choose a JPG, PNG or WebP image.', true); return; }
+    LL.toast('Uploading banner…');
+    shrinkBanner(f).then(function (small) { return LLApi.uploadBanner(small); }).then(function (url) {
+      P.banner_url = url; LL.toast('Banner updated.'); render();
+    }).catch(function (e) {
+      var m = (e && e.message) || '';
+      LL.toast(/banner_url/.test(m) ? 'Banner is not set up yet. Run migration 009 in Supabase.' : (m || 'Could not upload the banner.'), true);
+    });
+  }
+  function vBanner() {
+    app.innerHTML = '<div class="pf-v pf-sub">' + bar('Banner Photo') + '<div class="pf-pad"><div class="pf-banprev">' + (P.banner_url ? '<img src="' + esc(P.banner_url) + '" alt="">' : '') + '</div>' +
+      '<div class="pf-list" style="margin-top:22px">' + row(I.cam, 'Take Photo', 'Use your camera', 'bTake') + row(I.img, 'Choose from Gallery', 'Select from your photos', 'bGal') + (P.banner_url ? row(I.trash, 'Remove Banner', 'Go back to the green banner', 'bDel') : '') + '</div>' +
+      '<div class="pf-tip"><b>Tips</b>• Wide, landscape photos look best<br>• Your name and photo stay readable over it<br>• Large photos are shrunk for you</div></div>' +
+      '<input type="file" id="bInCam" accept="image/*" capture="environment" style="display:none"><input type="file" id="bInGal" accept="image/jpeg,image/png,image/webp" style="display:none"></div>';
+    document.getElementById('pfBack').onclick = back;
+    document.getElementById('bTake').onclick = function () { document.getElementById('bInCam').click(); };
+    document.getElementById('bGal').onclick = function () { document.getElementById('bInGal').click(); };
+    document.getElementById('bInCam').onchange = function () { pickBanner(this.files[0]); this.value = ''; };
+    document.getElementById('bInGal').onchange = function () { pickBanner(this.files[0]); this.value = ''; };
+    var d = document.getElementById('bDel');
+    if (d) d.onclick = function () {
+      LL.confirm({ title: 'Remove your banner?', body: 'The default green banner will be shown.', confirmText: 'Remove', danger: true }).then(function (ok) {
+        if (!ok) return;
+        window.LLAuth.updateProfile({ banner_url: null }).then(function (r) { if (r.error) { LL.toast(r.error.message, true); return; } P.banner_url = null; LL.toast('Banner removed.'); render(); });
+      });
+    };
+  }
+
   /* ---------- 5. account settings ---------- */
   var GL = { male: 'Male', female: 'Female', other: 'Other', prefer_not_to_say: 'Prefer not to say' };
   function vAccount() {
@@ -200,7 +250,7 @@
   }
 
   function render() {
-    ({ overview: vOverview, edit: vEdit, photo: vPhoto, account: vAccount, privacy: vPrivacy, appearance: vAppearance }[view] || vOverview)();
+    ({ overview: vOverview, edit: vEdit, photo: vPhoto, banner: vBanner, account: vAccount, privacy: vPrivacy, appearance: vAppearance }[view] || vOverview)();
     var b = document.getElementById('pfBack'); if (b && !b.onclick) b.onclick = back;
   }
 

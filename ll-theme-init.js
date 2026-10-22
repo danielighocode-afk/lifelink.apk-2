@@ -24,3 +24,36 @@
     if ((native || forced) && file === 'index.html') location.replace(forced || !localStorage.getItem('ll-welcomed') ? 'welcome.html' : 'home.html');
   } catch (e) {}
 })();
+
+/* ---- page slide direction (used by the view-transition CSS in ll-app.css). Must run in <head>, before first paint. ---- */
+(function () {
+  var de = document.documentElement, KEY = 'll-nav-dir';
+  function store(v) { try { sessionStorage.setItem(KEY, v); } catch (e) {} }
+  function read() { try { return sessionStorage.getItem(KEY); } catch (e) { return null; } }
+  // Tapping a bottom tab: slide left or right depending on whether the tab is before or after the current one.
+  document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest ? e.target.closest('.ll-tabbar a.ll-tab') : null;
+    if (!a) return;
+    var tabs = [].slice.call(document.querySelectorAll('.ll-tabbar .ll-tab')), cur = -1;
+    tabs.forEach(function (t, i) { if (t.getAttribute('aria-current') === 'page') cur = i; });
+    var idx = tabs.indexOf(a);
+    store(cur >= 0 && idx >= 0 && idx < cur ? 'tab-back' : 'fwd');
+  }, true);
+  window.addEventListener('pageswap', function (e) {
+    try {
+      if (!e.viewTransition) return;
+      var dir = read(), act = e.activation;
+      if (!dir && act && act.navigationType === 'traverse' && act.entry && act.from) dir = act.entry.index < act.from.index ? 'back' : 'fwd';
+      dir = dir || 'fwd';
+      store(dir); de.setAttribute('data-ll-nav', dir);
+    } catch (err) {}
+  });
+  window.addEventListener('pagereveal', function (e) {
+    try {
+      if (!e.viewTransition) return;
+      var dir = read() || 'fwd';
+      de.setAttribute('data-ll-nav', dir);
+      e.viewTransition.finished.then(function () { try { sessionStorage.removeItem(KEY); } catch (x) {} de.removeAttribute('data-ll-nav'); }, function () { try { sessionStorage.removeItem(KEY); } catch (x) {} });
+    } catch (err) {}
+  });
+})();

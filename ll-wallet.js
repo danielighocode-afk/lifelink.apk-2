@@ -86,8 +86,14 @@
     var showAll = false;
     addCss();
     el.innerHTML = LL.loading('wallet');
+    var firstLoad = true;
     function load() {
-      return Promise.all([LLApi.wallet.me(), LLApi.wallet.ledger(50), LLApi.wallet.deposits(10)]).then(function (r) { draw(r[0], r[1], r[2]); })
+      var ck = 'wallet:' + role + ':' + (window.LL && LL.me ? LL.me.id : '');
+      if (firstLoad) { // show the last known wallet at once; the fresh numbers replace it a moment later
+        firstLoad = false;
+        try { var c0 = LL.cache.get(ck); if (c0) { var d0 = JSON.parse(c0); draw(d0[0], d0[1], d0[2]); } } catch (e) {}
+      }
+      return Promise.all([LLApi.wallet.me(), LLApi.wallet.ledger(50), LLApi.wallet.deposits(10)]).then(function (r) { try { LL.cache.set(ck, JSON.stringify(r)); } catch (e) {} draw(r[0], r[1], r[2]); })
         .catch(function (e) { removeSheet(); el.innerHTML = LL.error(e.message); });
     }
     function txRow(l, i) {

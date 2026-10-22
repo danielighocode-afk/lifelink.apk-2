@@ -92,9 +92,33 @@
 /* Phase 1 Part 2: signOut / reset / getProfile / updateProfile / requireAuth. */
 (function () {
   'use strict';
-  var EDITABLE = ['full_name', 'phone', 'avatar_url', 'onboarded', 'interests', 'home_area', 'date_of_birth', 'gender', 'about'];
+  var EDITABLE = ['full_name', 'phone', 'avatar_url', 'onboarded', 'interests', 'home_area', 'date_of_birth', 'gender', 'about', 'banner_url'];
   function A() { return window.LLAuth; }
+  /* Speed cache: the last verified profile is kept on this device so protected pages can paint instantly while the
+     real check runs in the background. It is a UI convenience only: Supabase RLS still decides what data is returned. */
+  var PCK = 'll-profile-cache-v1';
+  function localSessionUser() {
+    try { var s = JSON.parse(localStorage.getItem('ll-supabase-auth') || 'null'); return (s && s.user && s.user.id) ? s.user : null; } catch (e) { return null; }
+  }
+  function cacheSet(profile, user) {
+    try { if (profile && profile.id) localStorage.setItem(PCK, JSON.stringify({ profile: profile, user: { id: profile.id, email: (user && user.email) || profile.email || '' } })); } catch (e) {}
+  }
+  function cacheClear() {
+    try {
+      localStorage.removeItem(PCK);
+      for (var i = localStorage.length - 1; i >= 0; i--) { var k = localStorage.key(i); if (k && k.indexOf('ll-swr:') === 0) localStorage.removeItem(k); }
+    } catch (e) {}
+  }
+  // Returns { profile, user } only if the saved profile belongs to the session that is stored on this device.
+  function cachedSession() {
+    try {
+      var c = JSON.parse(localStorage.getItem(PCK) || 'null'), su = localSessionUser();
+      if (c && c.profile && c.profile.id && su && su.id === c.profile.id) return c;
+    } catch (e) {}
+    return null;
+  }
   function signOut() {
+    cacheClear();
     if (!window.LLSB) return Promise.resolve({ error: new Error('supabase-client.js did not load.') });
     try { localStorage.removeItem('ll_session'); } catch (e) {}
     try { localStorage.removeItem('ll_users'); } catch (e) {}
@@ -115,7 +139,7 @@
       return { data: (res && res.data) || null, error: null };
     }).catch(function (err) { return { data: null, error: new Error(A().friendly(err)) }; });
   }
-  function getProfile() {
+  function fetchProfile() {
     if (!window.LLSB) return Promise.resolve({ user: null, profile: null, error: new Error('supabase-client.js did not load.') });
     return window.LLSB.getClient().then(function (sb) {
       return sb.auth.getUser().then(function (u) {
@@ -123,17 +147,32 @@
         if ((u && u.error) || !user) return { user: null, profile: null, error: new Error('You are not signed in.') };
         var base = 'id, role, full_name, email, phone, avatar_url, onboarded, interests, home_area';
         // Optional profile details (migration 008). If those columns are not there yet, fall back to the base fields so sign-in never breaks.
-        return sb.from('profiles').select(base + ', date_of_birth, gender, about').eq('id', user.id).single().then(function (p) {
+        return sb.from('profiles').select(base + ', date_of_birth, gender, about, banner_url').eq('id', user.id).single().then(function (p) {
           if (p && p.error) {
-            return sb.from('profiles').select(base).eq('id', user.id).single().then(function (q) {
-              if (q && q.error) return { user: user, profile: null, error: q.error };
-              return { user: user, profile: q.data, error: null };
+            // 009 (banner_url) may not be applied yet: retry with the 008 fields, then the base fields.
+            return sb.from('profiles').select(base + ', date_of_birth, gender, about').eq('id', user.id).single().then(function (q8) {
+              if (q8 && !q8.error) return { user: user, profile: q8.data, error: null };
+              return sb.from('profiles').select(base).eq('id', user.id).single().then(function (q) {
+                if (q && q.error) return { user: user, profile: null, error: q.error };
+                return { user: user, profile: q.data, error: null };
+              });
             });
           }
           return { user: user, profile: p.data, error: null };
         });
       });
     }).catch(function (err) { return { user: null, profile: null, error: err }; });
+  }
+  var inflight = null;
+  function getProfile() {
+    if (inflight) return inflight;
+    inflight = fetchProfile().then(function (r) {
+      inflight = null;
+      if (r && !r.error && r.user && r.profile) cacheSet(r.profile, r.user);
+      else if (r && !r.user && r.error && /not signed in/i.test(r.error.message || '')) cacheClear();
+      return r;
+    }, function (e) { inflight = null; throw e; });
+    return inflight;
   }
   function updateProfile(patch) {
     if (!window.LLSB) return Promise.resolve({ data: null, error: new Error('supabase-client.js did not load.') });
@@ -166,6 +205,7 @@
         if ((u && u.error) || !user) return { data: null, error: new Error('You are not signed in.') };
         return sb.from('profiles').update(clean).eq('id', user.id).select().single().then(function (r) {
           if (r && r.error) return { data: null, error: new Error(A().friendly(r.error)) };
+          if (r.data) { var cs = cachedSession(); if (cs) cacheSet(Object.assign({}, cs.profile, r.data), cs.user); }
           return { data: r.data, error: null };
         });
       });
@@ -193,4 +233,6 @@
   window.LLAuth.getProfile = getProfile;
   window.LLAuth.updateProfile = updateProfile;
   window.LLAuth.requireAuth = requireAuth;
+  window.LLAuth.cachedSession = cachedSession;
+  window.LLAuth.clearCache = cacheClear;
 })();

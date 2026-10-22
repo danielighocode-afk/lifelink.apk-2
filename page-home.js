@@ -8,6 +8,7 @@
   /* ---------- greeting, bell, provider card (depend on who is signed in) ---------- */
   function who(profile) {
     var hi = $('hi');
+    $('signin').hidden = !!profile; $('bell').hidden = !profile;
     if (profile) {
       var first = String(profile.full_name || '').trim().split(/\s+/)[0] || 'there';
       hi.innerHTML = 'Hi,<b></b>'; hi.querySelector('b').textContent = first;
@@ -74,11 +75,14 @@
     $('quick').innerHTML = '<a href="discovery.html"><span>' + svg('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>') + '</span>Find providers</a>';
   }
   function load() {
-    if (!window.LLApi || !LLApi.catalog) return failed();
+    var CK = 'categories', raw = null, hadCache = false;
+    try { raw = window.LL && LL.cache ? LL.cache.get(CK) : null; var c0 = raw ? JSON.parse(raw) : null; if (c0 && c0.length) { render(c0); hadCache = true; } } catch (e) { raw = null; }
+    if (!window.LLApi || !LLApi.catalog) { if (!hadCache) failed(); return; }
     LLApi.catalog.categories().then(function (cats) {
-      if (!cats || !cats.length) { $('cats').innerHTML = '<p class="hm-note">No service categories have been added yet.</p>'; $('quick').innerHTML = ''; return; }
-      render(cats);
-    }, failed);
+      if (!cats || !cats.length) { $('cats').innerHTML = '<p class="hm-note">No service categories have been added yet.</p>'; $('quick').innerHTML = ''; try { LL.cache.set(CK, '[]'); } catch (e) {} return; }
+      var json = JSON.stringify(cats);
+      if (json !== raw) { try { LL.cache.set(CK, json); } catch (e) {} render(cats); }
+    }, function () { if (!hadCache) failed(); });
   }
   load();
 })();

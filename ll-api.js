@@ -450,6 +450,14 @@
       mine: function () { return q('reports', function (t) { return t.select('id,kind,category,reference,status,created_at').order('created_at', { ascending: false }); }); }
     },
     deleteAccount: function () { return rpc('delete_my_account'); },
+    // Banner upload -> same public bucket (own folder), then save the URL on the caller's profile (migration 009).
+    uploadBanner: function (file) {
+      return upload('avatars', file).then(function (path) {
+        return publicUrl('avatars', path).then(function (url) {
+          return window.LLAuth.updateProfile({ banner_url: url }).then(function (r) { if (r.error) throw r.error; return url; });
+        });
+      });
+    },
     // Avatar upload -> public bucket, then save the URL on the caller's profile.
     uploadAvatar: function (file) {
       return upload('avatars', file).then(function (path) {

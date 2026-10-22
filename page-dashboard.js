@@ -32,13 +32,15 @@
     },
     requests: function () {
       return LLApi.customer.requests().then(function (rows) {
-        return '<div class="flex justify-end"><a href="request.html" class="text-sm font-extrabold bg-emerald-600 text-white px-5 py-2.5 rounded-xl">New request</a></div>' +
+        return '<div class="flex items-center justify-between gap-3"><a href="?section=bookings" class="ll-backlnk">&larr; Bookings</a><a href="request.html" class="text-sm font-extrabold bg-emerald-600 text-white px-5 py-2.5 rounded-xl">New request</a></div>' +
           (rows.length ? '<div class="space-y-3">' + rows.map(reqRow).join('') + '</div>' : LL.empty('No requests yet', 'Describe a job and get quotes from verified providers.', 'request.html', 'Request a service'));
       });
     },
     bookings: function () {
-      return Promise.all([LLApi.customer.bookings(), provMap()]).then(function (r) {
-        return r[0].length ? '<div class="space-y-3">' + r[0].map(function (b) { return bookRow(b, r[1]); }).join('') + '</div>' : LL.empty('No bookings yet', 'Accept a provider\'s quote to create a booking.', 'request.html', 'Request a service');
+      return Promise.all([LLApi.customer.bookings(), provMap(), LLApi.customer.requests().catch(function () { return []; })]).then(function (r) {
+        var nOpen = r[2].filter(function (x) { return x.status === 'open' || x.status === 'quoted'; }).length;
+        var bar = '<a href="?section=requests" class="ll-reqbar"><span class="ll-reqbar-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg></span><span class="ll-reqbar-t"><b>My requests</b><em>' + (nOpen ? nOpen + ' open · view quotes' : 'View your requests and quotes') + '</em></span><svg class="ll-reqbar-a" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></a>';
+        return bar + (r[0].length ? '<div class="space-y-3">' + r[0].map(function (b) { return bookRow(b, r[1]); }).join('') + '</div>' : LL.empty('No bookings yet', 'Accept a provider\'s quote to create a booking.', 'request.html', 'Request a service'));
       });
     },
     messages: function () {
@@ -80,14 +82,34 @@
     LL.setHeader(TITLES[section], 'Hi ' + (String(profile.full_name || '').split(' ')[0] || 'there'));
     document.getElementById('headerActions').innerHTML = '<a href="request.html" class="hidden sm:inline-flex text-xs font-extrabold bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl">New request</a>';
     LLApi.messages.unreadTotal(profile.id).then(function (n) { LL.setBadge('navMsgBadge', n); }, function () {});
+    // Sections whose HTML is plain links can be shown instantly from the last visit, then refreshed behind it.
+    // (messages and wallet mount live widgets, so they are always built fresh.)
+    function cacheable(s) { return s !== 'messages' && s !== 'wallet'; }
+    function ckey(s) { return 'cust:' + profile.id + ':' + s; }
+    var shown = null;
     function paint(quiet) {
-      if (!quiet) app.innerHTML = LL.loading(TITLES[section].toLowerCase());
+      var cached = (!quiet && cacheable(section)) ? LL.cache.get(ckey(section)) : null;
+      if (!quiet) { app.innerHTML = cached != null ? cached : LL.loading(TITLES[section].toLowerCase()); shown = cached; }
       return S[section]().then(function (h) {
-        app.innerHTML = h;
+        if (cacheable(section)) LL.cache.set(ckey(section), h);
+        if (h !== shown) { app.innerHTML = h; shown = h; }
         var m = document.getElementById('markAll'); if (m) m.onclick = function () { LLApi.notifications.markAllRead().then(function () { location.reload(); }); };
-      }).catch(function (e) { if (!quiet) app.innerHTML = LL.error(e.message); });
+      }).catch(function (e) { if (!quiet && cached == null) app.innerHTML = LL.error(e.message); });
     }
     paint(false);
+    // Preload the other sections quietly once this one has settled, so tapping them opens instantly.
+    function warm() {
+      if (document.hidden || (navigator.onLine === false)) return;
+      var last = +(LL.cache.get('warm:' + profile.id) || 0);
+      if (Date.now() - last < 60000) return;
+      LL.cache.set('warm:' + profile.id, String(Date.now()));
+      var todo = ['overview', 'bookings', 'requests', 'reviews', 'notifications'].filter(function (s) { return s !== section && S[s]; });
+      (function next() {
+        var s = todo.shift(); if (!s) return;
+        S[s]().then(function (h) { LL.cache.set(ckey(s), h); }, function () {}).then(function () { setTimeout(next, 250); });
+      })();
+    }
+    (window.requestIdleCallback ? requestIdleCallback : function (f) { setTimeout(f, 1200); })(function () { setTimeout(warm, 800); });
     if (section !== 'messages' && section !== 'wallet') LL.onLive(function () { LL.quiet(app, function () { return paint(true); }); });
   });
 })();

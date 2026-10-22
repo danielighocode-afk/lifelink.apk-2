@@ -1,3 +1,10 @@
+# Build status — Stage 2.7 (speed pass + customer banner)
+- Customer profile banner photo (migration 009_profile_banner.sql).
+- APK build now compiles Tailwind locally (ll-tailwind.css), bundles the Supabase SDK (www/vendor) and the Plus Jakarta Sans font (www/fonts). Source .html files are unchanged, so the plain website still works from the CDNs. Needs `npm install` (tailwindcss 3.4.17, @supabase/supabase-js 2.117.3, @fontsource-variable/plus-jakarta-sans).
+- Instant paint: last verified profile is cached on the device (cleared on sign-out); dashboard sections, wallet, home categories and profile numbers show the last result at once and refresh behind it; other dashboard sections are preloaded quietly.
+- Direction-aware slide between pages (view transitions, Chrome/WebView 126+; skipped when reduced motion is on).
+- NOT verified: the real Tailwind build (no internet where this was prepared; tested with stand-in packages), an APK build, or a phone. Provider dashboard is not cached yet.
+
 # Build status — Stage 2.6 (new app home screen: home.html)
 - New first screen of the app: home.html + page-home.js (banner carousel, search, real categories from Supabase, Become a Provider). In the APK, index.html now forwards to welcome (first launch) then home.html. Customers and visitors stay on home.html; providers/admins are sent to their own dashboard. Customers signing in inside the app land on home.html.
 - Verified in headless Chromium with stubbed Supabase: signed-out, signed-in (name + unread count), dark mode, offline categories message, search -> discovery.html?q=, banner slides, native routing. NOT verified on a phone or with real Supabase data.

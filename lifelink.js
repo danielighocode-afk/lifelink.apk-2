@@ -213,6 +213,7 @@
       LL.whenAuth(function (p) { if (p) cb(p); });
     },
     signOut: function () {
+      try { LL.cache.clear(); } catch (e) {}
       var done = function () { location.href = 'index.html'; };
       if (window.LLAuth && window.LLAuth.signOut) window.LLAuth.signOut().then(done, done); else done();
     },
@@ -377,33 +378,47 @@
   function mountBell(el) {
     if (!window.LLApi || el._llBell) return; el._llBell = true;
     el.style.position = 'relative';
-    el.innerHTML = '<button type="button" aria-label="Notifications" class="relative p-2.5 text-slate-500 hover:text-emerald-600 bg-slate-50 hover:bg-emerald-50 rounded-2xl border border-slate-200 transition">' +
-      '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>' +
-      '<span data-dot class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-emerald-600 text-white text-[10px] font-extrabold items-center justify-center"></span></button>' +
-      '<div data-panel class="hidden absolute right-0 mt-2 w-80 max-h-96 overflow-auto bg-white border border-slate-200 rounded-2xl shadow-xl z-50 text-left"></div>';
+    el.innerHTML = '<button type="button" aria-label="Notifications" aria-haspopup="true" class="ll-bell-btn">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 00-4-5.7V5a2 2 0 10-4 0v.3A6 6 0 006 11v3.2a2 2 0 01-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>' +
+      '<span data-dot class="ll-bdot"></span></button>' +
+      '<div data-panel class="ll-np" role="dialog" aria-label="Notifications"></div>';
     var btn = el.querySelector('button'), dot = el.querySelector('[data-dot]'), panel = el.querySelector('[data-panel]');
-    function setCount(n) { dot.textContent = n > 9 ? '9+' : n; dot.classList.toggle('hidden', !n); dot.classList.toggle('flex', !!n); }
+    function setCount(n) { dot.textContent = n > 9 ? '9+' : n; dot.classList.toggle('on', !!n); }
     function refreshCount() { LLApi.notifications.unreadCount().then(setCount, function () {}); }
     function renderPanel() {
-      panel.innerHTML = '<p class="p-4 text-xs font-bold text-slate-400">Loading…</p>';
+      panel.innerHTML = '<p class="ll-np-empty">Loading…</p>';
       LLApi.notifications.list(15).then(function (rows) {
-        if (!rows.length) { panel.innerHTML = '<p class="p-4 text-sm text-slate-500">No notifications yet.</p>'; return; }
-        panel.innerHTML = '<div class="flex items-center justify-between px-4 py-3 border-b border-slate-100"><span class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Notifications</span><button data-all class="text-[11px] font-extrabold text-emerald-700">Mark all read</button></div>' +
-          rows.map(function (n) {
-            return '<a href="' + LL.esc(n.link || '#') + '" data-id="' + LL.esc(n.id) + '" class="block px-4 py-3 border-b border-slate-50 hover:bg-slate-50 ' + (n.read_at ? '' : 'bg-emerald-50/40') + '">' +
-              '<p class="text-sm font-extrabold text-slate-900">' + LL.esc(n.title) + '</p>' +
-              (n.body ? '<p class="text-xs text-slate-500 mt-0.5">' + LL.esc(n.body) + '</p>' : '') +
-              '<p class="text-[10px] font-bold text-slate-400 mt-1">' + LL.esc(LL.ago(n.created_at)) + '</p></a>';
+        if (!rows.length) { panel.innerHTML = '<div class="ll-np-h"><b>Notifications</b></div><p class="ll-np-empty">No notifications yet.</p>'; return; }
+        var unread = rows.some(function (n) { return !n.read_at; });
+        panel.innerHTML = '<div class="ll-np-h"><b>Notifications</b>' + (unread ? '<button type="button" data-all>Mark all read</button>' : '') + '</div>' +
+          rows.map(function (n, i) {
+            return '<a href="' + LL.esc(n.link || '#') + '" data-id="' + LL.esc(n.id) + '" class="ll-np-i' + (n.read_at ? '' : ' un') + '" style="animation-delay:' + Math.min(i, 8) * 30 + 'ms"><i class="ll-np-d"></i><span class="ll-np-t"><b>' + LL.esc(n.title) + '</b>' +
+              (n.body ? '<em>' + LL.esc(n.body) + '</em>' : '') + '<small>' + LL.esc(LL.ago(n.created_at)) + '</small></span></a>';
           }).join('');
         var all = panel.querySelector('[data-all]');
         if (all) all.onclick = function (e) { e.stopPropagation(); LLApi.notifications.markAllRead().then(function () { setCount(0); renderPanel(); }); };
         panel.querySelectorAll('a[data-id]').forEach(function (a) { a.addEventListener('click', function () { LLApi.notifications.markRead(a.getAttribute('data-id')); }); });
-      }, function (e) { panel.innerHTML = '<p class="p-4 text-sm text-rose-700">' + LL.esc(e.message) + '</p>'; });
+      }, function (e) { panel.innerHTML = '<p class="ll-np-empty" style="color:#be123c">' + LL.esc(e.message) + '</p>'; });
     }
-    btn.onclick = function (e) { e.stopPropagation(); var open = panel.classList.toggle('hidden') === false; if (open) renderPanel(); };
-    document.addEventListener('click', function (e) { if (!el.contains(e.target)) panel.classList.add('hidden'); });
+    btn.onclick = function (e) {
+      e.stopPropagation();
+      var open = !panel.classList.contains('open');
+      panel.classList.toggle('open', open);
+      if (open) {
+        if (window.innerWidth < 768) panel.style.top = Math.round(btn.getBoundingClientRect().bottom + 8) + 'px'; else panel.style.top = '';
+        renderPanel();
+      }
+    };
+    document.addEventListener('click', function (e) { if (!el.contains(e.target)) panel.classList.remove('open'); });
     refreshCount(); setInterval(refreshCount, 45000);
   }
+
+  /* ---- tiny on-device cache for instant paint (stale-while-revalidate). Cleared on sign-out. ---- */
+  LL.cache = {
+    get: function (k) { try { return localStorage.getItem('ll-swr:' + k); } catch (e) { return null; } },
+    set: function (k, v) { try { localStorage.setItem('ll-swr:' + k, v); } catch (e) { try { LL.cache.clear(); } catch (e2) {} } },
+    clear: function () { try { for (var i = localStorage.length - 1; i >= 0; i--) { var k = localStorage.key(i); if (k && k.indexOf('ll-swr:') === 0) localStorage.removeItem(k); } } catch (e) {} }
+  };
 
   /* ---- guard / auth bootstrap ---- */
   var body = document.body;
@@ -415,6 +430,32 @@
       if (retries > 0) return setTimeout(function () { bootstrap(retries - 1); }, 150);
       if (need === 'public') { LL._resolveAuth(null); mountChrome(null); return; }
       return LL.showFatal('The sign-in scripts did not load. Check your internet connection and reload the page.');
+    }
+    // FAST PATH: a profile verified earlier on this device lets the page paint at once; the live check below still runs
+    // and corrects anything that changed (signed out, role changed). RLS on the server is what really protects data.
+    var fast = null;
+    try { fast = window.LLAuth.cachedSession && window.LLAuth.cachedSession(); } catch (e) {}
+    if (fast && !LL._authKnown) {
+      var fr = fast.profile.role, fok = need === 'public' || need === 'any' || fr === need || fr === 'admin';
+      if (fok) {
+        LL._resolveAuth(fast.profile, fast.user);
+        try { document.documentElement.style.visibility = ''; } catch (e) {}
+        mountChrome(fast.profile);
+        window.LLAuth.getProfile().then(function (r2) {
+          var p2 = (!r2.error && r2.user && r2.profile) ? r2.profile : null;
+          if (!p2) {
+            if (r2.error && !/not signed in/i.test(r2.error.message || '')) return; // backend hiccup: keep what is on screen
+            if (need !== 'public') LL.go('signin.html?next=' + encodeURIComponent(file));
+            return;
+          }
+          if (p2.role !== fast.profile.role) {
+            var ok2 = need === 'public' || need === 'any' || p2.role === need || p2.role === 'admin';
+            if (!ok2) { LL.go(LL.home(p2.role)); return; }
+          }
+          LL.me = { id: p2.id, role: p2.role, name: p2.full_name || '', email: p2.email || (r2.user && r2.user.email) || '', profile: p2 };
+        }, function () {});
+        return;
+      }
     }
     window.LLAuth.getProfile().then(function (r) {
       var profile = (!r.error && r.user && r.profile) ? r.profile : null;

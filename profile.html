@@ -21,6 +21,12 @@
     .pf-top { position: relative; padding: calc(16px + env(safe-area-inset-top, 0px)) 18px 78px; color: #fff; background: linear-gradient(145deg, #0a5a42 0%, #0b7a58 50%, #13a174 100%); overflow: hidden; }
     .pf-top::before, .pf-top::after { content: ""; position: absolute; border-radius: 50%; background: rgba(255,255,255,.07); pointer-events: none; }
     .pf-top::before { width: 240px; height: 240px; right: -70px; top: -90px; } .pf-top::after { width: 160px; height: 160px; left: -60px; bottom: -70px; }
+    .pf-top.has-ban { background-size: cover; background-position: center; }
+    .pf-top.has-ban .pf-sc { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.38) 0%, rgba(0,0,0,.18) 45%, rgba(0,0,0,.5) 100%); pointer-events: none; }
+    .pf-top.has-ban::before, .pf-top.has-ban::after { display: none; }
+    .pf-bcam { width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255,255,255,.16); color: #fff; display: grid; place-items: center; cursor: pointer; } .pf-bcam svg { width: 20px; height: 20px; }
+    .pf-btns { display: flex; gap: 10px; }
+    .pf-banprev { width: 100%; aspect-ratio: 16 / 7; border-radius: 16px; overflow: hidden; margin-top: 14px; background: linear-gradient(145deg, #0a5a42, #13a174); } .pf-banprev img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .pf-row1 { position: relative; display: flex; align-items: center; justify-content: space-between; }
     .pf-row1 img { height: 36px; width: auto; background: #fff; border-radius: 12px; padding: 5px 10px; box-sizing: content-box; }
     .pf-gear { width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255,255,255,.16); color: #fff; display: grid; place-items: center; cursor: pointer; } .pf-gear svg { width: 21px; height: 21px; }

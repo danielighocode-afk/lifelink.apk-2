@@ -327,3 +327,65 @@ html.ll-native body { padding-top: 0; }
   ::view-transition-old(root), ::view-transition-new(root) { animation: none !important; }
   button[class*="bg-emerald-600"]::after, a[class*="bg-emerald-600"]::after { display: none; }
 }
+
+
+/* ---------- notification bell + panel (self-contained: works with or without Tailwind) ---------- */
+.ll-bell-btn { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border-radius: 16px; border: 1px solid var(--ll-border); background: var(--ll-surface-2, var(--ll-surface)); color: var(--ll-text-2); cursor: pointer; transition: transform .15s ease, background .15s ease, color .15s ease; }
+.ll-bell-btn:active { transform: scale(.94); } .ll-bell-btn:hover { color: var(--ll-primary); }
+.ll-bell-btn svg { width: 22px; height: 22px; }
+.ll-bdot { display: none; position: absolute; top: -5px; right: -5px; min-width: 19px; height: 19px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: var(--ll-primary); color: #fff; border: 2px solid var(--ll-bg); font-size: 10px; font-weight: 800; line-height: 1; align-items: center; justify-content: center; }
+.ll-bdot.on { display: flex; }
+.ll-np { display: none; position: absolute; right: 0; top: calc(100% + 8px); width: 350px; max-width: calc(100vw - 24px); max-height: 70vh; overflow-y: auto; overscroll-behavior: contain; background: var(--ll-surface); color: var(--ll-text); border: 1px solid var(--ll-border); border-radius: 20px; box-shadow: var(--ll-shadow-lg, 0 18px 50px rgba(15,23,42,.2)); z-index: 90; text-align: left; }
+.ll-np.open { display: block; animation: llNpIn .22s cubic-bezier(.2,.8,.2,1); }
+@keyframes llNpIn { from { opacity: 0; transform: translateY(-8px) scale(.98); } to { opacity: 1; transform: none; } }
+.ll-np-h { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; background: var(--ll-surface); border-bottom: 1px solid var(--ll-border); }
+.ll-np-h b { font-size: 16px; font-weight: 800; }
+.ll-np-h button { border: 0; background: var(--ll-primary-soft, rgba(7,134,95,.12)); color: var(--ll-primary); font: inherit; font-size: 12.5px; font-weight: 800; padding: 7px 12px; border-radius: 10px; cursor: pointer; white-space: nowrap; }
+.ll-np-i { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; color: inherit; text-decoration: none; animation: llNpIn .3s ease both; }
+.ll-np-i + .ll-np-i { border-top: 1px solid var(--ll-border); }
+.ll-np-i:active { background: var(--ll-surface-2, rgba(0,0,0,.04)); }
+.ll-np-i.un { background: var(--ll-primary-soft, rgba(7,134,95,.08)); }
+.ll-np-d { flex: none; width: 9px; height: 9px; margin-top: 6px; border-radius: 50%; background: transparent; }
+.ll-np-i.un .ll-np-d { background: var(--ll-primary); }
+.ll-np-t { min-width: 0; flex: 1; display: block; }
+.ll-np-t b { display: block; font-size: 14.5px; font-weight: 800; line-height: 1.3; }
+.ll-np-t em { display: block; margin-top: 3px; font-style: normal; font-size: 13.5px; line-height: 1.45; color: var(--ll-text-2); }
+.ll-np-t small { display: block; margin-top: 5px; font-size: 12px; font-weight: 700; color: var(--ll-text-2); opacity: .85; }
+.ll-np-empty { margin: 0; padding: 28px 18px; text-align: center; font-size: 14px; color: var(--ll-text-2); font-weight: 600; }
+@media (max-width: 767px) {
+  .ll-np { position: fixed; left: 12px; right: 12px; width: auto; max-width: none; top: 76px; max-height: calc(100dvh - 76px - var(--ll-tab-h) - env(safe-area-inset-bottom, 0px) - 20px); }
+}
+@media (prefers-reduced-motion: reduce) { .ll-np.open, .ll-np-i { animation: none !important; } }
+
+/* Bookings -> My requests shortcut bar, back link, and hidden section chips on the customer app */
+.ll-reqbar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding: 14px 16px; border-radius: 20px; color: #fff; text-decoration: none; background: linear-gradient(135deg, #2563eb, #1d4ed8); box-shadow: 0 8px 20px rgba(37,99,235,.28); transition: transform .15s; }
+.ll-reqbar:active { transform: scale(.98); }
+.ll-reqbar-i { width: 42px; height: 42px; border-radius: 14px; background: rgba(255,255,255,.18); display: grid; place-items: center; flex: none; }
+.ll-reqbar-i svg { width: 22px; height: 22px; }
+.ll-reqbar-t { flex: 1; min-width: 0; }
+.ll-reqbar-t b { display: block; font-size: 15.5px; font-weight: 800; }
+.ll-reqbar-t em { display: block; font-style: normal; font-size: 12.5px; font-weight: 600; opacity: .85; }
+.ll-reqbar-a { width: 20px; height: 20px; flex: none; }
+.ll-backlnk { font-size: 14px; font-weight: 800; color: var(--ll-primary, #07865f); text-decoration: none; }
+body[data-ll-role="customer"] #mobileNav { display: none !important; }
+
+
+/* ---------- page-to-page slide (cross-document view transitions; ignored by browsers that lack them) ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+  ::view-transition-group(root) { animation-duration: 230ms; animation-timing-function: cubic-bezier(.2,.7,.2,1); }
+  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 230ms; animation-timing-function: cubic-bezier(.2,.7,.2,1); animation-fill-mode: both; mix-blend-mode: normal; }
+  /* forward: new page slides in from the right, old drifts left */
+  html:not([data-ll-nav="back"]):not([data-ll-nav="tab-back"]) ::view-transition-old(root) { animation-name: ll-out-left; }
+  html:not([data-ll-nav="back"]):not([data-ll-nav="tab-back"]) ::view-transition-new(root) { animation-name: ll-in-right; }
+  /* back: reverse */
+  html[data-ll-nav="back"] ::view-transition-old(root), html[data-ll-nav="tab-back"] ::view-transition-old(root) { animation-name: ll-out-right; }
+  html[data-ll-nav="back"] ::view-transition-new(root), html[data-ll-nav="tab-back"] ::view-transition-new(root) { animation-name: ll-in-left; }
+  /* keep the tab bar steady while pages slide */
+  .ll-tabbar { view-transition-name: ll-tabbar; }
+  ::view-transition-group(ll-tabbar) { animation-duration: 0s; }
+}
+@keyframes ll-in-right { from { transform: translateX(28%); opacity: .0; } to { transform: none; opacity: 1; } }
+@keyframes ll-out-left { from { transform: none; opacity: 1; } to { transform: translateX(-12%); opacity: 0; } }
+@keyframes ll-in-left { from { transform: translateX(-28%); opacity: .0; } to { transform: none; opacity: 1; } }
+@keyframes ll-out-right { from { transform: none; opacity: 1; } to { transform: translateX(12%); opacity: 0; } }
