@@ -204,8 +204,8 @@ html[data-theme="dark"] [role="dialog"] { background-color: var(--ll-surface) !i
 .ll-sheet-link.danger svg { color: #e11d48; }
 
 /* pages that need the full screen (live map) keep their own layout */
-body[data-ll-page="tracking"] .ll-tabbar, body[data-ll-page="signin"] .ll-tabbar, body[data-ll-page="admin"] .ll-tabbar { display: none !important; }
-body[data-ll-page="tracking"], body[data-ll-page="signin"], body[data-ll-page="admin"] { padding-bottom: 0 !important; }
+body[data-ll-page="signin"] .ll-tabbar, body[data-ll-page="admin"] .ll-tabbar { display: none !important; }
+body[data-ll-page="signin"], body[data-ll-page="admin"] { padding-bottom: 0 !important; }
 
 @media (prefers-reduced-motion: reduce) {
   .ll-sheet, .ll-scrim, [role="dialog"] { animation: none !important; }
@@ -237,7 +237,8 @@ html[data-theme="dark"] .hero-search-divider { border-color: transparent !import
 @keyframes llSheen { 0%, 60% { transform: translateX(-130%) skewX(-18deg); } 100% { transform: translateX(260%) skewX(-18deg); } }
 
 /* page content eases in */
-main { animation: llRise .45s var(--ll-ease) both; }
+main { animation: llMainIn .4s ease both; }
+@keyframes llMainIn { from { opacity: 0; } to { opacity: 1; } }
 #app[data-quiet] { animation: none; }
 
 /* cards: soft depth + lift on hover/press */

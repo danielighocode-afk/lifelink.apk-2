@@ -2,7 +2,10 @@
 (function () {
   'use strict';
   var app = document.getElementById('app');
-  var state = { req: null, quotes: [], provs: {}, sort: 'price', chat: null };
+  var state = { req: null, quotes: [], provs: {}, sort: 'price', chat: null, fee: null };
+  var AR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+  var SH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>';
+  function feeTxt() { return state.fee != null ? LL.naira(state.fee) : 'a small platform fee'; }
 
   function listView() {
     app.innerHTML = LL.loading('your requests');
@@ -31,31 +34,32 @@
   function render() {
     var r = state.req, open = r.status === 'open' || r.status === 'quoted';
     var qs = sorted();
-    var html = '<section class="bg-white border border-slate-200 rounded-3xl p-6 space-y-3">' +
+    var html = '<section class="cq-card cq-req">' +
       '<div class="flex flex-wrap items-center justify-between gap-3"><h1 class="text-xl font-extrabold text-slate-900">' + LL.esc(r.category_text || 'Service request') + '</h1>' + LL.badge(r.status) + '</div>' +
       '<p class="text-sm text-slate-700 whitespace-pre-wrap">' + LL.esc(r.description) + '</p>' +
       '<p class="text-xs font-semibold text-slate-500">' + LL.esc(r.location_area) + ' · ' + LL.esc(LL.cap(r.urgency)) + (r.preferred_date ? ' · preferred ' + LL.esc(LL.date(r.preferred_date)) + (r.preferred_window ? ' (' + LL.esc(r.preferred_window) + ')' : '') : '') + ' · sent ' + LL.esc(LL.ago(r.created_at)) + '</p>' +
       '<div id="gallery" class="flex flex-wrap gap-2"></div>' +
       (open ? '<div><button id="cancelReq" class="text-xs font-extrabold text-rose-600 hover:text-rose-700">Cancel this request</button></div>' : '') +
       '</section>';
-    html += '<div class="flex flex-wrap items-center justify-between gap-3"><h2 class="font-extrabold text-slate-900">Quotes (' + qs.length + ')</h2>' +
-      '<label class="text-xs font-bold text-slate-500">Sort by <select id="sortSel" class="ml-1 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold"><option value="price">Lowest price</option><option value="rating">Highest rated</option><option value="newest">Newest</option></select></label></div>';
+    html += '<div class="cq-hd"><h2>Quotes (' + qs.length + ')</h2>' +
+      '<label>Sort by <select id="sortSel"><option value="price">Lowest price</option><option value="rating">Highest rated</option><option value="newest">Newest</option></select></label></div>';
     if (!qs.length) {
       html += LL.empty(open ? 'No quotes yet' : 'No active quotes', open ? 'Providers have been notified. You will get a notification when a quote arrives.' : '');
     } else {
-      html += '<div class="space-y-3">' + qs.map(function (q) {
+      html += '<div class="cq-list">' + qs.map(function (q) {
         var p = state.provs[q.provider_id] || {};
         var accepted = q.status === 'accepted';
-        return '<article class="bg-white border ' + (accepted ? 'border-emerald-400' : 'border-slate-200') + ' rounded-3xl p-5 space-y-3">' +
-          '<div class="flex items-start justify-between gap-3"><div class="flex items-center gap-3 min-w-0">' + LL.avatar(p.business_name, p.avatar_url, 'w-12 h-12') +
-          '<div class="min-w-0"><a href="provider-profile.html?id=' + LL.esc(q.provider_id) + '" class="font-extrabold text-slate-900 hover:text-emerald-700 truncate block">' + LL.esc(p.business_name || 'Provider') + '</a>' +
-          '<p class="text-xs font-semibold text-slate-500">' + (p.rating_avg != null ? LL.stars(p.rating_avg) + ' (' + (p.review_count || 0) + ') · ' : 'No reviews yet · ') + (p.jobs_done || 0) + ' jobs done</p></div></div>' +
-          '<div class="text-right shrink-0"><p class="text-xl font-extrabold text-slate-900">' + LL.naira(q.price_kobo) + '</p>' + (q.arrival_text ? '<p class="text-[11px] font-semibold text-slate-500">' + LL.esc(q.arrival_text) + '</p>' : '') + '</div></div>' +
-          (q.message ? '<p class="text-sm text-slate-700 bg-slate-50 rounded-2xl p-3 whitespace-pre-wrap">' + LL.esc(q.message) + '</p>' : '') +
-          '<div class="flex flex-wrap gap-2">' +
-          (open ? '<button data-accept="' + LL.esc(q.id) + '" class="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm px-5 py-2.5 rounded-xl">Accept quote</button>' : '') +
-          (accepted ? '<span class="text-sm font-extrabold text-emerald-700 py-2.5">Accepted</span>' : '') +
-          '<button data-chat="' + LL.esc(q.provider_id) + '" class="border border-slate-200 hover:bg-slate-50 text-slate-700 font-extrabold text-sm px-5 py-2.5 rounded-xl">Message</button></div></article>';
+        return '<article class="cq-card cq-q' + (accepted ? ' acc' : '') + '">' +
+          '<div class="cq-pv">' + LL.avatar(p.business_name, p.avatar_url, 'w-12 h-12') +
+          '<div class="min-w-0"><a href="provider-profile.html?id=' + LL.esc(q.provider_id) + '" class="cq-pn">' + LL.esc(p.business_name || 'Provider') + '</a>' +
+          '<p class="cq-ps">' + (p.rating_avg != null ? '<span style="color:#f5a30a">★</span> ' + Number(p.rating_avg).toFixed(1) + ' (' + (p.review_count || 0) + ') · ' : 'No reviews yet · ') + (p.jobs_done || 0) + ' jobs done</p></div></div>' +
+          '<div class="cq-box">' + SH + '<div><small>Provider Quotation</small><b>' + LL.naira(q.price_kobo) + '</b>' + (q.arrival_text ? '<em>' + LL.esc(q.arrival_text) + '</em>' : '') + '</div></div>' +
+          (q.message ? '<p class="cq-msg">' + LL.esc(q.message) + '</p>' : '') +
+          (open ? '<p class="cq-fee">You pay the provider ' + LL.naira(q.price_kobo) + ' directly. ' + (state.fee != null ? LL.naira(state.fee) : 'A small platform fee') + ' is reserved from your LifeLink wallet (and the same from theirs) and only charged once they arrive and you confirm it.</p>' : '') +
+          '<div class="cq-act">' +
+          (open ? '<button data-accept="' + LL.esc(q.id) + '" class="cq-go">Accept Quotation &amp; Confirm ' + AR + '</button>' : '') +
+          (accepted ? '<span class="cq-ok">Accepted</span>' : '') +
+          '<button data-chat="' + LL.esc(q.provider_id) + '" class="cq-sec">Message</button></div></article>';
       }).join('') + '</div>';
     }
     html += '<section id="chatBox" class="hidden bg-white border border-slate-200 rounded-3xl p-5 space-y-3"><div class="flex justify-between items-center"><h3 id="chatTitle" class="font-extrabold text-slate-900"></h3><button id="chatClose" class="text-xs font-bold text-slate-400 hover:text-slate-700">Close</button></div><div id="chatMount"></div></section>';
@@ -73,7 +77,7 @@
       b.onclick = function () {
         var q = state.quotes.filter(function (x) { return x.id === b.getAttribute('data-accept'); })[0];
         var p = state.provs[q.provider_id] || {};
-        LL.confirm({ title: 'Accept this quote?', body: 'You will book ' + (p.business_name || 'this provider') + ' for ' + LL.naira(q.price_kobo) + ', which you pay to them directly. ₦100 is reserved from your LifeLink wallet (and ₦100 from theirs) and only charged once they arrive and you confirm it. Other quotes on this request will be declined.', confirmText: 'Accept and book' }).then(function (ok) {
+        LL.confirm({ title: 'Accept this quote?', body: 'You will book ' + (p.business_name || 'this provider') + ' for ' + LL.naira(q.price_kobo) + ', which you pay to them directly. ' + feeTxt() + ' is reserved from your LifeLink wallet (and the same from theirs) and only charged once they arrive and you confirm it. Other quotes on this request will be declined.', confirmText: 'Accept and book' }).then(function (ok) {
           if (!ok) return;
           LL.busy(b, 'Booking…', function () { return LLApi.customer.acceptQuote(q.id); }).then(function (bookingId) {
             var id = bookingId && bookingId.id ? bookingId.id : bookingId;
@@ -103,6 +107,7 @@
 
   function load(quiet) {
     var id = LL.q('request');
+    try { LLApi.wallet.me().then(function (w) { if (w && w.fee_kobo != null && state.fee !== w.fee_kobo) { state.fee = w.fee_kobo; if (state.req) render(); } }, function () {}); } catch (e) {}
     if (!quiet) app.innerHTML = LL.loading('quotes');
     return Promise.all([LLApi.customer.request(id), LLApi.customer.quotes(id), LLApi.catalog.providers()]).then(function (r) {
       if (!r[0]) { app.innerHTML = LL.empty('Request not found', 'It may have been removed, or it belongs to another account.', 'compare-quotes.html', 'See your requests'); return; }

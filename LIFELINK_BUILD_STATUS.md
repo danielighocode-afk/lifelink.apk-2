@@ -1,3 +1,7 @@
+# Build status — Stage 2.6 (new app home screen: home.html)
+- New first screen of the app: home.html + page-home.js (banner carousel, search, real categories from Supabase, Become a Provider). In the APK, index.html now forwards to welcome (first launch) then home.html. Customers and visitors stay on home.html; providers/admins are sent to their own dashboard. Customers signing in inside the app land on home.html.
+- Verified in headless Chromium with stubbed Supabase: signed-out, signed-in (name + unread count), dark mode, offline categories message, search -> discovery.html?q=, banner slides, native routing. NOT verified on a phone or with real Supabase data.
+
 # Build status — Stage 2.5 (Android app wrapper + app-style UI)
 - Verified in headless Chromium (390px, stubbed login, Capacitor simulated): welcome screens, first-launch routing, signed-in redirect, tab bars (customer/provider), Profile sheet, Android back-button handling, light/dark. No JS errors.
 - Verified: prepare-www and android-setup scripts (run against a fake Android tree, twice); package.json, capacitor.config.json and the workflow parse.
@@ -56,3 +60,24 @@ Maps and live tracking, 200 m / 100 m GPS arrival logic, warnings and ₦200 pen
 - Fee is a flat ₦100 per side (was 5%). Old test bookings were moved to `confirmed` with no fee reserved.
 - `pending_payment` / `paid` / `refunded` booking states are gone; `supabase/test_mark_paid.sql` was removed (no longer needed).
 - Stage-1 "verified arrival" = provider taps arrived + customer confirms. Customers who never confirm cannot be charged, and providers cannot start the job, so GPS in the maps stage replaces this.
+
+## Stage 2.7 - Services screen (discovery.html + page-discovery.js)
+App bar, search pill, real category chips, sort + filters bottom sheet, new provider cards. Data, filter and sort logic unchanged. Shows Verified (listing is admin-verified only), service area instead of distance, 'From N' min price, 'Request quote' button. Not yet tested on a real phone or real data.
+
+## Stage 2.8 - Provider profile (provider-profile.html + page-provider-profile.js)
+Full-width photo with back/share, Verified Provider tag, rating, area, availability, tags, About, stats (experience, reviews, jobs done), Services & Pricing, fixed Book Now (-> request.html?provider=, or sign-in first when signed out; hidden for providers/admins). Reviews open in a bottom sheet from the rating or the Reviews number. Services-screen card button now opens this profile. Also: dashboard quick-action row now only shows on the dashboards. Response rate and favourites hearts intentionally left out for now. Not yet tested on a phone or with real data.
+
+## Stage 2.9 - Booking & quotation flow (request.html, page-request.js, compare-quotes.html, page-compare-quotes.js)
+request.html is now a 4-step wizard (Details, Location, Request/photos, Review & Confirm) with progress bar, slide animations, per-step validation, Android back = previous step, Edit links on the summary. Same data call (LLApi.customer.createRequest) and same map picker (LLMap.pickerModal). Voice notes and videos intentionally not included (no storage/DB support yet). Quote screen restyled: Provider Quotation box and "Accept Quotation & Confirm"; it calls the same LLApi.customer.acceptQuote. Fee wording now reads the real wallet fee (LLApi.wallet.me().fee_kobo) instead of a hard-coded 100. Wallet/fee/RLS logic untouched. Not yet tested on a phone or with real Supabase data.
+
+## Stage 2.10 - Live tracking (tracking.html + page-tracking.js)
+App bar, map with floating provider bubble, provider card (photo, name, status, rating, job address) with Message (chat sheet) and Cancel (same cancel flow as booking.html), booking summary row (links to booking.html), existing "Share my location" panel kept. Bottom tab bar now shows on tracking (Bookings active); request/compare-quotes count as Home, booking/tracking as Bookings. Live data logic (LLApi.tracking.snapshot, realtime + 10 s poll, LLMap.share) unchanged. Not shown: ETA minutes (no routing service), Call button (no phone numbers exposed), top-right share icon. Map itself only checked with a stub; test on the phone.
+
+## Stage 2.10 - Live tracking (tracking.html + page-tracking.js)
+App bar "Tracking Your Provider", map with floating provider bubble (name + status/distance), my-location and fit buttons, provider card (photo, verified tick, rating, status, job address, Message, Cancel), booking summary row, share-location panel, bottom tab bar (Bookings active). Chat opens in a bottom sheet. Live data, realtime + 10 s polling, GPS arrival and cancel logic untouched. Left out on purpose: Call (no provider phone number is exposed), minutes-away estimate (no routing service; distance shown instead), curved driving route (dashed straight guide line), share icon (locations are private to the two parties). Not tested with the real map tiles or a phone.
+
+## Stage 2.11 - Wallet (ll-wallet.js, shared by customer and provider dashboards)
+Green balance card with Add Funds, Deposit and History tiles (no Send, as requested), Recent Transactions list with icons and colours (See all / Show less), pending-payment and failed-attempt cards kept, add-funds in a bottom sheet (same chips, amount field, Paystack inline flow, verifyDeposit retries). Only markup/CSS changed; LLApi.wallet calls, Paystack test mode and fee rules untouched. Not yet tested with real Paystack or on a phone.
+
+## Stage 2.12 - Customer profile (profile.html, page-profile.js; supabase/migrations/008_profile_extras.sql)
+Full Profile screen for customers (Profile tab now opens profile.html): overview (photo, name, location, wallet balance, total bookings, quick actions, account list), Edit Profile (name, phone, location, date of birth, gender, about me; email read-only), Change Profile Photo (camera/gallery/remove, auto-shrunk to a square JPEG under 2 MB, uploaded to the public avatars bucket through LLApi.uploadAvatar), Account Settings, Privacy & Security (change password, delete account), Appearance (theme + text size). Android back moves between these views. Needs migration 008 (date_of_birth, gender, about) - user has run it. supabase-auth.js falls back safely if those columns are missing. Left out: notification toggles, 2FA, blocked users, accent colour, exclusive-offers banner. Providers keep the existing More sheet. Not yet tested against real Supabase/storage or on a phone.

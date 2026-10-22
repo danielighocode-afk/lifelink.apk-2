@@ -21,6 +21,81 @@
     .field:focus { border-color: #059669; background: #fff; }
     .lbl { display: block; font-size: .75rem; font-weight: 800; color: #334155; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .375rem; }
   </style>
+  <style>
+    .rq-old { }
+    .rq-wrap { max-width: 560px; margin: 0 auto; width: 100%; padding: 0 16px; box-sizing: border-box; }
+    .rq-bar { display: none; align-items: center; gap: 10px; padding: calc(10px + env(safe-area-inset-top, 0px)) 4px 6px; }
+    .rq-bar h1 { margin: 0; font-size: 19px; font-weight: 800; color: var(--ll-text); }
+    .rq-back { width: 40px; height: 40px; border-radius: 50%; border: 0; background: transparent; color: var(--ll-text); display: grid; place-items: center; cursor: pointer; }
+    .rq-back svg { width: 22px; height: 22px; } .rq-back:active { background: var(--ll-surface-2, #e8eeeb); }
+    .rq-steps { display: grid; grid-template-columns: repeat(4, 1fr); position: relative; margin: 10px 0 22px; }
+    .rq-steps::before { content: ""; position: absolute; top: 15px; left: 12.5%; right: 12.5%; height: 2px; background: var(--ll-border, #dfe7e3); }
+    .rq-line { position: absolute; top: 15px; left: 12.5%; height: 2px; width: 0; background: var(--ll-primary, #07865f); transition: width .45s cubic-bezier(.2,.8,.2,1); }
+    .rq-st { position: relative; text-align: center; font-size: 11.5px; font-weight: 700; color: var(--ll-text-2, #64748b); }
+    .rq-st i { display: grid; place-items: center; width: 31px; height: 31px; margin: 0 auto 6px; border-radius: 50%; background: var(--ll-surface, #fff); border: 2px solid var(--ll-border, #dfe7e3); font-style: normal; font-size: 13px; font-weight: 800; transition: all .3s ease; position: relative; z-index: 1; }
+    .rq-st.on i { background: var(--ll-primary, #07865f); border-color: var(--ll-primary, #07865f); color: #fff; box-shadow: 0 0 0 5px rgba(7,134,95,.14); }
+    .rq-st.on { color: var(--ll-text); }
+    .rq-st.done i { background: var(--ll-primary, #07865f); border-color: var(--ll-primary, #07865f); color: #fff; font-size: 0; }
+    .rq-st.done i::after { content: ""; width: 9px; height: 5px; border-left: 2.5px solid #fff; border-bottom: 2.5px solid #fff; transform: rotate(-45deg) translate(1px,-1px); }
+    .rq-p { display: none; } .rq-p.on { display: block; animation: rqIn .35s cubic-bezier(.2,.8,.2,1) both; }
+    .rq-p.back.on { animation-name: rqInBack; }
+    @keyframes rqIn { from { opacity: 0; transform: translateX(22px); } to { opacity: 1; transform: none; } }
+    @keyframes rqInBack { from { opacity: 0; transform: translateX(-22px); } to { opacity: 1; transform: none; } }
+    .rq-h { margin: 0 0 6px; font-size: 17px; font-weight: 800; color: var(--ll-text); }
+    .rq-sub { margin: 0 0 16px; font-size: 14px; color: var(--ll-text-2, #64748b); font-weight: 500; line-height: 1.5; }
+    .rq-l { display: block; margin: 18px 0 8px; font-size: 14px; font-weight: 800; color: var(--ll-text); }
+    .rq-l small { font-weight: 500; color: var(--ll-text-2, #64748b); font-size: 12.5px; }
+    .rq-in { width: 100%; box-sizing: border-box; background: var(--ll-surface, #fff); border: 1px solid var(--ll-border, #dfe7e3); border-radius: 14px; padding: 14px 16px; font: inherit; font-size: 15px; font-weight: 600; color: var(--ll-text); outline: none; transition: border-color .15s, box-shadow .15s; }
+    .rq-in:focus { border-color: var(--ll-primary, #07865f); box-shadow: 0 0 0 3px rgba(7,134,95,.15); }
+    textarea.rq-in { resize: none; min-height: 130px; line-height: 1.5; font-weight: 500; }
+    .rq-cnt { text-align: right; font-size: 12px; color: var(--ll-text-2, #64748b); margin-top: 4px; font-weight: 600; }
+    .rq-card { background: var(--ll-surface, #fff); border: 1px solid var(--ll-border, #dfe7e3); border-radius: 18px; padding: 14px; }
+    .rq-pv { display: flex; align-items: center; gap: 12px; }
+    .rq-pv .av { width: 54px; height: 54px; border-radius: 50%; overflow: hidden; background: linear-gradient(135deg, #0b7a58, #18b785); color: #fff; display: grid; place-items: center; font-weight: 800; flex: none; }
+    .rq-pv .av img { width: 100%; height: 100%; object-fit: cover; }
+    .rq-pv b { display: flex; align-items: center; gap: 6px; font-size: 15px; color: var(--ll-text); } .rq-pv b svg { width: 15px; height: 15px; color: var(--ll-primary); }
+    .rq-pv small { display: block; margin-top: 3px; font-size: 13px; color: var(--ll-text-2, #64748b); font-weight: 600; } .rq-pv .st { color: #f5a30a; }
+    .rq-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .rq-ug { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .rq-ug button { border: 1.5px solid var(--ll-border, #dfe7e3); background: var(--ll-surface, #fff); border-radius: 14px; padding: 11px 6px; text-align: center; cursor: pointer; font: inherit; color: var(--ll-text); transition: all .15s; }
+    .rq-ug button b { display: block; font-size: 13px; } .rq-ug button span { display: block; font-size: 11px; color: var(--ll-text-2, #64748b); margin-top: 2px; font-weight: 600; }
+    .rq-ug button.on { border-color: var(--ll-primary, #07865f); background: rgba(7,134,95,.09); }
+    .rq-btn2 { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; box-sizing: border-box; padding: 14px; border-radius: 14px; border: 1px solid var(--ll-border, #dfe7e3); background: var(--ll-surface, #fff); color: var(--ll-text); font: inherit; font-size: 14.5px; font-weight: 700; cursor: pointer; }
+    .rq-btn2 svg { width: 19px; height: 19px; color: var(--ll-primary, #07865f); } .rq-btn2:active { transform: scale(.98); }
+    .rq-loc { display: flex; gap: 12px; align-items: center; margin-top: 12px; }
+    .rq-loc > svg { width: 22px; height: 22px; color: var(--ll-primary, #07865f); flex: none; }
+    .rq-loc b { display: block; font-size: 14.5px; color: var(--ll-text); word-break: break-word; } .rq-loc small { font-size: 12.5px; color: var(--ll-text-2, #64748b); font-weight: 600; }
+    .rq-note { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; padding: 13px 14px; border-radius: 14px; background: rgba(7,134,95,.09); color: var(--ll-text); font-size: 13px; line-height: 1.5; font-weight: 600; }
+    .rq-note svg { width: 19px; height: 19px; color: var(--ll-primary, #07865f); flex: none; margin-top: 1px; }
+    .rq-ph { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .rq-ph > div, .rq-ph > button { position: relative; aspect-ratio: 1; border-radius: 14px; overflow: hidden; background: var(--ll-surface-2, #e8eeeb); animation: rqPop .3s ease both; }
+    .rq-ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .rq-ph .x { position: absolute; top: 5px; right: 5px; width: 24px; height: 24px; border-radius: 50%; border: 0; background: rgba(0,0,0,.6); color: #fff; font-size: 15px; line-height: 1; cursor: pointer; }
+    .rq-ph .add { border: 1.5px dashed var(--ll-border, #c9d5cf); background: transparent; color: var(--ll-text-2, #64748b); display: grid; place-content: center; text-align: center; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .rq-ph .add b { font-size: 22px; font-weight: 500; display: block; line-height: 1; }
+    @keyframes rqPop { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
+    .rq-sum { background: var(--ll-surface, #fff); border: 1px solid var(--ll-border, #dfe7e3); border-radius: 18px; overflow: hidden; }
+    .rq-r { display: flex; gap: 12px; padding: 14px 16px; align-items: flex-start; }
+    .rq-r + .rq-r { border-top: 1px solid var(--ll-border, #dfe7e3); }
+    .rq-r > div { flex: 1; min-width: 0; } .rq-r small { display: block; font-size: 12px; color: var(--ll-text-2, #64748b); font-weight: 700; } .rq-r b { display: block; margin-top: 2px; font-size: 14.5px; color: var(--ll-text); font-weight: 700; word-break: break-word; white-space: pre-wrap; }
+    .rq-r button { border: 0; background: none; color: var(--ll-primary, #07865f); font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; padding: 2px 0; }
+    .rq-r .rq-pv b { display: flex; margin-top: 0; }
+    .rq-tm { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .rq-tm button { border: 1.5px solid var(--ll-border, #dfe7e3); background: var(--ll-surface, #fff); color: var(--ll-text); font: inherit; font-size: 13.5px; font-weight: 700; padding: 11px 4px; border-radius: 12px; cursor: pointer; transition: all .15s; animation: rqPop .25s ease both; }
+    .rq-tm button.on { border-color: var(--ll-primary, #07865f); background: var(--ll-primary, #07865f); color: #fff; }
+    .rq-th { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; } .rq-th img { width: 52px; height: 52px; border-radius: 10px; object-fit: cover; }
+    .rq-foot { margin-top: 24px; }
+    .rq-go { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; box-sizing: border-box; border: 0; background: var(--ll-primary, #07865f); color: #fff; font: inherit; font-size: 16px; font-weight: 800; padding: 16px; border-radius: 16px; cursor: pointer; box-shadow: 0 8px 22px rgba(7,134,95,.3); transition: transform .15s ease, opacity .15s; }
+    .rq-go:active { transform: scale(.98); } .rq-go:disabled { opacity: .7; } .rq-go svg { width: 18px; height: 18px; }
+    @media (max-width: 767px) {
+      .rq-old { display: none !important; } .rq-bar { display: flex; }
+      .rq-main { padding-bottom: 100px !important; }
+      .rq-foot { position: fixed; left: 16px; right: 16px; margin: 0; z-index: 40; bottom: calc(var(--ll-tab-h, 64px) + env(safe-area-inset-bottom, 0px) + 12px); }
+      body:not(.ll-has-tabbar) .rq-foot { bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); }
+    }
+    @media (min-width: 768px) { .rq-wrap { padding-top: 12px; } .rq-box { background: var(--ll-surface, #fff); border: 1px solid var(--ll-border, #dfe7e3); border-radius: 24px; padding: 26px; box-shadow: var(--ll-shadow, none); } .rq-box .rq-card, .rq-box .rq-sum, .rq-box .rq-in, .rq-box .rq-btn2 { background: var(--ll-bg, #f5f8f6); } }
+    @media (prefers-reduced-motion: reduce) { .rq-p.on, .rq-ph > * { animation: none !important; } .rq-line, .rq-st i { transition: none; } }
+  </style>
   <script src="ll-theme-init.js"></script>
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -29,7 +104,7 @@
   <link rel="stylesheet" href="ll-app.css">
 </head>
 <body class="min-h-screen flex flex-col bg-slate-50 antialiased selection:bg-emerald-100 selection:text-emerald-800" data-ll-page="request" data-ll-role="customer">
-<header class="bg-white border-b border-slate-200/80 sticky top-0 z-30 shadow-xs">
+<header class="rq-old bg-white border-b border-slate-200/80 sticky top-0 z-30 shadow-xs">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
       <div class="flex items-center gap-4">
         <a href="dashboard.html" class="p-2 text-slate-500 hover:text-emerald-600 hover:bg-slate-50 rounded-xl transition" title="Back to dashboard" id="backLink"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg></a>
@@ -41,76 +116,64 @@
       <div class="flex items-center gap-3"><div data-ll-bell></div><div data-ll-account class="flex items-center gap-2"></div></div>
     </div>
   </header>
-  <main class="flex-grow max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-8">
-    <div class="text-center space-y-2 max-w-2xl mx-auto">
-      <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">What do you need help with?</h1>
-      <p class="text-sm sm:text-base font-semibold text-slate-500">Describe the job. Verified providers will send you quotes to compare.</p>
+  <main class="rq-main flex-grow rq-wrap" style="padding-bottom:40px">
+    <div class="rq-bar"><button type="button" class="rq-back" id="rqBack" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><h1 id="rqTitle">Request Booking</h1></div>
+    <div class="rq-steps" id="rqSteps" aria-label="Progress">
+      <div class="rq-line" id="rqLine"></div>
+      <div class="rq-st"><i>1</i>Details</div><div class="rq-st"><i>2</i>Location</div><div class="rq-st"><i>3</i>Request</div><div class="rq-st"><i>4</i>Confirm</div>
     </div>
-    <div id="directBanner" class="hidden max-w-3xl mx-auto w-full rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-900"></div>
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-      <div class="lg:col-span-8 space-y-6">
-        <form id="requestForm" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6" novalidate>
-          <div class="space-y-3">
-            <div class="flex items-center justify-between">
-              <label class="lbl !mb-0" for="issueInput">Describe your issue</label>
-              <span id="charCounter" class="text-[11px] font-bold text-slate-400">0 / 2000 characters</span>
-            </div>
-            <textarea id="issueInput" rows="5" maxlength="2000" placeholder="What needs doing, and anything the provider should know before quoting?" class="field resize-none"></textarea>
-            <div id="dropZone" class="border-2 border-dashed border-slate-200 rounded-2xl p-4 text-center space-y-2 transition">
-              <button type="button" id="addPhotos" class="bg-white hover:bg-slate-100 text-slate-700 font-extrabold px-4 py-2 rounded-xl border border-slate-200 text-xs">Add photos</button>
-              <p class="text-[11px] font-semibold text-slate-400">Up to 5 JPG, PNG or WebP images, 10 MB each. Drag and drop works too. Only providers who can see your request can view them.</p>
-              <div id="fileList" class="flex flex-wrap gap-2 justify-center"></div>
-              <input type="file" id="hiddenFileInput" class="hidden" multiple accept="image/jpeg,image/png,image/webp">
-            </div>
-          </div>
-          <div>
-            <label class="lbl" for="categorySelect">Service category</label>
-            <select id="categorySelect" class="field"><option>Loading categories&hellip;</option></select>
-            <p id="catNote" class="hidden mt-2 text-xs font-semibold text-amber-700"></p>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div><label class="lbl" for="prefDate">Preferred date (optional)</label><input id="prefDate" type="date" class="field"></div>
-            <div><label class="lbl" for="prefWindow">Preferred time (optional)</label>
-              <select id="prefWindow" class="field"><option value="">No preference</option><option value="morning">Morning</option><option value="afternoon">Afternoon</option><option value="evening">Evening</option></select></div>
-          </div>
-          <div>
-            <label class="lbl" for="locationInput">Service location</label>
-            <input type="text" id="locationInput" maxlength="160" placeholder="Area and street, e.g. the neighbourhood and a nearby landmark" class="field">
-          </div>
-          <div class="space-y-2">
-            <span class="lbl">Pin the exact spot (optional)</span>
-            <p class="text-xs font-semibold text-slate-500">A pin helps your provider find you and lets arrival be confirmed by GPS. Only the provider you book can see it. With no pin, you confirm arrival yourself.</p>
-            <div class="flex flex-wrap gap-2">
-              <button type="button" id="pinOpen" class="border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-extrabold text-xs px-4 py-2 rounded-xl">Choose on map</button>
-              <button type="button" id="pinMe" class="border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-extrabold text-xs px-4 py-2 rounded-xl">Use my current location</button>
-              <button type="button" id="pinClear" class="hidden text-rose-600 font-extrabold text-xs px-2 py-2 underline">Remove pin</button>
-            </div>
-            <p id="pinStat" class="text-xs font-bold text-emerald-700"></p>
-          </div>
-          <div class="space-y-2">
-            <span class="lbl">Urgency</span>
-            <div class="grid grid-cols-3 gap-3">
-              <button type="button" data-urgency="scheduled"><span class="block text-xs font-extrabold text-slate-900">Normal</span><span class="text-[10px] font-semibold text-slate-400 block mt-0.5">On a scheduled day</span></button>
-              <button type="button" data-urgency="soon"><span class="block text-xs font-extrabold text-slate-900">Soon</span><span class="text-[10px] font-semibold text-slate-400 block mt-0.5">In the next day or so</span></button>
-              <button type="button" data-urgency="emergency"><span class="block text-xs font-extrabold text-amber-800">Emergency</span><span class="text-[10px] font-semibold text-amber-600 block mt-0.5">As soon as possible</span></button>
-            </div>
-          </div>
-          <button type="submit" id="submitBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-4 rounded-2xl shadow-md shadow-emerald-600/20 transition text-base">Send request</button>
-        </form>
-      </div>
-      <aside class="lg:col-span-4 space-y-6">
-        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
-          <h2 class="font-extrabold text-slate-900">What happens next</h2>
-          <ol class="space-y-3 text-sm text-slate-600 font-semibold list-decimal pl-5">
-            <li>Verified providers see your request and send quotes.</li>
-            <li>You compare quotes, message providers, and accept one.</li>
-            <li>Your booking is created. You agree a time with the provider.</li>
-          </ol>
+    <div class="rq-box">
+    <div id="directBanner" class="hidden" style="display:none"></div>
+    <form id="requestForm" novalidate>
+      <section class="rq-p" data-p="1">
+        <h2 class="rq-h">What do you need help with?</h2>
+        <p class="rq-sub">Review your selected service and describe the work you need.</p>
+        <div id="provBox"></div>
+        <label class="rq-l" for="categorySelect" style="margin-top:6px">Service type</label>
+        <select id="categorySelect" class="rq-in"><option>Loading categories&hellip;</option></select>
+        <p id="catNote" class="hidden" style="font-size:12.5px;color:#b45309;font-weight:600;margin:8px 0 0"></p>
+        <label class="rq-l" for="issueInput">Description</label>
+        <textarea id="issueInput" maxlength="2000" class="rq-in" placeholder="What needs doing, and anything the provider should know before quoting?"></textarea>
+        <div class="rq-cnt" id="charCounter">0 / 2000</div>
+        <label class="rq-l">Preferred date &amp; time <small>(optional)</small></label>
+        <div class="rq-2"><input id="prefDate" type="date" class="rq-in" aria-label="Preferred date"><select id="prefWindow" class="rq-in" aria-label="Preferred time"><option value="">No preference</option><option value="morning">Morning</option><option value="afternoon">Afternoon</option><option value="evening">Evening</option></select></div>
+        <div id="timeBox" style="display:none"><span class="rq-l" style="margin-top:14px">Pick a time <small>(optional)</small></span><div class="rq-tm" id="timeGrid"></div></div>
+        <label class="rq-l">How urgent is it?</label>
+        <div class="rq-ug">
+          <button type="button" data-urgency="scheduled"><b>Normal</b><span>On a scheduled day</span></button>
+          <button type="button" data-urgency="soon"><b>Soon</b><span>In a day or so</span></button>
+          <button type="button" data-urgency="emergency"><b>Emergency</b><span>As soon as possible</span></button>
         </div>
-        <div class="rounded-3xl border border-amber-200 bg-amber-50 p-5 text-xs font-semibold text-amber-900 leading-relaxed">
-          Requests and quotes are free. To confirm a booking, both you and the provider need at least ₦100 in your LifeLink wallet; it is only charged once the provider arrives and you confirm it. You pay the provider directly for the job.
+      </section>
+      <section class="rq-p" data-p="2">
+        <h2 class="rq-h">Service location</h2>
+        <p class="rq-sub">Confirm where the work will be done.</p>
+        <label class="rq-l" for="locationInput" style="margin-top:0">Address</label>
+        <input type="text" id="locationInput" maxlength="160" class="rq-in" placeholder="Area and street, e.g. the neighbourhood and a nearby landmark">
+        <div style="display:grid;gap:10px;margin-top:14px">
+          <button type="button" class="rq-btn2" id="pinMe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>Use my current location</button>
+          <button type="button" class="rq-btn2" id="pinOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11.5A7 7 0 005 9.5C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.4"/></svg>Choose on map</button>
         </div>
-      </aside>
+        <div class="rq-card rq-loc hidden" id="pinCard" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11.5A7 7 0 005 9.5C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.4"/></svg><div style="flex:1"><small>Map pin set</small><b id="pinStat"></b></div><button type="button" id="pinClear" style="border:0;background:none;color:#e11d48;font:inherit;font-size:13px;font-weight:800;cursor:pointer">Remove</button></div>
+        <div class="rq-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.500-1-8-4-8-9V6z"/><path d="M8.500 12l2.500 2.500 4.500-5"/></svg><span>A pin helps the provider find you and lets arrival be confirmed by GPS. Only the provider you book can see it. With no pin, you confirm arrival yourself.</span></div>
+      </section>
+      <section class="rq-p" data-p="3">
+        <h2 class="rq-h">Add photos</h2>
+        <p class="rq-sub">Photos help the provider understand the work. This step is optional.</p>
+        <div class="rq-ph" id="phGrid"></div>
+        <div class="rq-2" style="margin-top:14px"><button type="button" class="rq-btn2" id="addGallery"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg>Gallery</button><button type="button" class="rq-btn2" id="addCamera"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Camera</button></div>
+        <p class="rq-sub" style="margin:12px 0 0;font-size:12.5px">Up to 5 JPG, PNG or WebP images, 10 MB each. Only providers who can see your request can view them.</p>
+        <input type="file" id="hiddenFileInput" class="hidden" style="display:none" multiple accept="image/jpeg,image/png,image/webp">
+        <input type="file" id="cameraInput" class="hidden" style="display:none" accept="image/*" capture="environment">
+      </section>
+      <section class="rq-p" data-p="4">
+        <h2 class="rq-h">Your request summary</h2>
+        <p class="rq-sub">Check everything, then send it. Providers reply with quotes you can compare.</p>
+        <div class="rq-sum" id="rqSum"></div>
+        <div class="rq-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.500-1-8-4-8-9V6z"/><path d="M8.500 12l2.500 2.500 4.500-5"/></svg><span id="feeNote">Requests and quotes are free. You pay the provider directly for the job.</span></div>
+      </section>
+      <div class="rq-foot"><button type="button" class="rq-go" id="rqNext"><span id="rqNextT">Next: Location</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button><button type="submit" id="submitBtn" class="rq-go hidden" style="display:none">Send request</button></div>
+    </form>
     </div>
   </main>
 <script src="supabase-config.js"></script>

@@ -21,6 +21,62 @@
     .field:focus { border-color: #059669; background: #fff; }
     .lbl { display: block; font-size: .75rem; font-weight: 800; color: #334155; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .375rem; }
   </style>
+  <style>
+    .pp-old { }
+    #app { padding: 0 !important; max-width: 640px !important; }
+    .pp-hero { position: relative; height: 280px; background: linear-gradient(135deg, #0b7a58, #18b785); overflow: hidden; }
+    .pp-hero img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; display: block; }
+    .pp-hero .ini { position: absolute; inset: 0; display: grid; place-items: center; font-size: 84px; font-weight: 800; color: rgba(255,255,255,.9); letter-spacing: 2px; }
+    .pp-hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,.35), rgba(0,0,0,0) 38%); pointer-events: none; }
+    .pp-top { position: absolute; left: 14px; right: 14px; top: calc(12px + env(safe-area-inset-top, 0px)); z-index: 2; display: flex; justify-content: space-between; }
+    .pp-ic { width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255,255,255,.92); color: #0f172a; display: grid; place-items: center; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,.18); transition: transform .15s ease; }
+    .pp-ic:active { transform: scale(.92); }
+    .pp-ic svg { width: 20px; height: 20px; }
+    .pp-card { position: relative; margin-top: -26px; background: var(--ll-bg, #f5f8f6); border-radius: 26px 26px 0 0; padding: 20px 18px 24px; animation: ppFade .45s ease both; }
+    @keyframes ppFade { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes ppUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+    .pp-vf { position: absolute; right: 16px; top: -16px; display: inline-flex; align-items: center; gap: 6px; background: var(--ll-primary, #07865f); color: #fff; font-size: 12px; font-weight: 700; padding: 7px 13px; border-radius: 999px; box-shadow: 0 4px 14px rgba(7,134,95,.35); }
+    .pp-vf svg { width: 14px; height: 14px; }
+    .pp-n { margin: 0; font-size: 24px; font-weight: 800; color: var(--ll-text); line-height: 1.2; }
+    .pp-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 8px; font-size: 14px; color: var(--ll-text-2, #64748b); font-weight: 600; }
+    .pp-rate { display: inline-flex; align-items: center; gap: 5px; background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; }
+    .pp-rate b { color: var(--ll-text); font-weight: 800; } .pp-rate .st { color: #f5a30a; }
+    .pp-rate.off { cursor: default; }
+    .pp-av { font-weight: 700; } .pp-av.on { color: var(--ll-primary); }
+    .pp-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .pp-tags span { font-size: 12.5px; font-weight: 600; padding: 7px 13px; border-radius: 999px; background: var(--ll-surface-2, #e8eeeb); color: var(--ll-text-2, #475569); }
+    .pp-h { margin: 22px 0 8px; font-size: 17px; font-weight: 800; color: var(--ll-text); }
+    .pp-about { margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--ll-text); white-space: pre-wrap; }
+    .pp-stats { display: flex; margin-top: 20px; background: var(--ll-surface, #fff); border: 1px solid var(--ll-border, #e2e8f0); border-radius: 18px; }
+    .pp-stat { flex: 1; text-align: center; padding: 14px 6px; background: none; border: 0; font: inherit; color: var(--ll-text); cursor: default; }
+    .pp-stat + .pp-stat { border-left: 1px solid var(--ll-border, #e2e8f0); }
+    .pp-stat b { display: block; font-size: 17px; font-weight: 800; } .pp-stat span { font-size: 12.5px; color: var(--ll-text-2, #64748b); font-weight: 600; }
+    button.pp-stat.tap { cursor: pointer; } button.pp-stat.tap span { color: var(--ll-primary); }
+    .pp-list { background: var(--ll-surface, #fff); border: 1px solid var(--ll-border, #e2e8f0); border-radius: 18px; overflow: hidden; }
+    .pp-row { display: flex; align-items: center; gap: 10px; padding: 14px 16px; animation: ppUp .45s cubic-bezier(.2,.8,.2,1) both; }
+    .pp-row + .pp-row { border-top: 1px solid var(--ll-border, #e2e8f0); }
+    .pp-row svg { width: 18px; height: 18px; color: var(--ll-primary); flex: none; }
+    .pp-row div { flex: 1; min-width: 0; } .pp-row b { display: block; font-size: 14.5px; font-weight: 700; color: var(--ll-text); } .pp-row small { font-size: 12.5px; color: var(--ll-text-2, #64748b); }
+    .pp-row em { font-style: normal; font-weight: 800; font-size: 14.5px; color: var(--ll-text); white-space: nowrap; }
+    .pp-note { font-size: 14px; color: var(--ll-text-2, #64748b); margin: 0; }
+    .pp-cta { display: block; width: 100%; box-sizing: border-box; text-align: center; background: var(--ll-primary, #07865f); color: #fff !important; font-weight: 800; font-size: 16px; padding: 16px; border-radius: 16px; text-decoration: none; box-shadow: 0 8px 22px rgba(7,134,95,.32); transition: transform .15s ease; }
+    .pp-cta:active { transform: scale(.98); }
+    .pp-ctaw { margin-top: 22px; }
+    .pp-sk { height: 120px; margin: 16px; border-radius: 18px; background: linear-gradient(90deg, var(--ll-surface-2,#e8eeeb) 25%, var(--ll-surface,#fff) 50%, var(--ll-surface-2,#e8eeeb) 75%); background-size: 200% 100%; animation: llShimmer 1.3s infinite; }
+    .pp-sheet { position: fixed; inset: 0; z-index: 95; display: none; } .pp-sheet.open { display: block; }
+    .pp-scrim { position: absolute; inset: 0; background: rgba(8,20,16,.5); animation: llFade .2s ease; }
+    .pp-panel { position: absolute; left: 0; right: 0; bottom: 0; max-height: 82vh; overflow-y: auto; background: var(--ll-surface, #fff); color: var(--ll-text); border-radius: 26px 26px 0 0; padding: 10px 18px calc(22px + env(safe-area-inset-bottom, 0px)); animation: llSheetUp .3s cubic-bezier(.2,.8,.2,1); max-width: 640px; margin: 0 auto; }
+    .pp-grab { width: 42px; height: 4px; border-radius: 4px; background: var(--ll-border, #cbd5e1); margin: 0 auto 10px; }
+    .pp-rv { padding: 14px 0; border-top: 1px solid var(--ll-border, #e2e8f0); } .pp-rv .t { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--ll-text-2, #64748b); font-weight: 600; } .pp-rv .t i { font-style: normal; color: #f5a30a; font-size: 15px; letter-spacing: 1px; } .pp-rv p { margin: 6px 0 0; font-size: 14.5px; line-height: 1.5; }
+    @media (max-width: 767px) {
+      .pp-old { display: none !important; }
+      #app { padding-bottom: 96px !important; }
+      .pp-ctaw { position: fixed; left: 16px; right: 16px; bottom: calc(var(--ll-tab-h, 64px) + env(safe-area-inset-bottom, 0px) + 12px); margin: 0; z-index: 40; }
+      body:not(.ll-has-tabbar) .pp-ctaw { bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); }
+    }
+    @media (min-width: 768px) { #app { padding-top: 24px !important; } .pp-hero { border-radius: 26px 26px 0 0; } }
+    @media (prefers-reduced-motion: reduce) { .pp-card, .pp-row, .pp-sk { animation: none !important; } }
+  </style>
   <script src="ll-theme-init.js"></script>
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -29,7 +85,7 @@
   <link rel="stylesheet" href="ll-app.css">
 </head>
 <body class="min-h-screen flex flex-col bg-slate-50 antialiased selection:bg-emerald-100 selection:text-emerald-800" data-ll-page="provider-profile" data-ll-role="public">
-<header class="bg-white border-b border-slate-200/80 sticky top-0 z-30"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+<header class="pp-old bg-white border-b border-slate-200/80 sticky top-0 z-30"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
     <a href="index.html" aria-label="LifeLink home"><img src="images/lifelink-logo.png" alt="LifeLink" class="h-10 w-auto"></a>
     <nav class="hidden sm:flex items-center gap-6 text-sm font-extrabold text-slate-600"><a href="discovery.html" class="hover:text-emerald-600">Find providers</a><a href="provider-onboarding.html" class="hover:text-emerald-600">For providers</a><a href="trust-safety.html" class="hover:text-emerald-600">Trust &amp; Safety</a></nav>
     <div class="flex items-center gap-3"><div data-ll-bell></div><div data-ll-account class="flex items-center gap-2"></div></div></div></header><main id="app" class="flex-grow max-w-3xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6"></main>

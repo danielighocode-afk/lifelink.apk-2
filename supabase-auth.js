@@ -92,7 +92,7 @@
 /* Phase 1 Part 2: signOut / reset / getProfile / updateProfile / requireAuth. */
 (function () {
   'use strict';
-  var EDITABLE = ['full_name', 'phone', 'avatar_url', 'onboarded', 'interests', 'home_area'];
+  var EDITABLE = ['full_name', 'phone', 'avatar_url', 'onboarded', 'interests', 'home_area', 'date_of_birth', 'gender', 'about'];
   function A() { return window.LLAuth; }
   function signOut() {
     if (!window.LLSB) return Promise.resolve({ error: new Error('supabase-client.js did not load.') });
@@ -121,8 +121,15 @@
       return sb.auth.getUser().then(function (u) {
         var user = u && u.data && u.data.user;
         if ((u && u.error) || !user) return { user: null, profile: null, error: new Error('You are not signed in.') };
-        return sb.from('profiles').select('id, role, full_name, email, phone, avatar_url, onboarded, interests, home_area').eq('id', user.id).single().then(function (p) {
-          if (p && p.error) return { user: user, profile: null, error: p.error };
+        var base = 'id, role, full_name, email, phone, avatar_url, onboarded, interests, home_area';
+        // Optional profile details (migration 008). If those columns are not there yet, fall back to the base fields so sign-in never breaks.
+        return sb.from('profiles').select(base + ', date_of_birth, gender, about').eq('id', user.id).single().then(function (p) {
+          if (p && p.error) {
+            return sb.from('profiles').select(base).eq('id', user.id).single().then(function (q) {
+              if (q && q.error) return { user: user, profile: null, error: q.error };
+              return { user: user, profile: q.data, error: null };
+            });
+          }
           return { user: user, profile: p.data, error: null };
         });
       });
@@ -141,6 +148,16 @@
       var pe = A().validatePhone(clean.phone);
       if (pe) return Promise.resolve({ data: null, error: new Error(pe) });
       clean.phone = A().trim(clean.phone);
+    }
+    if (Object.prototype.hasOwnProperty.call(clean, 'about') && clean.about != null) {
+      clean.about = String(clean.about).trim();
+      if (clean.about.length > 200) return Promise.resolve({ data: null, error: new Error('About me can be at most 200 characters.') });
+      if (!clean.about) clean.about = null;
+    }
+    if (Object.prototype.hasOwnProperty.call(clean, 'gender') && clean.gender && ['male', 'female', 'other', 'prefer_not_to_say'].indexOf(clean.gender) < 0) return Promise.resolve({ data: null, error: new Error('Choose a valid gender option.') });
+    if (Object.prototype.hasOwnProperty.call(clean, 'date_of_birth') && clean.date_of_birth) {
+      var dob = new Date(clean.date_of_birth + 'T00:00:00');
+      if (isNaN(dob.getTime()) || dob > new Date() || dob.getFullYear() < 1900) return Promise.resolve({ data: null, error: new Error('Enter a valid date of birth.') });
     }
     if (Object.keys(clean).length === 0) return Promise.resolve({ data: null, error: new Error('Nothing to update.') });
     return window.LLSB.getClient().then(function (sb) {

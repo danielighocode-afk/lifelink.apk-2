@@ -21,6 +21,35 @@
     .field:focus { border-color: #059669; background: #fff; }
     .lbl { display: block; font-size: .75rem; font-weight: 800; color: #334155; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .375rem; }
   </style>
+  <style>
+    #app { max-width: 640px !important; }
+    .cq-card { background: var(--ll-surface, #fff); border: 1px solid var(--ll-border, #dfe7e3); border-radius: 20px; padding: 16px; animation: cqIn .4s cubic-bezier(.2,.8,.2,1) both; }
+    @keyframes cqIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .cq-req h1 { color: var(--ll-text) !important; }
+    .cq-hd { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; }
+    .cq-hd h2 { margin: 0; font-size: 17px; font-weight: 800; color: var(--ll-text); }
+    .cq-hd label { font-size: 12.5px; font-weight: 700; color: var(--ll-text-2, #64748b); }
+    .cq-hd select { margin-left: 4px; background: var(--ll-surface, #fff); color: var(--ll-text); border: 1px solid var(--ll-border, #dfe7e3); border-radius: 10px; padding: 6px 8px; font: inherit; font-size: 12.5px; font-weight: 700; }
+    .cq-list { display: grid; gap: 14px; }
+    .cq-q.acc { border-color: var(--ll-primary, #07865f); box-shadow: 0 0 0 3px rgba(7,134,95,.12); }
+    .cq-pv { display: flex; align-items: center; gap: 12px; }
+    .cq-pn { display: block; font-size: 16px; font-weight: 800; color: var(--ll-text); text-decoration: none; }
+    .cq-ps { margin: 2px 0 0; font-size: 13px; font-weight: 600; color: var(--ll-text-2, #64748b); }
+    .cq-box { display: flex; gap: 12px; align-items: center; margin-top: 14px; padding: 14px; border-radius: 16px; background: rgba(7,134,95,.09); border: 1px solid rgba(7,134,95,.28); }
+    .cq-box svg { width: 28px; height: 28px; color: var(--ll-primary, #07865f); flex: none; }
+    .cq-box small { display: block; font-size: 12.5px; font-weight: 700; color: var(--ll-text-2, #64748b); }
+    .cq-box b { display: block; font-size: 24px; font-weight: 800; color: var(--ll-primary, #07865f); line-height: 1.2; }
+    .cq-box em { font-style: normal; font-size: 12.5px; font-weight: 600; color: var(--ll-text-2, #64748b); }
+    .cq-msg { margin: 12px 0 0; padding: 12px; border-radius: 14px; background: var(--ll-surface-2, #eef3f0); font-size: 14px; line-height: 1.5; color: var(--ll-text); white-space: pre-wrap; }
+    .cq-fee { margin: 12px 0 0; font-size: 12.5px; line-height: 1.5; font-weight: 600; color: var(--ll-text-2, #64748b); }
+    .cq-act { display: grid; gap: 10px; margin-top: 14px; }
+    .cq-go { display: flex; align-items: center; justify-content: center; gap: 8px; border: 0; background: var(--ll-primary, #07865f); color: #fff; font: inherit; font-size: 15.5px; font-weight: 800; padding: 15px; border-radius: 15px; cursor: pointer; box-shadow: 0 8px 20px rgba(7,134,95,.28); transition: transform .15s; }
+    .cq-go svg { width: 18px; height: 18px; } .cq-go:active { transform: scale(.98); }
+    .cq-sec { border: 1px solid var(--ll-border, #dfe7e3); background: transparent; color: var(--ll-text); font: inherit; font-size: 14.5px; font-weight: 700; padding: 13px; border-radius: 15px; cursor: pointer; }
+    .cq-ok { text-align: center; font-weight: 800; color: var(--ll-primary, #07865f); }
+    @media (max-width: 767px) { #app { padding-top: calc(14px + env(safe-area-inset-top, 0px)) !important; padding-bottom: 96px !important; } }
+    @media (prefers-reduced-motion: reduce) { .cq-card { animation: none !important; } }
+  </style>
   <script src="ll-theme-init.js"></script>
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">

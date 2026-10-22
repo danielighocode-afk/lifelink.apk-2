@@ -3,7 +3,7 @@
 (function () {
   'use strict';
   var page = (document.body && document.body.getAttribute('data-ll-page')) || '';
-  var HIDE = { tracking: 1, signin: 1, admin: 1, welcome: 1 };
+  var HIDE = { signin: 1, admin: 1, welcome: 1 };
   var cap = window.Capacitor, NATIVE = !!(cap && typeof cap.isNativePlatform === 'function' && cap.isNativePlatform());
   if (NATIVE) document.documentElement.classList.add('ll-native');
   function plug(n) { return NATIVE && cap.Plugins && cap.Plugins[n] ? cap.Plugins[n] : null; }
@@ -19,6 +19,7 @@
     var sb = plug('StatusBar'); if (sb) { try { sb.setStyle({ style: dark ? 'DARK' : 'LIGHT' }); sb.setBackgroundColor({ color: dark ? '#101A18' : '#F5F8F6' }); } catch (e) {} }
   }
   function setPref(pref) { try { localStorage.setItem('ll-theme', pref); } catch (e) {} applyTheme(pref); }
+  window.LLApp = { setTheme: function (p) { setPref(p); }, getTheme: function () { return getPref(); } };
   function getPref() { return document.documentElement.getAttribute('data-theme-pref') || 'system'; }
   if (mq && mq.addEventListener) mq.addEventListener('change', function () { if (getPref() === 'system') applyTheme('system'); });
 
@@ -47,11 +48,11 @@
   /* ---------------- tab sets per role ---------------- */
   function tabsFor(role) {
     if (role === 'customer') return [
-      { k: 'home', l: 'Home', i: I.home, h: 'dashboard.html', m: function (p, s) { return p === 'dashboard.html' && (!s || s === 'overview' || s === 'requests'); } },
-      { k: 'bk', l: 'Bookings', i: I.jobs, h: 'dashboard.html?section=bookings', m: function (p, s) { return p === 'dashboard.html' && s === 'bookings'; } },
+      { k: 'home', l: 'Home', i: I.home, h: NATIVE ? 'home.html' : 'dashboard.html', m: function (p, s) { return NATIVE ? (p === 'home.html' || p === 'discovery.html' || p === 'provider-profile.html' || p === 'request.html' || p === 'compare-quotes.html') : (p === 'dashboard.html' && (!s || s === 'overview' || s === 'requests')); } },
+      { k: 'bk', l: 'Bookings', i: I.jobs, h: 'dashboard.html?section=bookings', m: function (p, s) { return (p === 'dashboard.html' && s === 'bookings') || p === 'tracking.html' || p === 'booking.html'; } },
       { k: 'wal', l: 'Wallet', i: I.wallet, h: 'dashboard.html?section=wallet', m: function (p, s) { return (p === 'dashboard.html' && s === 'wallet') || p === 'payment.html'; } },
       { k: 'msg', l: 'Messages', i: I.chat, h: 'dashboard.html?section=messages', badge: true, m: function (p, s) { return p === 'dashboard.html' && s === 'messages'; } },
-      { k: 'more', l: 'Profile', i: I.user, more: true, m: function (p) { return p === 'settings.html'; } }
+      { k: 'pf', l: 'Profile', i: I.user, h: 'profile.html', m: function (p) { return p === 'profile.html' || p === 'settings.html'; } }
     ];
     if (role === 'provider') return [
       { k: 'home', l: 'Home', i: I.home, h: 'provider-dashboard.html', m: function (p, s) { return p === 'provider-dashboard.html' && !s; } },
@@ -62,7 +63,7 @@
     ];
     if (role === 'admin') return null;
     return [   // signed out
-      { k: 'home', l: 'Home', i: I.home, h: 'index.html', m: function (p) { return p === 'index.html' || p === ''; } },
+      { k: 'home', l: 'Home', i: I.home, h: NATIVE ? 'home.html' : 'index.html', m: function (p) { return p === 'index.html' || p === 'home.html' || p === ''; } },
       { k: 'find', l: 'Find', i: I.search, h: 'discovery.html', m: function (p) { return p === 'discovery.html' || p === 'provider-profile.html'; } },
       { k: 'safe', l: 'Safety', i: I.shield, h: 'trust-safety.html', m: function (p) { return p === 'trust-safety.html'; } },
       { k: 'in', l: 'Sign in', i: I.user, h: 'signin.html', m: function () { return false; } }
@@ -127,6 +128,7 @@
     document.body.appendChild(wrap);
     bindSeg(wrap);
     var openBtn = nav.querySelector('[data-more]');
+    if (!openBtn) { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); return; }
     function close() { wrap.classList.remove('open'); document.removeEventListener('keydown', onKey); openBtn.focus(); }
     function onKey(e) { if (e.key === 'Escape') close(); }
     openBtn.onclick = function () { wrap.classList.add('open'); document.addEventListener('keydown', onKey); var f = wrap.querySelector('a,button'); if (f) f.focus(); };
@@ -136,6 +138,7 @@
 
   /* ---------------- app-style extras (read-only; no business logic) ---------------- */
   function quickActions(role) {
+    var pg = (location.pathname.split('/').pop() || ''); if (pg !== 'dashboard.html' && pg !== 'provider-dashboard.html') return;
     var host = document.getElementById('app'); if (!host || !host.parentNode || document.querySelector('.ll-quick')) return;
     var sec = new URLSearchParams(location.search).get('section') || 'overview'; if (sec !== 'overview') return;
     var items = role === 'customer' ? [
@@ -155,14 +158,15 @@
   function nativeGlue(profile) {
     if (!NATIVE) return;
     var file = location.pathname.split('/').pop() || 'index.html';
-    // returning, signed-in user opening the app lands on their dashboard instead of the marketing page
-    if (profile && (file === 'index.html' || file === '') && window.LL && LL.home) { location.replace(LL.home(profile.role)); return; }
+    // the app's first screen is home.html (find a service). Providers and admins go straight to their own workspace.
+    if (profile && file === 'home.html' && (profile.role === 'provider' || profile.role === 'admin') && window.LL && LL.home) { location.replace(LL.home(profile.role)); return; }
     var app = plug('App');
     if (app && app.addListener) {
-      var roots = { 'index.html': 1, 'dashboard.html': 1, 'provider-dashboard.html': 1, 'welcome.html': 1, 'admin.html': 1 };
+      var roots = { 'index.html': 1, 'home.html': 1, 'dashboard.html': 1, 'provider-dashboard.html': 1, 'welcome.html': 1, 'admin.html': 1 };
       app.addListener('backButton', function () {
         var sheet = document.querySelector('.ll-sheet-wrap.open');
         if (sheet) { sheet.classList.remove('open'); return; }
+        var fs = document.querySelector('.dc-sheet.open'); if (fs) { fs.classList.remove('open'); document.body.style.overflow = ''; return; }
         var atRoot = roots[file] && !new URLSearchParams(location.search).get('section');
         if (!atRoot && history.length > 1) history.back(); else if (app.exitApp) app.exitApp();
       });

@@ -377,7 +377,7 @@
             // Route new customers to the protected dashboard. Onboarding can
             // be completed from there; this avoids a loop through a stale or
             // incomplete personalize.html route.
-            location.replace('dashboard.html');
+            location.replace((window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform()) ? 'home.html' : 'dashboard.html');
           }
         });
       }

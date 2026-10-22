@@ -17,27 +17,95 @@
   function age(iso) { return Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000)); }
   var ACTIVE = ['provider_on_the_way', 'arrived'];
 
+  var I_BACK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
+  var I_TOOL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 00-5 5L3 18l3 3 6.7-6.7a4 4 0 005-5l-2.5 2.5-2.4-.6-.6-2.4z"/></svg>';
+  var I_PIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11.5A7 7 0 005 9.5C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.4"/></svg>';
+  var I_CHAT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12z"/></svg>';
+  var I_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg>';
+  var I_NEXT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>';
+  var I_OK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-2px;display:inline-block"><path d="M5 12l5 5 9-10"/></svg>';
+  var info = { prov: null, req: null }, chatH = null, sheetEl = null;
+
   function shell(b) {
     var isProv = me.id === b.provider_id;
+    var title = isProv ? 'Route to the customer' : 'Tracking Your Provider';
     app.innerHTML =
-      '<div class="relative rounded-3xl overflow-hidden border border-slate-200 bg-slate-100" style="height:min(80dvh,780px);min-height:460px">' +
-        '<div id="trkMap" class="absolute inset-0"></div>' +
-        '<button id="trkFit" type="button" class="llm-fab" style="left:14px;top:14px" aria-label="Show both locations" title="Show both"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>' +
-        '<button id="trkMe" type="button" class="llm-fab" style="right:14px;top:78px" aria-label="Show my location" title="My location"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3.5" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg></button>' +
-        '<div class="llm-sheet"><div class="llm-grab"></div>' +
-          '<div class="flex items-center justify-between gap-3"><h1 class="text-base font-extrabold text-slate-900">' + (isProv ? 'Route to the customer' : 'Where is my provider?') + '</h1>' + LL.badge(b.status) + '</div>' +
-          '<p id="trkMsg" class="text-sm font-bold text-slate-700 mt-2"></p>' +
-          '<p id="trkSub" class="text-xs font-semibold text-slate-400 mt-0.5"></p>' +
-          '<p id="trkAddr" class="hidden text-sm font-extrabold text-slate-800 mt-2"></p>' +
-        '</div>' +
+      '<div class="tk-bar"><button type="button" class="tk-back" id="tkBack" aria-label="Back">' + I_BACK + '</button><h1>' + title + '</h1></div>' +
+      '<div class="tk-map">' +
+        '<div id="trkMap"></div>' +
+        '<div class="tk-bub" id="tkBub">' + I_TOOL + '<div style="min-width:0"><b id="tkBubN">' + (isProv ? 'Customer' : 'Your provider') + '</b><small id="tkBubS">Loading…</small></div></div>' +
+        '<button id="trkMe" type="button" class="llm-fab" style="left:14px;bottom:60px" aria-label="Show my location" title="My location"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3.5" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg></button>' +
+        '<button id="trkFit" type="button" class="llm-fab" style="right:14px;bottom:60px" aria-label="Show both locations" title="Show both"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>' +
       '</div>' +
-      '<section id="trkShare" class="bg-white border border-slate-200 rounded-3xl p-5 space-y-2"></section>' +
-      '<div class="flex flex-wrap gap-3"><a href="' + (isProv ? 'provider-dashboard.html?section=bookings' : 'booking.html?id=' + LL.esc(b.id)) + '" class="border border-slate-200 hover:bg-slate-50 text-slate-700 font-extrabold text-sm px-5 py-3 rounded-xl">Back to booking</a></div>' +
-      '<p class="text-[11px] font-semibold text-slate-400 text-center">Only you and the other person on this booking can see locations. Shared points are deleted when the job starts or the booking ends.</p>';
+      '<section class="tk-card">' +
+        '<div class="tk-pv"><div class="av" id="tkAv">' + (isProv ? 'C' : '·') + '</div><div style="min-width:0;flex:1"><h2 id="tkName">' + (isProv ? 'Your customer' : 'Your provider') + '</h2><p class="st" id="trkMsg"></p><p class="rt" id="tkRate"></p></div></div>' +
+        '<p class="tk-sub" id="trkSub"></p>' +
+        '<p class="tk-addr hidden" id="trkAddr" style="display:none"></p>' +
+        (isProv ? '' : '<div class="tk-act" id="tkAct"><button type="button" class="tk-msgb" id="tkMsgBtn">' + I_CHAT + 'Message</button><button type="button" class="tk-canb" id="tkCanBtn" style="display:none">' + I_X + 'Cancel</button></div>') +
+      '</section>' +
+      '<a class="tk-sum" id="tkSum" href="' + (isProv ? 'provider-dashboard.html?section=bookings' : 'booking.html?id=' + LL.esc(b.id)) + '"><div><b>Booking #' + LL.esc(String(b.id).slice(0, 8).toUpperCase()) + '</b><small id="tkSumS">' + LL.naira(b.price_kobo) + '</small></div>' + I_NEXT + '</a>' +
+      '<section id="trkShare" class="tk-card tk-more" style="margin-top:14px;box-shadow:none;animation:none"></section>' +
+      '<p class="tk-sub" style="text-align:center;margin:14px 20px 0">Only you and the other person on this booking can see locations. Shared points are deleted when the job starts or the booking ends.</p>';
     return LLMap.create(document.getElementById('trkMap'), { zoom: 15 });
   }
 
-  function setMsg(t, sub) { document.getElementById('trkMsg').textContent = t; document.getElementById('trkSub').textContent = sub || ''; }
+  function setMsg(t, sub) {
+    document.getElementById('trkMsg').textContent = t; document.getElementById('trkSub').textContent = sub || '';
+    var bs = document.getElementById('tkBubS'); if (bs) bs.textContent = t;
+  }
+
+  /* provider / request details for the card (display only) */
+  function fillInfo(b) {
+    var isProv = me.id === b.provider_id;
+    function stat() { var el = document.getElementById('tkSumS'); if (el) el.textContent = (info.req && info.req.category_text ? info.req.category_text + ' · ' : '') + LL.naira(b.price_kobo); }
+    if (info.req) {
+      stat();
+      var ad = document.getElementById('trkAddr');
+      if (ad && !ad.getAttribute('data-set') && info.req.location_area) { ad.innerHTML = I_PIN + '<span>' + LL.esc(info.req.location_area) + '</span>'; ad.style.display = 'flex'; ad.classList.remove('hidden'); }
+    }
+    if (isProv || !info.prov) return;
+    var p = info.prov;
+    document.getElementById('tkName').innerHTML = LL.esc(p.business_name) + ' ' + '<span style="color:var(--ll-primary)">' + I_OK + '</span>';
+    document.getElementById('tkAv').innerHTML = p.avatar_url ? '<img src="' + LL.esc(p.avatar_url) + '" alt="">' : LL.esc(LL.initials(p.business_name));
+    document.getElementById('tkRate').innerHTML = p.rating_avg != null ? '<span style="color:#f5a30a">★</span> ' + Number(p.rating_avg).toFixed(1) + ' (' + (p.review_count || 0) + ')' : (p.category ? LL.esc(p.category) : '');
+    var bn = document.getElementById('tkBubN'); if (bn) bn.textContent = p.business_name;
+  }
+  function loadInfo(b) {
+    var isProv = me.id === b.provider_id;
+    return Promise.all([
+      isProv ? Promise.resolve(null) : LLApi.catalog.provider(b.provider_id).catch(function () { return null; }),
+      LLApi.customer && LLApi.customer.request ? LLApi.customer.request(b.request_id).catch(function () { return null; }) : Promise.resolve(null)
+    ]).then(function (r) { info.prov = r[0]; info.req = r[1]; fillInfo(b); });
+  }
+  function openChat(b) {
+    LLApi.messages.open(b.request_id, b.provider_id).then(function (conv) {
+      var cid = conv && conv.id ? conv.id : conv;
+      if (!sheetEl) { sheetEl = document.createElement('div'); sheetEl.className = 'tk-sheet dc-sheet'; sheetEl.setAttribute('role', 'dialog'); document.body.appendChild(sheetEl); }
+      sheetEl.innerHTML = '<div class="tk-scrim"></div><div class="tk-panel"><div class="tk-grab"></div><h3>Chat with ' + LL.esc(info.prov ? info.prov.business_name : 'your provider') + '</h3><div id="tkChat"></div></div>';
+      sheetEl.querySelector('.tk-scrim').onclick = closeChat;
+      sheetEl.classList.add('open'); document.body.style.overflow = 'hidden';
+      if (chatH) chatH.destroy();
+      chatH = LLChat.mount(document.getElementById('tkChat'), cid);
+    }, function (e) { LL.toast(e.message, true); });
+  }
+  function closeChat() { if (chatH) { chatH.destroy(); chatH = null; } if (sheetEl) sheetEl.classList.remove('open'); document.body.style.overflow = ''; }
+  function wireActions(b) {
+    var back = document.getElementById('tkBack'); if (back) back.onclick = function () { if (history.length > 1) history.back(); else location.href = me.id === b.provider_id ? 'provider-dashboard.html?section=bookings' : 'booking.html?id=' + encodeURIComponent(b.id); };
+    var m = document.getElementById('tkMsgBtn'); if (m) m.onclick = function () { openChat(b); };
+    var c = document.getElementById('tkCanBtn');
+    if (c) c.onclick = function () {
+      LL.confirm({ title: 'Cancel this booking?', body: 'Nothing is charged. The fee reserved from both wallets is returned and the provider will be told.', confirmText: 'Cancel booking', danger: true }).then(function (ok) {
+        if (!ok) return;
+        LL.busy(c, 'Cancelling…', function () { return LLApi.customer.cancelBooking(b.id); }).then(function () { LL.goWithToast('dashboard.html?section=bookings', 'Booking cancelled. Your reserved fee was returned.'); }, function (e) { LL.toast(e.message, true); });
+      });
+    };
+  }
+  function cancelVisible(b) {
+    var c = document.getElementById('tkCanBtn'); if (!c) return;
+    var ok = ['confirmed', 'provider_on_the_way', 'arrived'].indexOf(b.status) >= 0 && b.fee_status !== 'charged';
+    c.style.display = ok ? 'flex' : 'none';
+    document.getElementById('tkAct').style.gridTemplateColumns = ok ? '1fr 1fr' : '1fr';
+  }
 
   function sharePanel(b) {
     var el = document.getElementById('trkShare');
@@ -92,7 +160,7 @@
     } else if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
     if (pin && !addrDone) {
       addrDone = true;
-      LLMap.reverse(pin.lat, pin.lng).then(function (a) { var el = document.getElementById('trkAddr'); if (el && a && a.line) { el.textContent = 'Job location: ' + a.line; el.classList.remove('hidden'); } });
+      LLMap.reverse(pin.lat, pin.lng).then(function (a) { var el = document.getElementById('trkAddr'); if (el && a && a.line) { el.innerHTML = I_PIN + '<span>' + LL.esc(a.line) + '</span>'; el.setAttribute('data-set', '1'); el.style.display = 'flex'; el.classList.remove('hidden'); } });
     }
     if (bounds.length && !draw.fitted) { map.fitBounds(bounds, { padding: [40, 40], maxZoom: 17 }); draw.fitted = true; }
     else if (bounds.length > 1 && markers.prov) { /* keep the user's own zoom; only recentre if provider left the view */ if (!map.getBounds().contains(markers.prov.getLatLng())) map.fitBounds(bounds, { padding: [40, 40], maxZoom: 17 }); }
@@ -108,13 +176,13 @@
     var a = age(provPt.updated_at), stale = a > 60;
     var d = pin ? dist(provPt.lat, provPt.lng, pin.lat, pin.lng) : null;
     if (isProv) setMsg(d != null ? 'You are about ' + fmt(d) + ' from the job location.' : 'Your location is being shared.', stale ? 'Your last location update was ' + a + ' s ago. Check your signal.' : 'Within ' + 100 + ' m you can tap "I have arrived".');
-    else setMsg(d != null ? 'Your provider is about ' + fmt(d) + ' away.' : 'Your provider is on the way.', stale ? 'Location not updating (last update ' + a + ' s ago).' : 'Updated ' + a + ' s ago.');
+    else setMsg(d != null ? 'On the way · about ' + fmt(d) + ' away' : 'On the way', stale ? 'Location not updating (last update ' + a + ' s ago).' : 'Updated ' + a + ' s ago.');
   }
 
   function refresh() {
     return LLApi.tracking.snapshot(id).then(function (snap) {
       if (!snap) return;
-      ctx = snap; sharePanel(snap.booking); draw(snap);
+      ctx = snap; sharePanel(snap.booking); cancelVisible(snap.booking); draw(snap);
     }).catch(function () {});
   }
 
@@ -134,11 +202,11 @@
         };
         var fit = document.getElementById('trkFit');
         if (fit) fit.onclick = function () { var pts = Object.keys(markers).map(function (k) { return markers[k].getLatLng(); }); if (pts.length > 1) mapObj.flyToBounds(pts, { padding: [50, 50], maxZoom: 17, duration: 0.8 }); else if (pts.length) mapObj.flyTo(pts[0], 17, { duration: 0.8 }); };
-        sharePanel(snap.booking); draw(snap);
+        wireActions(snap.booking); loadInfo(snap.booking); sharePanel(snap.booking); cancelVisible(snap.booking); draw(snap);
         unsub = LLApi.tracking.subscribe(id, refresh);
         LL.onLive(refresh);
         poll = setInterval(refresh, 10000);
-        window.addEventListener('pagehide', function () { if (myDot) myDot.stop(); if (shareHandle) shareHandle.stop(); if (unsub) unsub(); clearInterval(poll); });
+        window.addEventListener('pagehide', function () { if (myDot) myDot.stop(); if (shareHandle) shareHandle.stop(); closeChat(); if (unsub) unsub(); clearInterval(poll); });
       }, function (e) { app.innerHTML = LL.error(e.message); });
     }).catch(function (e) { app.innerHTML = LL.error(e.message); });
   }

@@ -11,15 +11,16 @@
   var m = document.querySelector('meta[name="theme-color"]');
   if (!m) { m = document.createElement('meta'); m.name = 'theme-color'; document.head.appendChild(m); }
   m.content = dark ? '#101A18' : '#F5F8F6';
+  try { var fs = localStorage.getItem('ll-font'); if (fs === 'small') root.style.fontSize = '93.75%'; else if (fs === 'large') root.style.fontSize = '112.5%'; } catch (e) {}
 })();
 
-/* Native app (Capacitor APK) only: first launch shows the welcome screens once. Normal browsers are never redirected. */
+/* Native app (Capacitor APK) only: first launch shows the welcome screens once, then the app opens on home.html (find a service). Normal browsers are never redirected. */
 (function () {
   try {
     var cap = window.Capacitor;
     var native = cap && typeof cap.isNativePlatform === 'function' && cap.isNativePlatform();
     var file = location.pathname.split('/').pop() || 'index.html';
     var forced = /[?&]welcome=1\b/.test(location.search);
-    if ((native || forced) && file === 'index.html' && (forced || !localStorage.getItem('ll-welcomed'))) location.replace('welcome.html');
+    if ((native || forced) && file === 'index.html') location.replace(forced || !localStorage.getItem('ll-welcomed') ? 'welcome.html' : 'home.html');
   } catch (e) {}
 })();

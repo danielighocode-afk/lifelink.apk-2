@@ -21,6 +21,48 @@
     .field:focus { border-color: #059669; background: #fff; }
     .lbl { display: block; font-size: .75rem; font-weight: 800; color: #334155; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .375rem; }
   </style>
+  <style>
+    #app { max-width: 720px !important; padding-left: 0 !important; padding-right: 0 !important; padding-top: 0 !important; }
+    .tk-bar { display: none; align-items: center; gap: 10px; padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 8px; background: var(--ll-bg, #f5f8f6); }
+    .tk-bar h1 { margin: 0; font-size: 18px; font-weight: 800; color: var(--ll-text); }
+    .tk-back { width: 40px; height: 40px; border-radius: 50%; border: 0; background: transparent; color: var(--ll-text); display: grid; place-items: center; cursor: pointer; }
+    .tk-back svg { width: 22px; height: 22px; }
+    .tk-map { position: relative; height: 46dvh; min-height: 300px; background: #e8eeeb; overflow: hidden; }
+    .tk-map #trkMap { position: absolute; inset: 0; }
+    .tk-bub { position: absolute; z-index: 1002; top: 14px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 100px); display: flex; align-items: center; gap: 10px; background: #fff; color: #0f172a; border-radius: 16px; padding: 9px 14px; box-shadow: 0 6px 20px rgba(15,23,42,.2); pointer-events: none; animation: tkDrop .5s cubic-bezier(.2,.8,.2,1) both; }
+    @keyframes tkDrop { from { opacity: 0; transform: translate(-50%, -10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+    .tk-bub svg { width: 24px; height: 24px; color: #0b7a58; flex: none; }
+    .tk-bub b { display: block; font-size: 13.5px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tk-bub small { display: block; font-size: 12px; font-weight: 700; color: #0b7a58; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tk-card { position: relative; z-index: 2; margin: -46px 14px 0; background: var(--ll-surface, #fff); border: 1px solid var(--ll-border, #dfe7e3); border-radius: 22px; padding: 16px; box-shadow: 0 10px 30px rgba(15,23,42,.14); animation: tkUp .5s .1s cubic-bezier(.2,.8,.2,1) both; }
+    @keyframes tkUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+    .tk-pv { display: flex; gap: 12px; align-items: center; }
+    .tk-pv .av { width: 56px; height: 56px; border-radius: 50%; overflow: hidden; flex: none; background: linear-gradient(135deg, #0b7a58, #18b785); color: #fff; display: grid; place-items: center; font-weight: 800; }
+    .tk-pv .av img { width: 100%; height: 100%; object-fit: cover; }
+    .tk-pv h2 { margin: 0; font-size: 16.5px; font-weight: 800; color: var(--ll-text); }
+    .tk-pv .st { margin: 3px 0 0; font-size: 13px; font-weight: 700; color: var(--ll-primary, #07865f); }
+    .tk-pv .rt { margin: 2px 0 0; font-size: 13px; font-weight: 600; color: var(--ll-text-2, #64748b); }
+    .tk-sub { margin: 10px 0 0; font-size: 12.5px; font-weight: 600; color: var(--ll-text-2, #64748b); }
+    .tk-addr { display: flex; gap: 8px; align-items: flex-start; margin-top: 12px; font-size: 14px; font-weight: 600; color: var(--ll-text); }
+    .tk-addr svg { width: 18px; height: 18px; color: var(--ll-primary, #07865f); flex: none; margin-top: 1px; }
+    .tk-act { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+    .tk-act button, .tk-act a { display: flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 14px; padding: 13px 8px; font: inherit; font-size: 14.5px; font-weight: 800; cursor: pointer; text-decoration: none; transition: transform .15s; }
+    .tk-act button:active, .tk-act a:active { transform: scale(.97); }
+    .tk-act svg { width: 18px; height: 18px; }
+    .tk-msgb { background: #0f3d30; color: #fff; } .tk-canb { background: rgba(225,29,72,.1); color: #be123c; }
+    .tk-sum { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 14px 14px 0; padding: 14px 16px; background: var(--ll-surface, #fff); border: 1px solid var(--ll-border, #dfe7e3); border-radius: 18px; text-decoration: none; color: var(--ll-text); }
+    .tk-sum b { display: block; font-size: 14.5px; } .tk-sum small { font-size: 13px; color: var(--ll-text-2, #64748b); font-weight: 600; }
+    .tk-sum svg { width: 18px; height: 18px; color: var(--ll-text-2, #64748b); flex: none; }
+    .tk-more { margin: 14px 14px 0; }
+    .tk-sheet { position: fixed; inset: 0; z-index: 95; display: none; } .tk-sheet.open { display: block; }
+    .tk-scrim { position: absolute; inset: 0; background: rgba(8,20,16,.5); animation: llFade .2s ease; }
+    .tk-panel { position: absolute; left: 0; right: 0; bottom: 0; height: 78dvh; display: flex; flex-direction: column; background: var(--ll-surface, #fff); color: var(--ll-text); border-radius: 26px 26px 0 0; padding: 10px 16px calc(14px + env(safe-area-inset-bottom, 0px)); animation: llSheetUp .3s cubic-bezier(.2,.8,.2,1); max-width: 720px; margin: 0 auto; }
+    .tk-panel h3 { margin: 6px 0 10px; font-size: 16px; font-weight: 800; } .tk-panel #tkChat { flex: 1; min-height: 0; overflow: auto; }
+    .tk-grab { width: 42px; height: 4px; border-radius: 4px; background: var(--ll-border, #cbd5e1); margin: 0 auto; }
+    @media (max-width: 767px) { .tk-old { display: none !important; } .tk-bar { display: flex; } #app { padding-bottom: 24px !important; } }
+    @media (min-width: 768px) { #app { padding-top: 20px !important; } .tk-map { border-radius: 24px; height: 52vh; } .tk-card, .tk-sum, .tk-more { margin-left: 0; margin-right: 0; } }
+    @media (prefers-reduced-motion: reduce) { .tk-bub, .tk-card { animation: none !important; } }
+  </style>
   <script src="ll-theme-init.js"></script>
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -29,7 +71,7 @@
   <link rel="stylesheet" href="ll-app.css">
 </head>
 <body class="min-h-screen flex flex-col bg-slate-50 antialiased selection:bg-emerald-100 selection:text-emerald-800" data-ll-page="tracking" data-ll-role="any">
-<header class="bg-white border-b border-slate-200/80 sticky top-0 z-30 shadow-xs">
+<header class="tk-old bg-white border-b border-slate-200/80 sticky top-0 z-30 shadow-xs">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
       <div class="flex items-center gap-4">
         <a href="dashboard.html" class="p-2 text-slate-500 hover:text-emerald-600 hover:bg-slate-50 rounded-xl transition" title="Back" id="backLink"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg></a>
@@ -42,7 +84,7 @@
     </div>
   </header>
   <main class="flex-grow max-w-5xl w-full mx-auto px-4 py-6 space-y-4" id="app"><p class="text-sm font-semibold text-slate-500 text-center py-16">Loading tracking…</p></main>
-  <script>document.addEventListener('DOMContentLoaded',function(){var t=setInterval(function(){if(window.LL&&LL.me){clearInterval(t);var h=LL.home(LL.me.role);document.getElementById('homeLink').href=h;document.getElementById('backLink').href=h;}},100);setTimeout(function(){clearInterval(t)},8000);});</script>
+  <script>document.addEventListener('DOMContentLoaded',function(){var t=setInterval(function(){if(window.LL&&LL.me){clearInterval(t);var h=LL.home(LL.me.role);var a=document.getElementById('homeLink');if(a)a.href=h;a=document.getElementById('backLink');if(a)a.href=h;}},100);setTimeout(function(){clearInterval(t)},8000);});</script>
 <script src="supabase-config.js"></script>
 <script src="supabase-client.js"></script>
 <script src="supabase-auth.js"></script>
