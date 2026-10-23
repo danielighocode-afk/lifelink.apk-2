@@ -35,15 +35,75 @@
     }
   </script>
   <style>
-    body {
-      background-color: #F8FAFC;
-      color: #0F172A;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-    }
-    .input-focus-effect:focus-within {
-      border-color: #059669;
-      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12);
-    }
+    /* Sign-in / sign-up look. Self-contained so it does not depend on the compiled Tailwind build. LifeLink green = primary, LifeLink blue = accents. */
+    :root { --au-blue: #2563eb; --au-ink: #0c1d44; --au-mute: #5f6f8c; --au-line: #dfe6f0; --au-field: #f6f8fc; --au-icon: #7b8aa6; }
+    html[data-theme="dark"] { --au-ink: #F0F7F3; --au-mute: #A5B9AE; --au-line: #30463D; --au-field: #22332D; --au-icon: #8fa59a; }
+    .hidden { display: none !important; }
+    .opacity-60 { opacity: .6; }
+    .au { min-height: 100vh; display: flex; flex-direction: column; position: relative; overflow-x: hidden; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: var(--au-ink); }
+    .au * { box-sizing: border-box; }
+
+    /* soft curves behind everything (same on sign in and sign up) */
+    .au-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+    .au-bg svg { position: absolute; display: block; }
+    .au-bg .tr { top: -70px; right: -100px; width: 360px; height: 360px; }
+    .au-bg .bl { left: 0; bottom: 0; width: min(80vw, 340px); height: auto; }
+    html[data-theme="dark"] .au-bg { opacity: .6; }
+
+    .au-head { position: relative; z-index: 2; width: 100%; max-width: 1120px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: calc(14px + env(safe-area-inset-top, 0px)) 20px 6px; }
+    .au-head img { height: 52px; width: auto; display: block; }
+    .au-help { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: var(--au-blue); font-weight: 700; font-size: 15px; text-decoration: none; }
+    .au-help svg { width: 26px; height: 26px; }
+    html[data-theme="dark"] .au-help { color: #7db4ff; }
+
+    .au-main { position: relative; z-index: 1; flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 18px 16px 30px; }
+    @media (min-width: 1024px) { .au-main { align-items: center; padding-top: 14px; } }
+    .au-card { position: relative; overflow: hidden; width: 100%; max-width: 440px; background: var(--ll-surface, #fff); border: 1px solid rgba(223, 230, 240, .7); border-radius: 26px; padding: 26px 24px 24px; box-shadow: 0 1px 2px rgba(15, 29, 68, .05), 0 18px 44px rgba(15, 29, 68, .09); }
+    html[data-theme="dark"] .au-card { border-color: var(--au-line); }
+    .au-card::before { content: ""; position: absolute; top: -80px; right: -70px; width: 240px; height: 240px; border-radius: 50%; background: rgba(7, 134, 95, .08); pointer-events: none; }
+    .au-card::after { content: ""; position: absolute; top: -40px; right: -125px; width: 240px; height: 240px; border-radius: 50%; background: rgba(37, 99, 235, .06); pointer-events: none; }
+    .au-card > * { position: relative; z-index: 1; }
+
+    .au-title { margin: 0; font-size: 32px; line-height: 1.1; font-weight: 800; letter-spacing: -.02em; color: var(--au-ink); }
+    .au-title .g { color: var(--ll-primary, #07865F); }
+    .au-sub { margin: 10px 0 0; max-width: 34ch; font-size: 15px; line-height: 1.45; font-weight: 500; color: var(--au-mute); }
+
+    .au-form { margin-top: 22px; display: grid; gap: 16px; }
+    .au-lab { display: block; margin: 0 0 8px; font-size: 14px; font-weight: 700; color: var(--au-ink); }
+    .au-lrow { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .au-lrow .au-lab { margin: 0; }
+    .au-lrow a { font-size: 13px; font-weight: 700; color: var(--ll-primary, #07865F); text-decoration: none; }
+    .au-field { display: flex; align-items: center; gap: 12px; height: 54px; padding: 0 14px; background: var(--au-field); border: 1px solid var(--au-line); border-radius: 16px; transition: border-color .15s, box-shadow .15s; }
+    .au-field:focus-within { border-color: var(--au-blue); box-shadow: 0 0 0 4px rgba(37, 99, 235, .14); }
+    .au-field > svg { width: 22px; height: 22px; flex: none; color: var(--au-icon); transition: color .15s; }
+    .au-field:focus-within > svg { color: var(--au-blue); }
+    html[data-theme] .au-field input.au-in:not([type=checkbox]):not([type=radio]):not([type=range]) { flex: 1; min-width: 0; height: 100%; min-height: 0; padding: 0; border: 0 !important; outline: 0; background: transparent !important; box-shadow: none !important; font: 500 16px 'Plus Jakarta Sans', system-ui, sans-serif !important; color: var(--au-ink); }
+    .au-in::placeholder { color: #8a97b0; opacity: 1; }
+    .au-eye { flex: none; width: 36px; height: 36px; margin-right: -6px; padding: 0; border: 0; border-radius: 10px; background: transparent; color: var(--au-icon); display: grid; place-items: center; cursor: pointer; }
+    .au-eye:hover { color: var(--au-blue); }
+    .au-eye svg { width: 22px; height: 22px; }
+
+    .au-rem { display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; font-size: 15px; font-weight: 500; color: var(--au-ink); }
+    .au-rem input { -webkit-appearance: none; appearance: none; flex: none; width: 26px; height: 26px; min-height: 0 !important; margin: 0; border-radius: 8px; border: 2px solid var(--au-line); background: transparent; display: grid; place-items: center; cursor: pointer; }
+    .au-rem input:checked { background: var(--ll-primary, #07865F); border-color: var(--ll-primary, #07865F); }
+    .au-rem input:checked::after { content: ""; width: 6px; height: 12px; border: solid #fff; border-width: 0 3px 3px 0; transform: rotate(45deg) translate(-1px, -1px); }
+    .au-rem input:focus-visible { outline: 3px solid rgba(37, 99, 235, .35); outline-offset: 2px; }
+
+    .au-err { margin: 0; font-size: 13px; font-weight: 700; color: #be123c; background: #fff1f2; border: 1px solid #fecdd3; border-radius: 14px; padding: 12px 14px; }
+    html[data-theme="dark"] .au-err { color: #fda4af; background: rgba(244, 63, 94, .12); border-color: rgba(244, 63, 94, .35); }
+
+    .au-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 58px; border: 0; border-radius: 18px; background: linear-gradient(180deg, #0a9a6c, #067a56); color: #fff; font: 800 17px 'Plus Jakarta Sans', system-ui, sans-serif; cursor: pointer; box-shadow: 0 10px 22px rgba(7, 134, 95, .28); transition: transform .12s, filter .15s; }
+    .au-btn:active { transform: scale(.985); }
+    .au-btn:focus-visible, .au-g:focus-visible { outline: 3px solid rgba(37, 99, 235, .4); outline-offset: 2px; }
+    .au-btn:disabled { cursor: default; }
+    .au-btn svg { width: 20px; height: 20px; }
+
+    .au-or { display: flex; align-items: center; gap: 14px; margin: 20px 0 16px; color: var(--au-mute); font-size: 15px; font-weight: 700; }
+    .au-or::before, .au-or::after { content: ""; flex: 1; height: 1px; background: var(--au-line); }
+    .au-g { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; height: 56px; border-radius: 18px; border: 1px solid var(--au-line); background: var(--ll-surface, #fff); color: var(--au-ink); font: 700 16px 'Plus Jakarta Sans', system-ui, sans-serif; cursor: pointer; }
+    .au-g svg { width: 24px; height: 24px; flex: none; }
+    .au-alt { margin: 22px 0 0; text-align: center; font-size: 14px; font-weight: 500; color: var(--au-mute); }
+    .au-alt a { color: var(--ll-primary, #07865F); font-weight: 800; text-decoration: none; white-space: nowrap; }
   </style>
   <script src="ll-theme-init.js"></script>
   <meta name="mobile-web-app-capable" content="yes">
@@ -52,144 +112,92 @@
   <meta name="apple-mobile-web-app-title" content="LifeLink">
   <link rel="stylesheet" href="ll-app.css">
 </head>
-<body class="min-h-screen flex flex-col bg-slate-50 antialiased selection:bg-emerald-100 selection:text-emerald-800" data-ll-page="signin" data-ll-role="public">
+<body class="au antialiased" data-ll-page="signin" data-ll-role="public">
 
-  <!-- TOP BRAND HEADER -->
-  <header class="bg-white border-b border-slate-200/80 sticky top-0 z-30 shadow-xs">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <!-- LIFELINK Logo & Tagline -->
-      <div class="flex items-center gap-3">
-        <a href="index.html" aria-label="LifeLink home" title="Go to LifeLink homepage"><img src="images/lifelink-logo.png" alt="LifeLink" class="h-12 w-auto object-contain"></a>
-        <div>
-          <span class="text-[10px] font-bold text-slate-400 tracking-wider uppercase">Find. Book. Get It Done.</span>
-        </div>
-      </div>
+  <!-- SOFT CURVES (decorative) -->
+  <div class="au-bg" aria-hidden="true">
+    <svg class="tr" viewBox="0 0 360 360"><circle cx="200" cy="160" r="180" fill="#07865F" opacity=".08"/><circle cx="262" cy="118" r="115" fill="#2563eb" opacity=".07"/></svg>
+    <svg class="bl" viewBox="0 0 340 270"><path d="M0 70 C110 75 230 150 300 270 L248 270 C190 175 100 108 0 102 Z" fill="#2563eb" opacity=".10"/><path d="M0 120 C90 120 190 172 252 270 L0 270 Z" fill="#34a77c" opacity=".35"/><path d="M0 162 C70 162 132 202 168 270 L0 270 Z" fill="#0b8a62" opacity=".85"/><path d="M0 208 C40 208 72 234 92 270 L0 270 Z" fill="#066b4b"/></svg>
+  </div>
 
-      <!-- Right Support Link & Region -->
-      <div class="flex items-center gap-4 text-xs font-semibold text-slate-500">
-        <div class="hidden sm:flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200">
-          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span class="text-slate-700 font-bold">Nigeria</span>
-        </div>
-        <a href="#" class="hover:text-emerald-600 transition flex items-center gap-1">
-          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-          Need Help?
-        </a>
-      </div>
-    </div>
+  <!-- TOP: existing LifeLink logo + Help -->
+  <header class="au-head">
+    <a href="index.html" aria-label="LifeLink home" title="Go to LifeLink homepage"><img src="images/lifelink-logo.png" alt="LifeLink"></a>
+    <a href="#" class="au-help"><svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><circle cx="12" cy="17.2" r=".6" fill="currentColor"/></svg>Help</a>
   </header>
 
   <!-- MAIN AUTHENTICATION CANVAS -->
-  <main class="flex-grow flex items-center justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+  <main class="au-main">
     <div class="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
 
-      <!-- LEFT COLUMN: CENTERED AUTHENTICATION CARD (7 Cols on LG) -->
+      <!-- AUTHENTICATION CARD -->
       <div class="lg:col-span-7 flex justify-center">
-        <div class="w-full max-w-md bg-white rounded-3xl p-7 sm:p-10 border border-slate-200 shadow-sm space-y-6">
-          
-          <!-- Welcome Heading & Subtitle -->
-          <div class="space-y-1.5">
-            <div class="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-xs font-extrabold px-3 py-1 rounded-full border border-emerald-200/80 mb-2">
-              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-              </svg>
-              Secure account access
-            </div>
-            <h1 id="authTitle" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Welcome back</h1>
-            <p id="authSubtitle" class="text-xs sm:text-sm font-semibold text-slate-500">Sign in to find trusted professionals near you.</p>
-          </div>
+        <div class="au-card">
 
-          <!-- INPUT FORM -->
-          <form id="authForm" onsubmit="return window.llHandleAuth(event)" class="space-y-4">
+          <h1 id="authTitle" class="au-title">Welcome back</h1>
+          <p id="authSubtitle" class="au-sub">Sign in to continue</p>
 
-            <!-- Full name (registration only) -->
-            <div id="nameWrap" class="space-y-1.5 hidden">
-              <label class="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">Full name</label>
-              <div class="input-focus-effect bg-slate-50 border border-slate-300 rounded-2xl p-1 transition flex items-center">
-                <input id="authFullName" type="text" autocomplete="name" placeholder="Adaeze Okafor" class="w-full bg-transparent text-sm font-semibold text-slate-800 placeholder-slate-400 outline-none px-3 py-2">
+          <form id="authForm" onsubmit="return window.llHandleAuth(event)" class="au-form">
+
+            <!-- Full name (sign up only) -->
+            <div id="nameWrap" class="hidden">
+              <label class="au-lab" for="authFullName">Full name</label>
+              <div class="au-field">
+                <svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-1a5 5 0 0 0-5-5H9a5 5 0 0 0-5 5v1"/><circle cx="12" cy="7.5" r="4"/></svg>
+                <input id="authFullName" class="au-in" type="text" autocomplete="name" placeholder="Enter your full name">
               </div>
             </div>
 
-            <!-- Phone (registration only) -->
-            <div id="phoneWrap" class="space-y-1.5 hidden">
-              <label class="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">Phone number</label>
-              <div class="input-focus-effect bg-slate-50 border border-slate-300 rounded-2xl p-1 transition flex items-center">
-                <input id="authPhone" type="tel" autocomplete="tel" placeholder="0803 123 4567" class="w-full bg-transparent text-sm font-semibold text-slate-800 placeholder-slate-400 outline-none px-3 py-2">
-              </div>
-            </div>
-            
-            <!-- Phone / Email Input -->
-            <div class="space-y-1.5">
-              <label class="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">Email</label>
-              <div class="input-focus-effect bg-slate-50 border border-slate-300 rounded-2xl p-1 transition flex items-center">
-                <div class="p-3 text-slate-400">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                  </svg>
-                </div>
-                <input id="authIdentifier" type="email" autocomplete="email" required placeholder="name@example.com" class="w-full bg-transparent text-sm font-semibold text-slate-800 placeholder-slate-400 outline-none pr-3 py-2">
+            <!-- Phone (sign up only) -->
+            <div id="phoneWrap" class="hidden">
+              <label class="au-lab" for="authPhone">Phone number</label>
+              <div class="au-field">
+                <svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                <input id="authPhone" class="au-in" type="tel" autocomplete="tel" placeholder="0803 123 4567">
               </div>
             </div>
 
-            <!-- Password Input with Show/Hide Toggle -->
-            <div class="space-y-1.5">
-              <div class="flex items-center justify-between">
-                <label class="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">Password</label>
-                <a href="#" id="forgotLink" class="text-xs font-extrabold text-emerald-600 hover:text-emerald-700 hover:underline transition">Forgot password?</a>
+            <!-- Email -->
+            <div>
+              <label class="au-lab" for="authIdentifier">Email</label>
+              <div class="au-field">
+                <svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.5 7 8.5 6 8.5-6"/></svg>
+                <input id="authIdentifier" class="au-in" type="email" autocomplete="email" required placeholder="name@example.com">
               </div>
-              <div class="input-focus-effect bg-slate-50 border border-slate-300 rounded-2xl p-1 transition flex items-center relative">
-                <div class="p-3 text-slate-400">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                  </svg>
-                </div>
-                <input type="password" id="passwordInput" required placeholder="••••••••••••" class="w-full bg-transparent text-sm font-semibold text-slate-800 placeholder-slate-400 outline-none pr-10 py-2">
-                
-                <!-- Show/Hide Icon Button -->
-                <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 text-slate-400 hover:text-slate-600 p-1 focus:outline-none transition">
-                  <svg id="eyeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                  </svg>
-                  <svg id="eyeOffIcon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858-5.908a10.018 10.018 0 013.122-.813c4.478 0 8.268 2.943 9.542 7a9.97 9.97 0 01-4.162 5.228m-4.661-4.661a3 3 0 11-4.243-4.243"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18"/>
-                  </svg>
+            </div>
+
+            <!-- Password with show/hide -->
+            <div>
+              <div class="au-lrow">
+                <label class="au-lab" for="passwordInput">Password</label>
+                <a href="#" id="forgotLink">Forgot password?</a>
+              </div>
+              <div class="au-field">
+                <svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10.5" width="16" height="10.5" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/><circle cx="12" cy="15.5" r="1" fill="currentColor"/></svg>
+                <input type="password" id="passwordInput" class="au-in" required placeholder="••••••••••">
+                <button type="button" class="au-eye" onclick="togglePasswordVisibility()" aria-label="Show or hide password">
+                  <svg id="eyeIcon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg id="eyeOffIcon" class="hidden" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.9 5.7A9.9 9.9 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-3.2 3.9M6.6 6.7C3.9 8.5 2.5 12 2.5 12s3.5 6.5 9.5 6.5c1.6 0 3-.4 4.3-1M3 3l18 18"/><path d="M10 10a3 3 0 0 0 4.2 4.2"/></svg>
                 </button>
               </div>
             </div>
 
-            <!-- Remember Me Row -->
-            <div class="flex items-center pt-1">
-              <label class="flex items-center gap-2 cursor-pointer select-none">
-                <input type="checkbox" checked class="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 accent-emerald-600">
-                <span class="text-xs font-bold text-slate-600">Keep me signed in on this device</span>
-              </label>
-            </div>
+            <label class="au-rem"><input type="checkbox" checked><span id="rememberLabel">Remember me</span></label>
 
-            <p id="authError" class="hidden text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3"></p>
+            <p id="authError" class="hidden au-err"></p>
 
-            <!-- LARGE EMERALD GREEN SIGN IN BUTTON -->
-            <button id="authSubmit" type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-extrabold py-4 rounded-2xl shadow-md shadow-emerald-600/20 transition text-sm flex items-center justify-center gap-2">
+            <button id="authSubmit" type="submit" class="au-btn">
               <span id="authSubmitLabel">Sign In</span>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
-              </svg>
+              <svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </button>
 
           </form>
 
-          <!-- DIVIDER WITH "OR" -->
-          <div class="relative flex items-center justify-center my-2">
-            <div class="border-t border-slate-200 w-full"></div>
-            <span class="bg-white px-3 text-xs font-bold text-slate-400 uppercase tracking-widest absolute">OR</span>
-          </div>
+          <div class="au-or">or</div>
 
-          <!-- CONTINUE WITH GOOGLE BUTTON -->
-          <button type="button" class="w-full bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-700 font-extrabold py-3.5 rounded-2xl border border-slate-300 shadow-xs transition text-xs sm:text-sm flex items-center justify-center gap-3">
-            <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+          <!-- CONTINUE WITH GOOGLE (look only; same as before, not wired up yet) -->
+          <button type="button" class="au-g">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
@@ -198,21 +206,7 @@
             <span>Continue with Google</span>
           </button>
 
-          <!-- LINK TO CREATE AN ACCOUNT -->
-          <div class="text-center pt-2">
-            <p class="text-xs font-semibold text-slate-500">
-              Don't have a LIFELINK account? 
-              <a href="#" id="modeToggle" class="font-extrabold text-emerald-600 hover:text-emerald-700 hover:underline transition">Create an account</a>
-            </p>
-          </div>
-
-          <!-- TRUST MESSAGE -->
-          <div class="pt-4 border-t border-slate-100 flex items-center justify-center gap-2 text-center text-[11px] font-bold text-slate-400">
-            <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M2.166 11.388a.75.75 0 011.096-.043l2.8 2.8a.75.75 0 001.06 0l8.75-8.75a.75.75 0 111.06 1.06l-8.75 8.75a2.25 2.25 0 01-3.182 0l-2.8-2.8a.75.75 0 01-.034-1.017z" clip-rule="evenodd"/>
-            </svg>
-            <span>Your account is protected by Supabase Authentication.</span>
-          </div>
+          <p class="au-alt"><span id="modePrompt">New to LifeLink?</span> <a href="#" id="modeToggle">Create account</a></p>
 
         </div>
       </div>
@@ -293,12 +287,15 @@
       function applyMode() {
         var signup = mode === 'signup';
         var t = el('authTitle'), s = el('authSubtitle'), lab = el('authSubmitLabel'), tg = el('modeToggle');
-        if (t) t.textContent = signup ? 'Create your account' : 'Welcome back';
+        var pr = el('modePrompt'), rl = el('rememberLabel');
+        if (t) { if (signup) t.innerHTML = 'Create your <span class="g">account</span>'; else t.textContent = 'Welcome back'; }
         if (s) s.textContent = signup
-          ? 'Enter your name, phone, email and a password to join LifeLink.'
-          : 'Sign in to find trusted professionals near you.';
+          ? 'Enter your details to join LifeLink and get started.'
+          : 'Sign in to continue';
         if (lab) lab.textContent = signup ? 'Create account' : 'Sign In';
-        if (tg) tg.textContent = signup ? 'Sign in instead' : 'Create an account';
+        if (tg) tg.textContent = signup ? 'Sign in instead' : 'Create account';
+        if (pr) pr.textContent = signup ? 'Already have a LifeLink account?' : 'New to LifeLink?';
+        if (rl) rl.textContent = signup ? 'Keep me signed in on this device' : 'Remember me';
         var nw = el('nameWrap'), pw = el('phoneWrap');
         if (nw) nw.classList.toggle('hidden', !signup);
         if (pw) pw.classList.toggle('hidden', !signup);

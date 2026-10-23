@@ -7,6 +7,7 @@
   var cap = window.Capacitor, NATIVE = !!(cap && typeof cap.isNativePlatform === 'function' && cap.isNativePlatform());
   if (NATIVE) document.documentElement.classList.add('ll-native');
   function plug(n) { return NATIVE && cap.Plugins && cap.Plugins[n] ? cap.Plugins[n] : null; }
+  if (NATIVE) { try { var ps = document.createElement('script'); ps.src = 'll-push.js'; ps.defer = true; document.head.appendChild(ps); } catch (e) {} }   // push notifications (Android app only)
 
   /* ---------------- theme ---------------- */
   var mq = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
@@ -16,7 +17,7 @@
     r.setAttribute('data-theme', dark ? 'dark' : 'light'); r.setAttribute('data-theme-pref', pref); r.style.colorScheme = dark ? 'dark' : 'light';
     var m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = dark ? '#101A18' : '#F5F8F6';
     document.querySelectorAll('.ll-seg button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-pref') === pref)); });
-    var sb = plug('StatusBar'); if (sb) { try { sb.setStyle({ style: dark ? 'DARK' : 'LIGHT' }); sb.setBackgroundColor({ color: page === 'home-app' ? (dark ? '#1b3a31' : '#e8f6ef') : (dark ? '#101A18' : '#F5F8F6') }); } catch (e) {} }
+    var sb = plug('StatusBar'); if (sb) { try { sb.setStyle({ style: dark ? 'DARK' : 'LIGHT' }); sb.setBackgroundColor({ color: dark ? '#101A18' : '#F5F8F6' }); } catch (e) {} }
   }
   function setPref(pref) { try { localStorage.setItem('ll-theme', pref); } catch (e) {} applyTheme(pref); }
   window.LLApp = { setTheme: function (p) { setPref(p); }, getTheme: function () { return getPref(); } };
@@ -175,16 +176,10 @@
     applyTheme(getPref());
   }
 
-  // Push notifications live in their own file and only load inside the native app, once a person is signed in.
-  function loadPush() {
-    if (!NATIVE || document.getElementById('ll-push-js')) return;
-    var s = document.createElement('script'); s.id = 'll-push-js'; s.src = 'll-push.js'; s.async = true; document.head.appendChild(s);
-  }
-
   function init(retries) {
     mountThemeFab();
     if (!window.LL || !LL.whenAuth) { if (retries > 0) return setTimeout(function () { init(retries - 1); }, 150); mountTabs(null); return nativeGlue(null); }
-    LL.whenAuth(function (p) { mountTabs(p); if (p) { quickActions(p.role); unreadBadge(p); } nativeGlue(p); if (p) loadPush(); });
+    LL.whenAuth(function (p) { mountTabs(p); if (p) { quickActions(p.role); unreadBadge(p); } nativeGlue(p); });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { init(20); }); else init(20);
 })();

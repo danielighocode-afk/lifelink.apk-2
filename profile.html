@@ -18,7 +18,7 @@
     body { background-color: #F8FAFC; color: #0F172A; font-family: 'Plus Jakarta Sans', sans-serif; }
     #app { padding: 0 !important; max-width: 560px !important; }
     .pf-old { }
-    .pf-top { position: relative; padding: calc(16px + env(safe-area-inset-top, 0px)) 18px 78px; color: #fff; background: linear-gradient(145deg, #0a5a42 0%, #0b7a58 50%, #13a174 100%); overflow: hidden; }
+    .pf-top { position: relative; padding: 16px 18px 78px; color: #fff; background: linear-gradient(145deg, #0a5a42 0%, #0b7a58 50%, #13a174 100%); overflow: hidden; }
     .pf-top::before, .pf-top::after { content: ""; position: absolute; border-radius: 50%; background: rgba(255,255,255,.07); pointer-events: none; }
     .pf-top::before { width: 240px; height: 240px; right: -70px; top: -90px; } .pf-top::after { width: 160px; height: 160px; left: -60px; bottom: -70px; }
     .pf-top.has-ban { background-size: cover; background-position: center; }
@@ -60,7 +60,7 @@
     .pf-v:not(.pf-sub) .pf-list .pf-li.danger .pf-ic { background: none; color: #e11d48; }
     .pf-v { --pf-grey: #5f6b66; } html[data-theme="dark"] .pf-v { --pf-grey: #a9b8b0; }
     .pf-sub { padding-bottom: 110px; }
-    .pf-bar { display: flex; align-items: center; gap: 8px; padding: calc(10px + env(safe-area-inset-top, 0px)) 12px 8px; }
+    .pf-bar { display: flex; align-items: center; gap: 8px; padding: 10px 12px 8px; }
     .pf-bar h1 { flex: 1; margin: 0; font-size: 18px; font-weight: 800; color: var(--ll-text); }
     .pf-back { width: 40px; height: 40px; border-radius: 50%; border: 0; background: transparent; color: var(--ll-text); display: grid; place-items: center; cursor: pointer; } .pf-back svg { width: 22px; height: 22px; }
     .pf-save { border: 0; background: var(--ll-primary, #07865f); color: #fff; font: inherit; font-size: 14px; font-weight: 800; padding: 9px 18px; border-radius: 12px; cursor: pointer; }
@@ -93,7 +93,7 @@
   <meta name="apple-mobile-web-app-title" content="LifeLink">
   <link rel="stylesheet" href="ll-app.css">
 </head>
-<body class="min-h-screen flex flex-col bg-slate-50 antialiased selection:bg-emerald-100 selection:text-emerald-800" data-ll-page="profile" data-ll-role="customer">
+<body class="min-h-screen flex flex-col bg-slate-50 antialiased selection:bg-emerald-100 selection:text-emerald-800" data-ll-page="profile" data-ll-role="customer" data-ll-strip>
 <header class="pf-old bg-white border-b border-slate-200/80 sticky top-0 z-30"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
     <a href="dashboard.html" aria-label="LifeLink home"><img src="images/lifelink-logo.png" alt="LifeLink" class="h-10 w-auto"></a>
     <div class="flex items-center gap-3"><div data-ll-bell></div></div></div></header>
