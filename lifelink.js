@@ -357,7 +357,27 @@
   }
 
   /* ---- account chip + notification bell (any element carrying the data attributes) ---- */
+  /* Signed in: the header logo becomes the user's profile picture (initials if none) and links to their profile.
+     Only logos inside a <header> are touched (sidebar brand, signed-out pages and the public website nav keep the logo). */
+  function swapLogoForAvatar(profile) {
+    if (!profile) return;
+    var dest = profile.role === 'provider' ? 'provider-dashboard.html?section=profile' : profile.role === 'admin' ? 'settings.html' : 'profile.html';
+    var ini = LL.initials(profile.full_name);
+    document.querySelectorAll('header img[src$="lifelink-logo.png"], header .ll-me').forEach(function (node) {
+      var a = node.closest('a'); if (!a || a.classList.contains('nav-logo')) return;
+      var me;
+      function initialsEl() { var s = document.createElement('span'); s.className = 'll-me'; s.textContent = ini; return s; }
+      if (profile.avatar_url) {
+        me = document.createElement('img'); me.className = 'll-me'; me.alt = ''; me.decoding = 'async'; me.src = profile.avatar_url;
+        me.onerror = function () { if (me.parentNode) me.parentNode.replaceChild(initialsEl(), me); };
+      } else me = initialsEl();
+      node.parentNode.replaceChild(me, node);
+      a.setAttribute('href', dest); a.setAttribute('aria-label', 'Your profile'); a.setAttribute('title', 'Your profile');
+    });
+  }
+
   function mountChrome(profile) {
+    if (profile) { try { swapLogoForAvatar(profile); } catch (e) {} }
     document.querySelectorAll('[data-ll-account]').forEach(function (el) {
       if (!profile) {
         el.innerHTML = '<a href="signin.html" class="text-xs font-extrabold text-slate-700 hover:text-emerald-700 px-3 py-2">Log in</a>' +
