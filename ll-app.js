@@ -16,7 +16,7 @@
     r.setAttribute('data-theme', dark ? 'dark' : 'light'); r.setAttribute('data-theme-pref', pref); r.style.colorScheme = dark ? 'dark' : 'light';
     var m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = dark ? '#101A18' : '#F5F8F6';
     document.querySelectorAll('.ll-seg button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-pref') === pref)); });
-    var sb = plug('StatusBar'); if (sb) { try { sb.setStyle({ style: dark ? 'DARK' : 'LIGHT' }); sb.setBackgroundColor({ color: dark ? '#101A18' : '#F5F8F6' }); } catch (e) {} }
+    var sb = plug('StatusBar'); if (sb) { try { sb.setStyle({ style: dark ? 'DARK' : 'LIGHT' }); sb.setBackgroundColor({ color: page === 'home-app' ? (dark ? '#1b3a31' : '#e8f6ef') : (dark ? '#101A18' : '#F5F8F6') }); } catch (e) {} }
   }
   function setPref(pref) { try { localStorage.setItem('ll-theme', pref); } catch (e) {} applyTheme(pref); }
   window.LLApp = { setTheme: function (p) { setPref(p); }, getTheme: function () { return getPref(); } };
