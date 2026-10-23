@@ -60,7 +60,7 @@
       { k: 'req', l: 'Requests', i: I.search, h: 'provider-request.html', m: function (p) { return p === 'provider-request.html'; } },
       { k: 'bk', l: 'Jobs', i: I.jobs, h: 'provider-dashboard.html?section=bookings', m: function (p, s) { return p === 'provider-dashboard.html' && (s === 'bookings' || s === 'quotes'); } },
       { k: 'msg', l: 'Messages', i: I.chat, h: 'provider-dashboard.html?section=messages', badge: true, m: function (p, s) { return p === 'provider-dashboard.html' && s === 'messages'; } },
-      { k: 'more', l: 'Profile', i: I.user, more: true, m: function (p, s) { return p === 'settings.html' || (p === 'provider-dashboard.html' && (s === 'wallet' || s === 'profile' || s === 'services' || s === 'reviews')); } }
+      { k: 'more', l: 'Profile', i: I.user, h: 'provider-dashboard.html?section=profile', m: function (p, s) { return p === 'settings.html' || (p === 'provider-dashboard.html' && (s === 'wallet' || s === 'profile' || s === 'services' || s === 'reviews')); } }
     ];
     if (role === 'admin') return null;
     return [   // signed out
@@ -129,10 +129,10 @@
     document.body.appendChild(wrap);
     bindSeg(wrap);
     var openBtn = nav.querySelector('[data-more]');
-    if (!openBtn) { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); return; }
-    function close() { wrap.classList.remove('open'); document.removeEventListener('keydown', onKey); openBtn.focus(); }
+    if (!openBtn && wrap.parentNode) wrap.parentNode.removeChild(wrap);
+    function close() { wrap.classList.remove('open'); document.removeEventListener('keydown', onKey); if (openBtn) openBtn.focus(); }
     function onKey(e) { if (e.key === 'Escape') close(); }
-    openBtn.onclick = function () { wrap.classList.add('open'); document.addEventListener('keydown', onKey); var f = wrap.querySelector('a,button'); if (f) f.focus(); };
+    if (openBtn) openBtn.onclick = function () { wrap.classList.add('open'); document.addEventListener('keydown', onKey); var f = wrap.querySelector('a,button'); if (f) f.focus(); };
     wrap.querySelector('[data-close]').onclick = close;
     wrap.querySelector('[data-signout]').onclick = function () { if (window.LL && LL.signOut) LL.signOut(); };
   }

@@ -41,7 +41,7 @@
             return '<a href="?section=bookings" class="pv-act"><span class="pv-act-i">' + I.jobs + '</span><span class="pv-act-t"><b>' + LL.esc(statusLbl(b.status)) + '</b><em>' + LL.esc(x.category_text || 'Job') + ' · ' + LL.esc(c) + '</em><small>' + LL.esc(LL.ago(b.created_at)) + '</small></span><span class="pv-act-p">' + LL.naira(b.price_kobo) + '</span></a>';
           }).join('') : '<p class="pv-none">No activity yet. New bookings will show up here.</p>';
           var mob = '<div class="md:hidden pv-m">' +
-            '<section class="pv-hero"><p class="pv-wel">Welcome</p><h2>' + LL.esc(prov.business_name || 'Your business') + '</h2><p class="pv-tag">More bookings. More income.<br>A better you.</p></section>' +
+            '<section class="pv-hero"' + (me && me.banner_url ? ' style="background-image:linear-gradient(135deg,rgba(4,40,31,.72),rgba(14,86,163,.55)),url(\'' + LL.esc(me.banner_url) + '\');background-size:cover;background-position:center"' : '') + '><p class="pv-wel">Welcome</p><h2>' + LL.esc(prov.business_name || 'Your business') + '</h2><p class="pv-tag">More bookings. More income.<br>A better you.</p></section>' +
             '<div class="pv-stats"><a href="?section=reviews">' + I.star + '<b>' + (prov.rating_avg != null ? Number(prov.rating_avg).toFixed(1) : '–') + '</b><span>Your rating</span></a>' +
             '<a href="?section=bookings">' + I.cal + '<b>' + (prov.jobs_done || 0) + '</b><span>Jobs done</span></a>' +
             '<a href="?section=wallet">' + I.cash + '<b>' + bal + '</b><span>Wallet</span></a></div>' +
@@ -270,23 +270,51 @@
     return '<span class="pm-av pm-c' + (k % 3) + '">' + (url ? '<img src="' + LL.esc(url) + '" alt="">' : LL.esc(LL.initials(name))) + '</span>';
   }
   function pmMobile(convs, nm, sum) {
-    var sel = LL.q('c');
+    var sel = LL.q('c'), cuId = LL.q('cu');
     var nameOf = function (c) { return (nm[c.customer_id] || {}).display_name || 'Customer'; };
+    var avOf = function (c) { return pmAvatar(nameOf(c), (nm[c.customer_id] || {}).avatar_url, c.customer_id); };
     return reqMap(convs.map(function (c) { return c.request_id; })).then(function (rm) {
       var ctx = function (c) { var x = rm[c.request_id] || {}; return [x.category_text, x.location_area].filter(Boolean).join(' · '); };
+      var tOf = function (c) { var s = sum[c.id] || {}; return new Date(s.last ? s.last.created_at : c.created_at).getTime() || 0; };
+      var lastTxt = function (c) { var l = (sum[c.id] || {}).last; return l ? (l.sender_id === me.id ? 'You: ' : '') + l.body : 'No messages yet'; };
       var cur = sel ? convs.filter(function (c) { return c.id === sel; })[0] : null;
+      /* 3) one open conversation: read it and reply */
       if (cur) {
-        return '<div class="pm-chat"><div class="pm-chat-h"><a href="?section=messages" class="pm-back" aria-label="Back to messages">' + PM.back + '</a>' + pmAvatar(nameOf(cur), (nm[cur.customer_id] || {}).avatar_url, cur.customer_id) +
+        setTimeout(function () { var el = document.getElementById('chatMount'); if (el) LLChat.mount(el, cur.id); }, 0);
+        return '<div class="pm-chat"><div class="pm-chat-h"><a href="?section=messages&cu=' + LL.esc(cur.customer_id) + '" class="pm-back" aria-label="Back to this customer\'s chats">' + PM.back + '</a>' + avOf(cur) +
           '<div class="pm-chat-t"><b>' + LL.esc(nameOf(cur)) + '</b><em>' + LL.esc(ctx(cur) || 'Customer') + '</em></div><a class="pm-view" href="provider-request.html?id=' + LL.esc(cur.request_id) + '">View request</a></div><div class="pm-chat-b"><div id="chatMount"></div></div></div>';
       }
+      /* group every conversation under its customer */
+      var g = {}, order = [];
+      convs.forEach(function (c) {
+        var o = g[c.customer_id]; if (!o) { o = g[c.customer_id] = { id: c.customer_id, convs: [], unread: 0, t: -1, top: c }; order.push(o); }
+        o.convs.push(c); o.unread += (sum[c.id] || {}).unread || 0;
+        if (tOf(c) > o.t) { o.t = tOf(c); o.top = c; }
+      });
+      order.sort(function (x, y) { return y.t - x.t; });
+      /* 2) one customer: all of their chat sessions */
+      var grp = cuId ? g[cuId] : null;
+      if (grp) {
+        grp.convs.sort(function (x, y) { return tOf(y) - tOf(x); });
+        return '<div class="pm"><div class="pm-chat pm-cu"><div class="pm-chat-h"><a href="?section=messages" class="pm-back" aria-label="Back to messages">' + PM.back + '</a>' + avOf(grp.top) +
+          '<div class="pm-chat-t"><b>' + LL.esc(nameOf(grp.top)) + '</b><em>' + grp.convs.length + ' chat' + (grp.convs.length === 1 ? '' : 's') + (grp.unread ? ' · ' + grp.unread + ' unread' : '') + '</em></div></div></div>' +
+          '<div class="pm-list">' + grp.convs.map(function (c) {
+            var s = sum[c.id] || {}, l = s.last, mine = l && l.sender_id === me.id;
+            var right = s.unread ? '<span class="pm-badge">' + s.unread + '</span>' : (mine ? '<span class="pm-tick' + (l.read_at ? ' read' : '') + '">' + PM.ticks + '</span>' : '');
+            return '<a href="?section=messages&c=' + LL.esc(c.id) + '" class="pm-card' + (s.unread ? ' un' : '') + '"><div class="pm-m"><div class="pm-top"><b>' + LL.esc(ctx(c) || 'Chat') + '</b><time>' + LL.esc(pmTime(l ? l.created_at : c.created_at)) + '</time></div>' +
+              '<div class="pm-mid"><span class="pm-last">' + LL.esc(lastTxt(c)) + '</span>' + right + '</div></div></a>';
+          }).join('') + '</div></div>';
+      }
+      /* 1) one row per customer */
       return '<div class="pm"><div class="pm-head"><div><h2>Messages</h2><p>Recent Chats</p></div><div class="pm-tools"><button type="button" data-pm-search aria-label="Search chats">' + PM.search + '</button><a href="provider-request.html" class="pm-new" aria-label="Start a chat from a request">' + PM.edit + '</a></div></div>' +
         '<input type="search" class="pm-q" data-pm-q placeholder="Search chats" hidden>' +
-        '<div class="pm-list">' + convs.map(function (c) {
-          var s = sum[c.id] || {}, l = s.last, mine = l && l.sender_id === me.id, nmv = nameOf(c), cx = ctx(c);
-          var right = s.unread ? '<span class="pm-badge">' + s.unread + '</span>' : (mine ? '<span class="pm-tick' + (l.read_at ? ' read' : '') + '">' + PM.ticks + '</span>' : '');
-          return '<a href="?section=messages&c=' + LL.esc(c.id) + '" class="pm-card' + (s.unread ? ' un' : '') + '" data-q="' + LL.esc((nmv + ' ' + cx + ' ' + (l ? l.body : '')).toLowerCase()) + '">' + pmAvatar(nmv, (nm[c.customer_id] || {}).avatar_url, c.customer_id) +
-            '<div class="pm-m"><div class="pm-top"><b>' + LL.esc(nmv) + '</b><time>' + LL.esc(pmTime(l ? l.created_at : c.created_at)) + '</time></div><div class="pm-mid"><span class="pm-last">' + LL.esc(l ? (mine ? 'You: ' : '') + l.body : 'No messages yet') + '</span>' + right + '</div>' +
-            (cx ? '<p class="pm-ctx">' + PM.pin + '<span>' + LL.esc(cx) + '</span></p>' : '') + '</div></a>';
+        '<div class="pm-list">' + order.map(function (o) {
+          var c = o.top, nmv = nameOf(c), n = o.convs.length;
+          var right = o.unread ? '<span class="pm-badge">' + o.unread + '</span>' : '';
+          var all = o.convs.map(function (x) { return ctx(x) + ' ' + ((sum[x.id] || {}).last ? sum[x.id].last.body : ''); }).join(' ');
+          return '<a href="?section=messages&cu=' + LL.esc(o.id) + '" class="pm-card' + (o.unread ? ' un' : '') + '" data-q="' + LL.esc((nmv + ' ' + all).toLowerCase()) + '">' + avOf(c) +
+            '<div class="pm-m"><div class="pm-top"><b>' + LL.esc(nmv) + '</b><time>' + LL.esc(pmTime(o.t ? new Date(o.t).toISOString() : c.created_at)) + '</time></div><div class="pm-mid"><span class="pm-last">' + LL.esc(lastTxt(c)) + '</span>' + right + '</div>' +
+            '<p class="pm-ctx">' + PM.pin + '<span>' + n + ' chat' + (n === 1 ? '' : 's') + '</span></p></div></a>';
         }).join('') + '</div><p class="pv-none" data-pm-empty hidden>No chats match your search.</p></div>';
     });
   }
@@ -313,10 +341,25 @@
   }
   function pvProfile(svcs, revs) {
     var sv = function (d, w) { return '<svg viewBox="0 0 24 24" width="' + (w || 20) + '" height="' + (w || 20) + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>'; };
+    var GEAR = '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3h0a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9v0a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/>';
     var chev = sv('<path d="M9 6l6 6-6 6"/>', 16), pen = sv('<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>', 18);
+
+    var items = [
+      ['Wallet', '<rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18M16 14.5h2"/>', 'provider-dashboard.html?section=wallet'],
+      ['Quotes', '<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h4M10 13h5M10 17h5"/>', 'provider-dashboard.html?section=quotes'],
+      ['My services', '<path d="M14.7 6.3a4 4 0 005 5L21 12.6 12.6 21a2.1 2.1 0 01-3-3L18 9.6"/><path d="M14.7 6.3l-3-3"/>', 'provider-dashboard.html?section=services'],
+      ['Reviews', '<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.4 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/>', 'provider-dashboard.html?section=reviews'],
+      ['Verification', '<rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="11" r="2"/><path d="M6.5 16c.5-1.5 4.5-1.5 5 0M14 10h4M14 14h4"/>', 'provider-verification.html'],
+      ['Settings', GEAR, 'settings.html'],
+      ['Trust & safety', '<path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/>', 'trust-safety.html']
+    ];
+    var th = (window.LLApp && LLApp.getTheme && LLApp.getTheme()) || 'system';
+    var menu = '<div class="pp-menu">' + items.map(function (x) { return '<a href="' + x[2] + '"><span>' + sv(x[1], 20) + '</span><b>' + x[0] + '</b>' + chev + '</a>'; }).join('') + '</div>' +
+      '<h3 class="pp-ap">Appearance</h3><div class="ll-seg" role="group" aria-label="Theme">' + ['light', 'dark', 'system'].map(function (k) { return '<button type="button" data-pp-th="' + k + '" aria-pressed="' + (th === k) + '">' + k.charAt(0).toUpperCase() + k.slice(1) + '</button>'; }).join('') + '</div>' +
+      '<button type="button" class="pp-out" data-pp-out>' + sv('<path d="M9 4H5a2 2 0 00-2 2v12a2 2 0 002 2h4M16 8l4 4-4 4M20 12H9"/>', 20) + '<b>Sign out</b></button>';
     var st = prov.verification_status || 'pending', ok = st === 'verified';
     var stLabel = ok ? 'Verified' : (st.charAt(0).toUpperCase() + st.slice(1).replace(/_/g, ' '));
-    var tick = ok ? '<svg class="pp-tick" viewBox="0 0 24 24" width="20" height="20" aria-label="Verified"><path fill="#1D9BF0" d="M12 1.8l2.4 1.7 2.9-.2 1.2 2.7 2.6 1.4-.4 2.9 1.4 2.5-1.7 2.4.1 2.9-2.8 1-1.6 2.5-2.8-.8-2.7.8-1.6-2.5-2.8-1 .1-2.9-1.7-2.4 1.4-2.5-.4-2.9 2.6-1.4 1.2-2.7 2.9.2z"/><path d="M8.2 12.2l2.7 2.7 5-5.4" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '';
+    var tick = ok ? '<svg class="pp-tick" viewBox="0 0 24 24" width="20" height="20" aria-label="Verified"><circle cx="12" cy="12" r="11" fill="#7C3AED"/><path d="M7.3 12.4l3.3 3.3 6.1-6.6" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '';
     var rating = prov.rating_avg != null ? Number(prov.rating_avg).toFixed(1) : '–';
     var banner = me && me.banner_url ? '<img src="' + LL.esc(me.banner_url) + '" alt="">' : '';
     var avatar = me && me.avatar_url ? '<img src="' + LL.esc(me.avatar_url) + '" alt="">' : '<span>' + LL.esc(LL.initials((me && me.full_name) || prov.business_name)) + '</span>';
@@ -325,7 +368,7 @@
     var tiles = list.length ? list.map(function (x) { return '<button type="button" class="pp-svc' + (x.active === false ? ' pp-svc-off' : '') + '" data-svc="' + LL.esc(x.id) + '"><span class="pp-svc-i">' + ppIcon(x.title) + '</span><span class="pp-svc-t">' + LL.esc(x.title) + (x.active === false ? '<small>Hidden</small>' : '') + '</span>' + chev + '</button>'; }).join('')
       : '<button type="button" class="pp-svc pp-svc-add" data-svc=""><span class="pp-svc-i">' + sv('<path d="M12 5v14M5 12h14"/>') + '</span><span class="pp-svc-t">Add a service</span>' + chev + '</button>';
     return '<div class="pp-m md:hidden">' +
-      '<div class="pp-bar"><a href="?section=overview" class="pp-bk" aria-label="Back">' + sv('<path d="M15 5l-7 7 7 7"/>', 24) + '</a><h1>Profile</h1><a href="settings.html" class="pp-bk" aria-label="Settings">' + sv('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3h0a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9v0a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/>', 24) + '</a></div>' +
+      '<div class="pp-bar"><a href="?section=overview" class="pp-bk" aria-label="Back">' + sv('<path d="M15 5l-7 7 7 7"/>', 24) + '</a><h1>Profile</h1><a href="settings.html" class="pp-bk" aria-label="Settings">' + sv(GEAR, 24) + '</a></div>' +
       '<div class="pp-cover">' + banner + '<button type="button" class="pp-chg" id="ppCoverBtn">' + sv('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>', 16) + '<span>Change Cover</span></button></div>' +
       '<div class="pp-id"><div class="pp-av"><div class="pp-av-i">' + avatar + '</div><button type="button" class="pp-pen" id="ppAvBtn" aria-label="Change photo">' + sv('<path d="M4 20h4L19 9l-4-4L4 16z"/>', 14) + '</button></div>' +
       '<div class="pp-nm"><h2><span>' + LL.esc(prov.business_name) + '</span>' + tick + '</h2><p>Provider Account</p><span class="pp-pill' + (ok ? '' : ' pp-pill-w') + '">' + (ok ? sv('<path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/>', 14) : '') + LL.esc(stLabel) + '</span></div></div>' +
@@ -334,6 +377,7 @@
       (prov.bio ? '<div class="pp-about">' + LL.esc(prov.bio) + '</div>' : '<button type="button" class="pp-about pp-about-e" data-pp-edit="pb">Tell customers about yourself and your work. Tap to add.</button>') +
       '<div class="pp-sec"><h3>Services</h3><span class="pp-sec-r"><button type="button" class="pp-va" data-svc="">+ Add</button><a href="?section=services" class="pp-va">View all</a></span></div><div class="pp-grid">' + tiles + '</div>' +
       '<button type="button" class="pp-edit" data-pp-edit="pn"><span>' + pen + '</span><b>Edit Profile</b>' + chev + '</button>' +
+      menu +
       '<input type="file" id="ppCoverIn" accept="image/jpeg,image/png,image/webp" hidden><input type="file" id="ppAvIn" accept="image/jpeg,image/png,image/webp" hidden></div>';
   }
   var ppSvcs = [], ppCats = null;
@@ -408,6 +452,8 @@
       LL.toast('Uploading photo…');
       LLApi.uploadAvatar(f).then(function (url) { me.avatar_url = url; LL.toast('Photo updated.'); render(true); }, function (e) { LL.toast(e.message || 'Could not upload the photo.', true); });
     };
+    Array.prototype.forEach.call(document.querySelectorAll('[data-pp-th]'), function (b) { b.onclick = function () { if (window.LLApp) LLApp.setTheme(b.getAttribute('data-pp-th')); }; });
+    var so = document.querySelector('[data-pp-out]'); if (so) so.onclick = function () { if (LL.signOut) LL.signOut(); };
     Array.prototype.forEach.call(document.querySelectorAll('[data-svc]'), function (b) { b.onclick = function () { ppSheet(b.getAttribute('data-svc')); }; });
     Array.prototype.forEach.call(document.querySelectorAll('[data-pp-edit]'), function (b) {
       b.onclick = function () {
