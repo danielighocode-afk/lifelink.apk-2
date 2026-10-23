@@ -4,24 +4,55 @@
   var app = document.getElementById('app'), me = null, prov = null, section = LL.q('section') || 'overview';
   var TITLES = { overview: 'Overview', quotes: 'My quotes', bookings: 'Bookings', messages: 'Messages', services: 'My services', reviews: 'Reviews', profile: 'Profile & availability', wallet: 'Wallet' };
   function card(i) { return '<section class="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 space-y-3">' + i + '</section>'; }
-  var STAT_IC = {
-    'Open requests': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"/>',
-    'Pending quotes': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M7 3h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z"/>',
-    'Active bookings': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m-3 0h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z"/>',
-    'Jobs done': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>'
-  };
-  function stat(l, n, h) { return '<a href="' + h + '" class="pv-stat bg-white border border-slate-200 rounded-2xl p-5 hover:border-emerald-300 block"><span class="ic"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24">' + (STAT_IC[l] || '') + '</svg></span><span><b>' + n + '</b><em>' + l + '</em></span></a>'; }
+  function stat(l, n, h) { return '<a href="' + h + '" class="bg-white border border-slate-200 rounded-2xl p-5 hover:border-emerald-300 block"><p class="text-3xl font-extrabold">' + n + '</p><p class="text-xs font-extrabold uppercase tracking-wider text-slate-400 mt-1">' + l + '</p></a>'; }
   function reqMap(ids) { return LLApi.provider.requestsByIds(ids).then(function (rows) { var m = {}; rows.forEach(function (r) { m[r.id] = r; }); return m; }).catch(function () { return {}; }); }
 
   var S = {
     overview: function () {
-      return Promise.all([LLApi.provider.requests(), LLApi.provider.myQuotes(), LLApi.provider.bookings(), LLApi.provider.reviews()]).then(function (r) {
+      return Promise.all([LLApi.provider.requests(), LLApi.provider.myQuotes(), LLApi.provider.bookings(), LLApi.provider.reviews(), LLApi.wallet.me().catch(function () { return null; }), LLApi.names().catch(function () { return {}; })]).then(function (r) {
         var open = r[0].filter(function (x) { return x.status === 'open' || x.status === 'quoted'; }).length;
-        var h = '<section class="pv-hero rounded-3xl bg-emerald-600 text-white"><small>Welcome back</small><h2>' + LL.esc(prov.business_name || 'Your business') + '</h2><div class="pv-hero-row"><span>' + (prov.rating_avg != null ? '★ ' + Number(prov.rating_avg).toFixed(1) : 'No reviews yet') + '</span><span>' + (prov.jobs_done || 0) + ' jobs done</span><span>' + (prov.available ? 'Accepting work' : 'Not accepting work') + '</span></div></section>';
-        if (prov.verification_status !== 'verified') h += '<div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900 flex flex-wrap justify-between gap-2"><span>Verification status: <strong>' + LL.esc(prov.verification_status) + '</strong>. You can send quotes once verified.</span><a href="provider-verification.html" class="font-extrabold underline">Open verification</a></div>';
-        h += '<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">' + stat('Open requests', open, 'provider-request.html') + stat('Pending quotes', r[1].filter(function (q) { return q.status === 'pending'; }).length, '?section=quotes') + stat('Active bookings', r[2].filter(function (b) { return ['pending_payment', 'paid', 'in_progress'].indexOf(b.status) >= 0; }).length, '?section=bookings') + stat('Jobs done', prov.jobs_done || 0, '?section=bookings') + '</div>';
-        h += card('<div class="flex justify-between items-center"><h2 class="font-extrabold">Your rating</h2><span>' + (prov.rating_avg != null ? LL.stars(prov.rating_avg) : '<span class="text-sm text-slate-400 font-semibold">No reviews yet</span>') + '</span></div><p class="text-sm text-slate-500">' + r[3].length + ' review' + (r[3].length === 1 ? '' : 's') + ' · availability: <strong>' + (prov.available ? 'accepting work' : 'not accepting work') + '</strong></p>');
-        return h;
+        var vb = '';
+        if (prov.verification_status !== 'verified') vb = '<div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900 flex flex-wrap justify-between gap-2"><span>Verification status: <strong>' + LL.esc(prov.verification_status) + '</strong>. You can send quotes once verified.</span><a href="provider-verification.html" class="font-extrabold underline">Open verification</a></div>';
+        var desk = '<div class="hidden md:block space-y-6">' + vb;
+        desk += '<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">' + stat('Open requests', open, 'provider-request.html') + stat('Pending quotes', r[1].filter(function (q) { return q.status === 'pending'; }).length, '?section=quotes') + stat('Active bookings', r[2].filter(function (b) { return ['pending_payment', 'paid', 'in_progress'].indexOf(b.status) >= 0; }).length, '?section=bookings') + stat('Jobs done', prov.jobs_done || 0, '?section=bookings') + '</div>';
+        desk += '<div class="mt-6">' + card('<div class="flex justify-between items-center"><h2 class="font-extrabold">Your rating</h2><span>' + (prov.rating_avg != null ? LL.stars(prov.rating_avg) : '<span class="text-sm text-slate-400 font-semibold">No reviews yet</span>') + '</span></div><p class="text-sm text-slate-500">' + r[3].length + ' review' + (r[3].length === 1 ? '' : 's') + ' · availability: <strong>' + (prov.available ? 'accepting work' : 'not accepting work') + '</strong></p>') + '</div></div>';
+
+        /* ---- mobile Home (matches the provider mock-up) ---- */
+        var ic = function (p, c) { return '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="' + (c || 'currentColor') + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>'; };
+        var I = {
+          star: '<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path fill="#FBBF24" d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg>',
+          cal: ic('<rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/>', '#6EE7B7'),
+          cash: ic('<rect x="3" y="6" width="18" height="12" rx="3"/><circle cx="12" cy="12" r="2.5"/><path d="M6.5 12h.01M17.5 12h.01"/>', '#7DD3FC'),
+          up: ic('<path d="M4 16l6-6 4 4 6-7"/><path d="M15 7h5v5"/>', '#fff'),
+          search: ic('<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>'),
+          jobs: ic('<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M8 12h8M8 16h5"/>'),
+          tools: ic('<path d="M14.7 6.3a4 4 0 005 5L21 12.6 12.6 21a2.1 2.1 0 01-3-3L18 9.6"/><path d="M14.7 6.3l-3-3M3.5 13.5l4 4"/>'),
+          wallet: ic('<rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18M16 14.5h2"/>'),
+          chev: ic('<path d="M9 6l6 6-6 6"/>'),
+          case: '<svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true"><defs><linearGradient id="pvg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4ADE80"/><stop offset="1" stop-color="#15803D"/></linearGradient></defs><path d="M22 18v-4a4 4 0 014-4h12a4 4 0 014 4v4" fill="none" stroke="#22C55E" stroke-width="4" stroke-linecap="round"/><rect x="6" y="18" width="52" height="38" rx="9" fill="url(#pvg)"/><path d="M6 32h52" stroke="#065F46" stroke-opacity=".45" stroke-width="3"/><rect x="27" y="29" width="10" height="8" rx="3" fill="#BBF7D0"/></svg>'
+        };
+        var bal = r[4] && r[4].available_kobo != null ? LL.naira(r[4].available_kobo) : LL.naira(0);
+        var tile = function (href, label, icon, tone) { return '<a href="' + href + '" class="pv-tile pv-' + tone + '">' + icon + '<span>' + label + '</span></a>'; };
+        var recent = r[2].slice(0, 3);
+        var statusLbl = function (s) { return ({ pending_payment: 'New booking received', paid: 'New booking received', confirmed: 'Booking confirmed', provider_on_the_way: 'You are on the way', arrived: 'You have arrived', in_progress: 'Job in progress', completed: 'Job completed', cancelled: 'Booking cancelled', disputed: 'Booking disputed' })[s] || 'Booking update'; };
+        return reqMap(recent.map(function (b) { return b.request_id; })).then(function (rm) {
+          var act = recent.length ? recent.map(function (b) {
+            var x = rm[b.request_id] || {}, c = (r[5][b.customer_id] || {}).display_name || 'Customer';
+            return '<a href="?section=bookings" class="pv-act"><span class="pv-act-i">' + I.jobs + '</span><span class="pv-act-t"><b>' + LL.esc(statusLbl(b.status)) + '</b><em>' + LL.esc(x.category_text || 'Job') + ' · ' + LL.esc(c) + '</em><small>' + LL.esc(LL.ago(b.created_at)) + '</small></span><span class="pv-act-p">' + LL.naira(b.price_kobo) + '</span></a>';
+          }).join('') : '<p class="pv-none">No activity yet. New bookings will show up here.</p>';
+          var mob = '<div class="md:hidden pv-m">' +
+            '<section class="pv-hero"><p class="pv-wel">Welcome</p><h2>' + LL.esc(prov.business_name || 'Your business') + '</h2><p class="pv-tag">More bookings. More income.<br>A better you.</p></section>' +
+            '<div class="pv-stats"><a href="?section=reviews">' + I.star + '<b>' + (prov.rating_avg != null ? Number(prov.rating_avg).toFixed(1) : '–') + '</b><span>Your rating</span></a>' +
+            '<a href="?section=bookings">' + I.cal + '<b>' + (prov.jobs_done || 0) + '</b><span>Jobs done</span></a>' +
+            '<a href="?section=wallet">' + I.cash + '<b>' + bal + '</b><span>Wallet</span></a></div>' +
+            '<div class="pv-body">' + vb +
+            '<a href="?section=profile" class="pv-strip"><span class="pv-strip-i">' + I.up + '</span><span class="pv-strip-t"><b>Keep your profile active</b><em>' + (prov.available ? 'More bookings, more income.' : 'You are hidden right now. Turn availability on.') + '</em></span>' + I.chev + '</a>' +
+            '<h3 class="pv-h">Quick Actions</h3><div class="pv-tiles">' + tile('provider-request.html', 'Requests', I.search, 'b') + tile('?section=bookings', 'Bookings', I.jobs, 'g') + tile('?section=services', 'My services', I.tools, 'b') + tile('?section=wallet', 'Wallet', I.wallet, 'g') + '</div>' +
+            '<div class="pv-pro" data-pv-pro role="button" tabindex="0"><span class="pv-pro-i">' + I.case + '</span><span class="pv-pro-t"><small>Grow Your Business</small><b>Upgrade to Pro</b><em>Get more visibility, priority support and higher earning opportunities.</em></span>' + I.chev + '</div>' +
+            '<div class="pv-row"><h3 class="pv-h">Recent Activity</h3><a href="?section=bookings">View all</a></div>' + act +
+            '</div></div>';
+          return '<div>' + desk + mob + '</div>';
+        });
       });
     },
     quotes: function () {
@@ -35,7 +66,8 @@
       return LLApi.provider.bookings().then(function (bs) {
         return Promise.all([reqMap(bs.map(function (b) { return b.request_id; })), LLApi.names().catch(function () { return {}; })]).then(function (r) {
           if (!bs.length) return LL.empty('No bookings yet', 'Bookings appear when a customer accepts your quote.');
-          return '<div class="space-y-3">' + bs.map(function (b) {
+          var list = bkAsc ? bs.slice().reverse() : bs;
+          var pairs = list.map(function (b) {
             var x = r[0][b.request_id] || {}, c = (r[1][b.customer_id] || {}).display_name || 'Customer';
             var act = '';
             var mk = function (attr, txt, cls) { return '<button data-' + attr + '="' + LL.esc(b.id) + '" class="' + cls + ' font-extrabold text-xs px-4 py-2 rounded-xl">' + txt + '</button>'; };
@@ -47,8 +79,10 @@
             if (['provider_on_the_way', 'arrived'].indexOf(b.status) >= 0) act += ' <a href="tracking.html?id=' + LL.esc(b.id) + '" class="text-xs font-extrabold text-emerald-700 underline">Open map</a>';
             if (['confirmed', 'provider_on_the_way', 'arrived'].indexOf(b.status) >= 0 && b.fee_status !== 'charged') act += ' <button data-cancel="' + LL.esc(b.id) + '" class="text-xs font-extrabold text-rose-600 underline">Cancel booking</button>';
             if (['confirmed', 'provider_on_the_way', 'arrived', 'in_progress', 'completed', 'disputed'].indexOf(b.status) >= 0) act += ' <a href="dispute.html?booking=' + LL.esc(b.id) + '" class="text-xs font-extrabold text-slate-500 underline">Report a problem</a>';
-            return card('<div class="flex justify-between items-center"><p class="font-extrabold">' + LL.esc(x.category_text || 'Job') + ' · ' + LL.esc(c) + '</p>' + LL.badge(b.status) + '</div><p class="text-sm text-slate-600">' + LL.esc(x.location_area || '') + '</p><p class="text-sm">' + LL.naira(b.price_kobo) + (b.scheduled_for ? ' · ' + LL.esc(LL.dateTime(b.scheduled_for)) : ' · no time set') + '</p><div class="flex flex-wrap items-center gap-3">' + act + '</div>');
-          }).join('') + '</div>';
+            var dk = card('<div class="flex justify-between items-center"><p class="font-extrabold">' + LL.esc(x.category_text || 'Job') + ' · ' + LL.esc(c) + '</p>' + LL.badge(b.status) + '</div><p class="text-sm text-slate-600">' + LL.esc(x.location_area || '') + '</p><p class="text-sm">' + LL.naira(b.price_kobo) + (b.scheduled_for ? ' · ' + LL.esc(LL.dateTime(b.scheduled_for)) : ' · no time set') + '</p><div class="flex flex-wrap items-center gap-3">' + act + '</div>');
+            return { d: dk, m: pvBkCard(b, x, c, act) };
+          });
+          return bkWrap(pairs);
         });
       });
     },
@@ -60,6 +94,7 @@
           var sel = LL.q('c') || convs[0].id, cur = convs.filter(function (c) { return c.id === sel; })[0] || convs[0];
           var nameOf = function (c) { return (nm[c.customer_id] || {}).display_name || 'Customer'; };
           setTimeout(function () { var el = document.getElementById('chatMount'); if (el) LLChat.mount(el, cur.id); }, 0);
+          if (window.matchMedia && window.matchMedia('(max-width: 767.98px)').matches) return pmMobile(convs, nm, sum);
           return '<div class="grid lg:grid-cols-3 gap-4"><div class="space-y-2">' + convs.map(function (c) { var s = sum[c.id] || {}; return '<a href="?section=messages&c=' + LL.esc(c.id) + '" class="flex items-center gap-3 p-3 rounded-2xl border ' + (c.id === cur.id ? 'border-emerald-400 bg-emerald-50/50' : 'border-slate-200 bg-white') + '">' + LL.avatar(nameOf(c), null, 'w-10 h-10') + '<div class="min-w-0 flex-1"><p class="font-extrabold text-sm truncate">' + LL.esc(nameOf(c)) + '</p><p class="text-xs text-slate-500 truncate">' + LL.esc(s.last ? s.last.body : 'No messages yet') + '</p></div>' + (s.unread ? '<span class="bg-emerald-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">' + s.unread + '</span>' : '') + '</a>'; }).join('') + '</div><div class="lg:col-span-2">' + card('<div class="flex justify-between"><h2 class="font-extrabold">' + LL.esc(nameOf(cur)) + '</h2><a class="text-xs font-extrabold text-emerald-700" href="provider-request.html?id=' + LL.esc(cur.request_id) + '">View request</a></div><div id="chatMount"></div>') + '</div></div>';
         });
       });
@@ -161,9 +196,122 @@
     });
   }
 
+  /* ---- Bookings (mobile) ---- */
+  var bkFilter = 'all', bkAsc = false, bkQ = '';
+  function bkIc(p) { return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>'; }
+  var BK = {
+    wrench: bkIc('<path d="M14.7 6.3a4 4 0 005 5L21 12.6 12.6 21a2.1 2.1 0 01-3-3L18 9.6"/><path d="M14.7 6.3l-3-3M3.5 13.5l4 4"/>'),
+    car: bkIc('<path d="M5 16V12l2-5h10l2 5v4M3 16h18v3H3zM7 13h.01M17 13h.01"/>'),
+    bolt: bkIc('<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>'),
+    box: bkIc('<path d="M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10"/>'),
+    pin: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+    cal: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>',
+    search: bkIc('<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>'),
+    sort: bkIc('<path d="M4 6h16M7 12h10M10 18h4"/>')
+  };
+  var BK_LBL = { completed: ['Completed', 'ok'], cancelled: ['Cancelled', 'bad'], pending_payment: ['Pending', 'wait'], disputed: ['Disputed', 'bad'], confirmed: ['Confirmed', 'act'], paid: ['Paid', 'act'], provider_on_the_way: ['On the way', 'act'], arrived: ['Arrived', 'act'], in_progress: ['In progress', 'act'] };
+  function pvBkCard(b, x, c, act) {
+    var g = b.status === 'completed' ? 'completed' : b.status === 'cancelled' ? 'cancelled' : 'active';
+    var l = BK_LBL[b.status] || [String(b.status || '').replace(/_/g, ' '), 'wait'];
+    var cat = String(x.category_text || 'Job'), ico = /auto|car|mechanic|vehicle/i.test(cat) ? BK.car : /electric|solar|wiring/i.test(cat) ? BK.bolt : /deliver|dispatch|courier/i.test(cat) ? BK.box : BK.wrench;
+    var q = (cat + ' ' + c + ' ' + (x.location_area || '')).toLowerCase();
+    return '<article class="pv-bk-card" data-g="' + g + '" data-q="' + LL.esc(q) + '"><span class="pv-bk-i">' + ico + '</span><div class="pv-bk-m"><div class="pv-bk-top"><div class="pv-bk-tt"><b>' + LL.esc(cat) + '</b><em>' + LL.esc(c) + '</em></div><span class="pv-pill pv-' + l[1] + '">' + LL.esc(l[0]) + '</span></div>' +
+      (x.location_area ? '<p class="pv-bk-r">' + BK.pin + '<span>' + LL.esc(x.location_area) + '</span></p>' : '') +
+      '<div class="pv-bk-bot"><p class="pv-bk-r">' + BK.cal + '<span>' + (b.scheduled_for ? LL.esc(LL.dateTime(b.scheduled_for)) : 'No time set') + '</span></p><strong>' + LL.naira(b.price_kobo) + '</strong></div>' +
+      (act ? '<div class="pv-bk-act">' + act + '</div>' : '') + '</div></article>';
+  }
+  function bkWrap(pairs) {
+    var chips = [['all', 'All'], ['completed', 'Completed'], ['active', 'Active'], ['cancelled', 'Cancelled']];
+    return '<div class="hidden md:block space-y-3">' + pairs.map(function (p) { return p.d; }).join('') + '</div>' +
+      '<div class="md:hidden pv-bk"><div class="pv-bk-head"><div><h2>Bookings</h2><p>Manage your confirmed and completed jobs</p></div><div class="pv-bk-tools"><button type="button" data-bk-search aria-label="Search bookings">' + BK.search + '</button><button type="button" data-bk-sort aria-label="Sort bookings">' + BK.sort + '</button></div></div>' +
+      '<input type="search" class="pv-bk-q" data-bk-q placeholder="Search bookings" hidden>' +
+      '<div class="pv-bk-chips">' + chips.map(function (c) { return '<button type="button" data-bk-f="' + c[0] + '" aria-pressed="' + (bkFilter === c[0]) + '">' + c[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="pv-bk-list">' + pairs.map(function (p) { return p.m; }).join('') + '</div><p class="pv-none" data-bk-empty hidden>No bookings in this view.</p></div>';
+  }
+  function bindBkFilter() {
+    var cards = app.querySelectorAll('.pv-bk-card'); if (!app.querySelector('.pv-bk')) return;
+    var inp = app.querySelector('[data-bk-q]'), empty = app.querySelector('[data-bk-empty]');
+    function apply() {
+      var n = 0, q = bkQ.trim().toLowerCase();
+      cards.forEach(function (c) { var ok = (bkFilter === 'all' || c.getAttribute('data-g') === bkFilter) && (!q || c.getAttribute('data-q').indexOf(q) >= 0); c.hidden = !ok; if (ok) n++; });
+      if (empty) empty.hidden = n > 0;
+      app.querySelectorAll('[data-bk-f]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-bk-f') === bkFilter)); });
+    }
+    app.querySelectorAll('[data-bk-f]').forEach(function (b) { b.onclick = function () { bkFilter = b.getAttribute('data-bk-f'); apply(); }; });
+    if (inp) { inp.value = bkQ; inp.hidden = !bkQ; inp.oninput = function () { bkQ = inp.value; apply(); }; }
+    var sb = app.querySelector('[data-bk-search]'); if (sb && inp) sb.onclick = function () { inp.hidden = !inp.hidden; if (!inp.hidden) inp.focus(); else { bkQ = ''; inp.value = ''; apply(); } };
+    var so = app.querySelector('[data-bk-sort]'); if (so) so.onclick = function () { bkAsc = !bkAsc; LL.toast(bkAsc ? 'Oldest first' : 'Newest first'); render(true); };
+    apply();
+  }
+  /* ---- Messages (mobile) ---- */
+  function pmIc(p, n) { n = n || 22; return '<svg viewBox="0 0 24 24" width="' + n + '" height="' + n + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>'; }
+  var PM = {
+    search: pmIc('<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>'),
+    edit: pmIc('<path d="M4 20h4L19 9a2.8 2.8 0 00-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>'),
+    back: pmIc('<path d="M15 6l-6 6 6 6"/>'),
+    pin: pmIc('<path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>', 15),
+    ticks: pmIc('<path d="M2 12.5l4 4L14 8M10 15.5l1.5 1.5L21 8"/>', 20)
+  };
+  function pmTime(ts) {
+    if (!ts) return '';
+    var d = new Date(ts), n = new Date(), day = 86400000, t0 = new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime();
+    if (d.getTime() >= t0) return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    if (d.getTime() >= t0 - day) return 'Yesterday';
+    if (d.getTime() >= t0 - 6 * day) return d.toLocaleDateString([], { weekday: 'long' });
+    return d.toLocaleDateString([], { day: 'numeric', month: 'short' });
+  }
+  function pmAvatar(name, url, id) {
+    var k = 0, str = String(id || name || ''); for (var i = 0; i < str.length; i++) k += str.charCodeAt(i);
+    return '<span class="pm-av pm-c' + (k % 3) + '">' + (url ? '<img src="' + LL.esc(url) + '" alt="">' : LL.esc(LL.initials(name))) + '</span>';
+  }
+  function pmMobile(convs, nm, sum) {
+    var sel = LL.q('c');
+    var nameOf = function (c) { return (nm[c.customer_id] || {}).display_name || 'Customer'; };
+    return reqMap(convs.map(function (c) { return c.request_id; })).then(function (rm) {
+      var ctx = function (c) { var x = rm[c.request_id] || {}; return [x.category_text, x.location_area].filter(Boolean).join(' · '); };
+      var cur = sel ? convs.filter(function (c) { return c.id === sel; })[0] : null;
+      if (cur) {
+        return '<div class="pm-chat"><div class="pm-chat-h"><a href="?section=messages" class="pm-back" aria-label="Back to messages">' + PM.back + '</a>' + pmAvatar(nameOf(cur), (nm[cur.customer_id] || {}).avatar_url, cur.customer_id) +
+          '<div class="pm-chat-t"><b>' + LL.esc(nameOf(cur)) + '</b><em>' + LL.esc(ctx(cur) || 'Customer') + '</em></div><a class="pm-view" href="provider-request.html?id=' + LL.esc(cur.request_id) + '">View request</a></div><div class="pm-chat-b"><div id="chatMount"></div></div></div>';
+      }
+      return '<div class="pm"><div class="pm-head"><div><h2>Messages</h2><p>Recent Chats</p></div><div class="pm-tools"><button type="button" data-pm-search aria-label="Search chats">' + PM.search + '</button><a href="provider-request.html" class="pm-new" aria-label="Start a chat from a request">' + PM.edit + '</a></div></div>' +
+        '<input type="search" class="pm-q" data-pm-q placeholder="Search chats" hidden>' +
+        '<div class="pm-list">' + convs.map(function (c) {
+          var s = sum[c.id] || {}, l = s.last, mine = l && l.sender_id === me.id, nmv = nameOf(c), cx = ctx(c);
+          var right = s.unread ? '<span class="pm-badge">' + s.unread + '</span>' : (mine ? '<span class="pm-tick' + (l.read_at ? ' read' : '') + '">' + PM.ticks + '</span>' : '');
+          return '<a href="?section=messages&c=' + LL.esc(c.id) + '" class="pm-card' + (s.unread ? ' un' : '') + '" data-q="' + LL.esc((nmv + ' ' + cx + ' ' + (l ? l.body : '')).toLowerCase()) + '">' + pmAvatar(nmv, (nm[c.customer_id] || {}).avatar_url, c.customer_id) +
+            '<div class="pm-m"><div class="pm-top"><b>' + LL.esc(nmv) + '</b><time>' + LL.esc(pmTime(l ? l.created_at : c.created_at)) + '</time></div><div class="pm-mid"><span class="pm-last">' + LL.esc(l ? (mine ? 'You: ' : '') + l.body : 'No messages yet') + '</span>' + right + '</div>' +
+            (cx ? '<p class="pm-ctx">' + PM.pin + '<span>' + LL.esc(cx) + '</span></p>' : '') + '</div></a>';
+        }).join('') + '</div><p class="pv-none" data-pm-empty hidden>No chats match your search.</p></div>';
+    });
+  }
+  function bindMsgSearch() {
+    var inp = app.querySelector('[data-pm-q]'), btn = app.querySelector('[data-pm-search]'); if (!inp || !btn) return;
+    var cards = app.querySelectorAll('.pm-card'), empty = app.querySelector('[data-pm-empty]');
+    function apply() { var n = 0, q = inp.value.trim().toLowerCase(); cards.forEach(function (c) { var ok = !q || c.getAttribute('data-q').indexOf(q) >= 0; c.hidden = !ok; if (ok) n++; }); if (empty) empty.hidden = n > 0; }
+    inp.oninput = apply;
+    btn.onclick = function () { inp.hidden = !inp.hidden; if (!inp.hidden) inp.focus(); else { inp.value = ''; apply(); } };
+  }
+  function pvHeader(p, profile) {
+    var hd = document.querySelector('header'); if (!hd || hd.querySelector('.pv-brand')) return;
+    var left = hd.children[0], right = hd.children[1];
+    var b = document.createElement('span'); b.className = 'pv-brand'; b.innerHTML = '<b>LifeLink</b><i>Provider</i>';
+    if (left && left.children[0]) left.insertBefore(b, left.children[1] || null);
+    var m = document.createElement('a'); m.className = 'pv-me'; m.href = '?section=profile'; m.setAttribute('aria-label', 'Profile');
+    m.innerHTML = profile && profile.avatar_url ? '<img src="' + LL.esc(profile.avatar_url) + '" alt="">' : '<span>' + LL.esc(LL.initials(profile && profile.full_name)) + '</span>';
+    if (right) right.appendChild(m);
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest && e.target.closest('[data-pv-pro]');
+    if (t && typeof LL.toast === 'function') LL.toast('Pro plans are coming soon.');
+  });
   function render(quiet) {
+    document.body.classList.toggle('pv-home', section === 'overview');
+    document.body.classList.toggle('pv-bk', section === 'bookings');
+    document.body.classList.toggle('pv-msg', section === 'messages');
+    document.body.classList.toggle('pv-msg-list', section === 'messages' && !LL.q('c'));
     if (!quiet) app.innerHTML = LL.loading(TITLES[section].toLowerCase());
-    return S[section]().then(function (h) { app.innerHTML = h; bindBookingActions(); syncSharing(); }).catch(function (e) { app.innerHTML = LL.error(e.message); });
+    return S[section]().then(function (h) { app.innerHTML = h; bindBookingActions(); bindBkFilter(); bindMsgSearch(); syncSharing(); }).catch(function (e) { app.innerHTML = LL.error(e.message); });
   }
   LL.ready(function (profile) {
     me = profile;
@@ -173,6 +321,7 @@
       if (!p) { LL.go('provider-onboarding.html'); return; }
       prov = p;
       LL.setHeader(TITLES[section], p.business_name);
+      pvHeader(p, profile);
       LLApi.messages.unreadTotal(profile.id).then(function (n) { LL.setBadge('navMsgBadge', n); }, function () {});
       render();
       if (section !== 'messages' && section !== 'profile' && section !== 'services' && section !== 'wallet') LL.onLive(function () { LL.quiet(app, function () { return render(true); }); });
