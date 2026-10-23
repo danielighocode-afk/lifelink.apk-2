@@ -718,3 +718,18 @@ html[data-theme="dark"] .pp-out { color: #fb7185; }
 
 /* ---------- provider Messages: customer screen ---------- */
 .pm-cu { margin-bottom: 0; }
+
+/* ---------- smoother scrolling and page changes (mobile) ---------- */
+@media (max-width: 767.98px) {
+  html { scroll-behavior: auto; -webkit-text-size-adjust: 100%; }
+  body { overscroll-behavior-y: none; }
+  a, button, [role="button"], input, select, textarea, label { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  /* blur behind fixed bars is the costliest thing to repaint while scrolling: use solid colour instead */
+  header.sticky, header[class*="sticky"] { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; background-color: var(--ll-surface) !important; }
+  .ll-tabbar { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; background: var(--ll-surface) !important; transform: translateZ(0); will-change: transform; }
+  .pm-card, .pr-card, .pv-bk-card, .pp-svc, .pp-menu a { transition: transform .12s ease; }
+  .pm-card:active, .pr-card:active, .pv-bk-card:active, .pp-svc:active, .pp-menu a:active { transform: scale(.985); }
+  /* shorter slide between pages so navigation feels immediate */
+  ::view-transition-group(root) { animation-duration: 170ms; }
+  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 170ms; }
+}
