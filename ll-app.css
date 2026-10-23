@@ -397,3 +397,70 @@ body[data-ll-role="customer"] #mobileNav { display: none !important; }
 @keyframes ll-out-left { from { transform: none; opacity: 1; } to { transform: translateX(-12%); opacity: 0; } }
 @keyframes ll-in-left { from { transform: translateX(-28%); opacity: .0; } to { transform: none; opacity: 1; } }
 @keyframes ll-out-right { from { transform: none; opacity: 1; } to { transform: translateX(12%); opacity: 0; } }
+
+/* ==========================================================================
+   PROVIDER APP POLISH: gives the provider screens the same soft, rounded look as the customer app.
+   Scoped to body[data-ll-role="provider"], so customer pages are untouched. Presentation only.
+   ========================================================================== */
+body[data-ll-role="provider"] { font-family: "Plus Jakarta Sans", system-ui, sans-serif; }
+
+/* header: borderless, page-coloured, bigger title, soft bell tile (like the customer Home) */
+body[data-ll-role="provider"] header.sticky { background-color: var(--ll-bg) !important; border-bottom: 0 !important; box-shadow: none; }
+body[data-ll-role="provider"] header #pageTitle { font-size: 22px; line-height: 1.15; font-weight: 800; letter-spacing: -.02em; }
+body[data-ll-role="provider"] header #pageSub { font-size: 13.5px; font-weight: 600; color: var(--ll-text-2); }
+body[data-ll-role="provider"] header .ll-bell-btn { width: 48px; height: 48px; border-radius: 16px; border: 0; background: var(--ll-surface); color: var(--ll-primary); box-shadow: 0 4px 12px rgba(20, 43, 39, .12); }
+body[data-ll-role="provider"] .ll-bdot { border-color: var(--ll-bg); }
+
+/* section chips: floating pills; the active one is solid green */
+body[data-ll-role="provider"] #mobileNav { background-color: var(--ll-bg) !important; border-bottom: 0 !important; padding: 6px 16px 12px; gap: 10px; }
+body[data-ll-role="provider"] #mobileNav a { border: 0 !important; padding: 9px 16px; font-size: 13.5px; background: var(--ll-surface) !important; color: var(--ll-text-2) !important; box-shadow: 0 2px 8px rgba(20, 43, 39, .08); transition: transform .15s var(--ll-ease); }
+body[data-ll-role="provider"] #mobileNav a:active { transform: scale(.95); }
+body[data-ll-role="provider"] #mobileNav a[class*="bg-emerald-50"] { background: var(--ll-primary) !important; color: #fff !important; box-shadow: 0 6px 14px rgba(7, 134, 95, .3); }
+
+/* quick actions: same tiles as the customer Home */
+body[data-ll-role="provider"] .ll-quick { margin-top: 6px; gap: 8px; }
+body[data-ll-role="provider"] .ll-quick a { border: 0; background: transparent; box-shadow: none; padding: 6px 2px; }
+body[data-ll-role="provider"] .ll-quick a span { width: 62px; height: 62px; border-radius: 20px; }
+body[data-ll-role="provider"] .ll-quick a svg { width: 28px; height: 28px; }
+body[data-ll-role="provider"] .ll-quick a em { font-size: 12.5px; font-weight: 700; color: var(--ll-text-2); }
+
+/* cards: borderless, larger radius, soft shadow */
+body[data-ll-role="provider"] main section[class*="rounded-3xl"],
+body[data-ll-role="provider"] main a.block[class*="rounded-2xl"],
+body[data-ll-role="provider"] main div[class*="rounded-2xl"][class*="bg-white"],
+body[data-ll-role="provider"] main form[class*="rounded-3xl"],
+body[data-ll-role="provider"] main a[class*="rounded-2xl"][class*="bg-white"] {
+  border-color: transparent !important; border-radius: 22px !important; box-shadow: var(--ll-shadow);
+}
+body[data-ll-role="provider"] main div[class*="border-dashed"] { border: 1.5px dashed var(--ll-border) !important; box-shadow: none; }
+body[data-ll-role="provider"] main section[class*="rounded-3xl"] h2,
+body[data-ll-role="provider"] main h1 { font-weight: 800; letter-spacing: -.01em; }
+body[data-ll-role="provider"] main h1.text-xl { font-size: 24px; }
+
+/* status chips: soft, rounded */
+body[data-ll-role="provider"] main span[class*="rounded-full"][class*="border"] { border-color: transparent !important; padding: 5px 12px; font-size: 12px; }
+
+/* overview: welcome card + stat tiles with icons */
+.pv-hero { border-radius: 26px !important; padding: 20px !important; }
+.pv-hero small { display: block; font-size: 13px; font-weight: 600; opacity: .85; }
+.pv-hero h2 { margin: 2px 0 14px; font-size: 22px; line-height: 1.2; font-weight: 800; letter-spacing: -.02em; color: #fff; }
+.pv-hero-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.pv-hero-row span { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; background: rgba(255, 255, 255, .18); font-size: 12.5px; font-weight: 800; color: #fff; }
+.pv-stat { display: flex !important; flex-direction: column; gap: 14px; padding: 16px !important; background: var(--ll-surface); }
+.pv-stat .ic { width: 44px; height: 44px; border-radius: 15px; display: flex; align-items: center; justify-content: center; background: var(--ll-primary-soft); color: var(--ll-primary); }
+.pv-stat .ic svg { width: 22px; height: 22px; }
+.pv-stat b { display: block; font-size: 30px; line-height: 1; font-weight: 800; letter-spacing: -.02em; color: var(--ll-text); }
+.pv-stat em { display: block; margin-top: 5px; font-style: normal; font-size: 13px; font-weight: 700; color: var(--ll-text-2); }
+
+/* buttons and form fields */
+body[data-ll-role="provider"] main button[class*="rounded-xl"], body[data-ll-role="provider"] main a[class*="rounded-xl"] { border-radius: 14px !important; }
+body[data-ll-role="provider"] main .field { border-radius: 16px; border-color: var(--ll-border); background: var(--ll-surface-2); }
+body[data-ll-role="provider"] main .lbl { text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 700; color: var(--ll-text-2); }
+
+/* message list: avatars and rows match the customer chat list */
+body[data-ll-role="provider"] main a.flex[class*="rounded-2xl"][class*="border"] { border-color: transparent !important; background: var(--ll-surface); box-shadow: var(--ll-shadow); }
+body[data-ll-role="provider"] main a.flex[class*="border-emerald-400"] { background: var(--ll-primary-soft); box-shadow: inset 0 0 0 1.5px var(--ll-primary), var(--ll-shadow); }
+
+/* account sheet: bigger rounded tiles */
+body[data-ll-role="provider"] .ll-sheet { border-radius: 30px 30px 0 0; }
+body[data-ll-role="provider"] .ll-sheet-link { border-radius: 18px; min-height: 58px; }
