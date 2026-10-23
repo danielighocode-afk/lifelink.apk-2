@@ -1,18 +1,32 @@
 #!/usr/bin/env node
 /* Run after `cap add android` (and safe to re-run). Applies LifeLink's Android-specific settings:
-   location permissions, launcher icons (from the original logo), splash image and background colour. */
+   location + notification permissions, Firebase push setup, launcher icons (from the original logo), splash image and background colour. */
 const fs = require('fs'), path = require('path');
 const root = path.resolve(__dirname, '..'), res = path.join(root, 'android', 'app', 'src', 'main', 'res');
 const manifest = path.join(root, 'android', 'app', 'src', 'main', 'AndroidManifest.xml');
 if (!fs.existsSync(manifest)) { console.error('android/ not found. Run: npm run android:add'); process.exit(1); }
 
 let xml = fs.readFileSync(manifest, 'utf8'), added = [];
-for (const p of ['ACCESS_FINE_LOCATION', 'ACCESS_COARSE_LOCATION', 'ACCESS_NETWORK_STATE']) {
+for (const p of ['ACCESS_FINE_LOCATION', 'ACCESS_COARSE_LOCATION', 'ACCESS_NETWORK_STATE', 'POST_NOTIFICATIONS']) {
   if (!xml.includes('android.permission.' + p)) { xml = xml.replace('</manifest>', '    <uses-permission android:name="android.permission.' + p + '" />\n</manifest>'); added.push(p); }
 }
 if (!xml.includes('android.hardware.location.gps')) xml = xml.replace('</manifest>', '    <uses-feature android:name="android.hardware.location.gps" android:required="false" />\n</manifest>');
 fs.writeFileSync(manifest, xml);
 console.log('manifest: permissions added -> ' + (added.join(', ') || 'none needed'));
+
+/* Push notifications: copy Firebase's google-services.json (kept in the project root) into the Android app and make sure Gradle uses it. */
+const gsSrc = path.join(root, 'google-services.json'), gsDest = path.join(root, 'android', 'app', 'google-services.json');
+if (fs.existsSync(gsSrc)) {
+  fs.copyFileSync(gsSrc, gsDest);
+  console.log('firebase: google-services.json copied to android/app/');
+  const patch = (file, fn) => { if (!fs.existsSync(file)) return; const a = fs.readFileSync(file, 'utf8'), b = fn(a); if (b !== a) { fs.writeFileSync(file, b); console.log('firebase: updated ' + path.relative(root, file)); } };
+  patch(path.join(root, 'android', 'build.gradle'), (g) => /com\.google\.gms:google-services/.test(g) ? g
+    : g.replace(/(classpath\s+['"]com\.android\.tools\.build:gradle:[^'"]+['"])/, "$1\n        classpath 'com.google.gms:google-services:4.4.2'"));
+  patch(path.join(root, 'android', 'app', 'build.gradle'), (g) => /com\.google\.gms\.google-services/.test(g) ? g
+    : g + "\napply plugin: 'com.google.gms.google-services'\n");
+} else {
+  console.warn('firebase: google-services.json not found in the project root. The app will build, but push notifications will not work.');
+}
 
 let icons = 0; const src = path.join(root, 'android-res');
 for (const d of fs.readdirSync(src)) {
