@@ -5,3 +5,5 @@ verify_jwt = true
 verify_jwt = true
 [functions.paystack-webhook]
 verify_jwt = false   # Paystack cannot send a Supabase JWT; the HMAC signature protects this endpoint.
+[functions.send-push]
+verify_jwt = false   # Called by a Database Webhook on new notifications; the x-webhook-secret header protects it.

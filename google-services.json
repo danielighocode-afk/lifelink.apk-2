@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "997573170135",
+    "project_id": "lifelink-4bbcc",
+    "storage_bucket": "lifelink-4bbcc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:997573170135:android:e21f17cf5245d70eb23192",
+        "android_client_info": {
+          "package_name": "com.lifelink.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyByzhU1mb_hAajYBRIaJLUepg5-FIX9weU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

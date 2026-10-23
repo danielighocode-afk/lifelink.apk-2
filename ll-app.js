@@ -175,10 +175,16 @@
     applyTheme(getPref());
   }
 
+  // Push notifications live in their own file and only load inside the native app, once a person is signed in.
+  function loadPush() {
+    if (!NATIVE || document.getElementById('ll-push-js')) return;
+    var s = document.createElement('script'); s.id = 'll-push-js'; s.src = 'll-push.js'; s.async = true; document.head.appendChild(s);
+  }
+
   function init(retries) {
     mountThemeFab();
     if (!window.LL || !LL.whenAuth) { if (retries > 0) return setTimeout(function () { init(retries - 1); }, 150); mountTabs(null); return nativeGlue(null); }
-    LL.whenAuth(function (p) { mountTabs(p); if (p) { quickActions(p.role); unreadBadge(p); } nativeGlue(p); });
+    LL.whenAuth(function (p) { mountTabs(p); if (p) { quickActions(p.role); unreadBadge(p); } nativeGlue(p); if (p) loadPush(); });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { init(20); }); else init(20);
 })();
