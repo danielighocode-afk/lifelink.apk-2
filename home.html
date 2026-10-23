@@ -18,7 +18,7 @@
     .hm { position: relative; max-width: 560px; margin: 0 auto; padding: 0 16px 8px; font-family: "Plus Jakarta Sans", system-ui, sans-serif; color: var(--ll-text); }
     .hm * { box-sizing: border-box; }
     .hm a { color: inherit; text-decoration: none; }
-    .hm-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; position: absolute; top: 0; left: 0; right: 0; z-index: 5; padding: calc(12px + env(safe-area-inset-top, 0px)) 18px 0; animation: llRise .5s var(--ll-ease) both; }
+    .hm-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; position: absolute; top: 0; left: 0; right: 0; z-index: 5; padding: 12px 18px 0; animation: llRise .5s var(--ll-ease) both; }
     .hm-brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
     .hm-brand img { height: 46px; width: auto; flex: none; }
     .hm-brand .ll-me { width: 46px; height: 46px; font-size: 17px; }
@@ -31,7 +31,7 @@
     .hm-signin { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 14px; background: var(--ll-primary); color: #fff !important; font-weight: 800; font-size: 14px; }
 
     /* ---- banner carousel ---- */
-    .bn { position: relative; margin: 0 -16px; border-radius: 0 0 30px 30px; height: calc(318px + env(safe-area-inset-top, 0px)); background: linear-gradient(135deg, #e8f6ef, #d4eee2); box-shadow: var(--ll-shadow); animation: llRise .55s .05s var(--ll-ease) both; }
+    .bn { position: relative; margin: 0 -16px; border-radius: 0 0 30px 30px; height: 318px; background: linear-gradient(135deg, #e8f6ef, #d4eee2); box-shadow: var(--ll-shadow); animation: llRise .55s .05s var(--ll-ease) both; }
     html[data-theme="dark"] .bn { background: linear-gradient(135deg, #1b3a31, #14302a); }
     .bn-track { position: absolute; inset: 0; border-radius: 0 0 30px 30px; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
     .bn-track::-webkit-scrollbar { display: none; }
@@ -40,7 +40,7 @@
     .bn-photo img { width: 100%; height: 100%; object-fit: cover; display: block; transform: scale(1.08); transition: transform 1.4s var(--ll-ease);
       -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 45%); mask-image: linear-gradient(90deg, transparent 0, #000 45%); }
     .bn-slide.on .bn-photo img { transform: scale(1); }
-    .bn-copy { position: relative; z-index: 1; width: 58%; padding: calc(92px + env(safe-area-inset-top, 0px)) 0 0 20px; }
+    .bn-copy { position: relative; z-index: 1; width: 58%; padding: 92px 0 0 20px; }
     .bn-copy h2 { margin: 0; font-size: 21px; line-height: 1.14; font-weight: 800; letter-spacing: -.02em; color: #12302a; }
     .bn-copy p { margin: 7px 0 0; font-size: 12.5px; line-height: 1.4; font-weight: 600; color: #3d5a51; }
     html[data-theme="dark"] .bn-copy h2 { color: #F0F7F3; } html[data-theme="dark"] .bn-copy p { color: #bcd1c7; }
@@ -91,7 +91,7 @@
     @media (prefers-reduced-motion: reduce) { .hm *, .bn, .bn-slide * { animation: none !important; transition: none !important; } .bn-slide .bn-copy > * { opacity: 1; transform: none; } }
   </style>
 </head>
-<body data-ll-page="home-app" data-ll-role="public">
+<body data-ll-page="home-app" data-ll-role="public" data-ll-strip>
 <main class="hm">
 
   <header class="hm-top">

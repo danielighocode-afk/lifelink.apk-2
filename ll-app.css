@@ -34,6 +34,10 @@ html[data-theme="dark"] {
 
 html { -webkit-tap-highlight-color: transparent; }
 body { background-color: var(--ll-bg) !important; color: var(--ll-text); -webkit-font-smoothing: antialiased; }
+/* Plain page-coloured band behind the phone's clock/battery (WhatsApp style). A page opts in with data-ll-strip on <body>;
+   its content then starts BELOW the band. Height is 0 where the system bar is already solid (older Android) or in a browser. */
+body[data-ll-strip] { padding-top: var(--ll-safe-t) !important; }
+body[data-ll-strip]::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: var(--ll-safe-t); background: var(--ll-bg); z-index: 20; pointer-events: none; }
 body, .bg-white, .bg-slate-50, .bg-slate-100, header, aside { transition: background-color .2s ease, border-color .2s ease, color .2s ease; }
 :focus-visible { outline: 2px solid var(--ll-primary); outline-offset: 2px; }
 
