@@ -122,6 +122,11 @@
       return LLApi.provider.reviews().then(function (rs) { return rs.length ? '<div class="space-y-3">' + rs.map(function (v) { return card('<div class="flex justify-between"><span class="text-amber-500 font-extrabold">' + '★'.repeat(v.rating) + '</span><span class="text-xs text-slate-400 font-semibold">' + LL.esc(LL.date(v.created_at)) + '</span></div>' + (v.comment ? '<p class="text-sm text-slate-700">' + LL.esc(v.comment) + '</p>' : '') + '<p class="text-xs font-semibold text-slate-500">' + (v.recommend ? 'Recommends you' : 'Does not recommend') + '</p>'); }).join('') + '</div>' : LL.empty('No reviews yet', 'Reviews appear after customers rate completed jobs.'); });
     },
     profile: function () {
+      return Promise.all([S.profileForm(), LLApi.provider.services().catch(function () { return []; }), LLApi.provider.reviews().catch(function () { return []; })]).then(function (r) {
+        return pvProfile(r[1], r[2]) + '<div id="ppForm" class="pp-form">' + r[0] + '</div>';
+      });
+    },
+    profileForm: function () {
       setTimeout(function () {
         document.getElementById('pf').onsubmit = function (e) {
           e.preventDefault();
@@ -292,6 +297,128 @@
     inp.oninput = apply;
     btn.onclick = function () { inp.hidden = !inp.hidden; if (!inp.hidden) inp.focus(); else { inp.value = ''; apply(); } };
   }
+  /* ---- mobile Profile (matches the provider Profile mock-up). The original form is kept below and opened by "Edit Profile". ---- */
+  function ppIcon(t) {
+    var k = String(t || '').toLowerCase(), p;
+    if (/data entry|typing|document|admin/.test(k)) p = '<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h4M10 13h5M10 17h5"/>';
+    else if (/web dev|develop|code|software|app/.test(k)) p = '<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M10 9l-3 3 3 3M14 9l3 3-3 3"/>';
+    else if (/design|graphic|logo|art/.test(k)) p = '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>';
+    else if (/video|film|edit|photo|camera/.test(k)) p = '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9.5v5l4.5-2.5z"/>';
+    else if (/bot|ai |^ai|chat/.test(k)) p = '<rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4M9.5 13h.01M14.5 13h.01M9.5 16h5"/>';
+    else if (/data|annot|database|analy/.test(k)) p = '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/>';
+    else if (/clean|laundry|wash/.test(k)) p = '<path d="M12 3s6 6.5 6 11a6 6 0 01-12 0c0-4.5 6-11 6-11z"/>';
+    else if (/repair|fix|plumb|electric|mechanic|tool/.test(k)) p = '<path d="M14.7 6.3a4 4 0 005 5L21 12.6 12.6 21a2.1 2.1 0 01-3-3L18 9.6"/><path d="M14.7 6.3l-3-3"/>';
+    else p = '<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.4 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/>';
+    return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>';
+  }
+  function pvProfile(svcs, revs) {
+    var sv = function (d, w) { return '<svg viewBox="0 0 24 24" width="' + (w || 20) + '" height="' + (w || 20) + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>'; };
+    var chev = sv('<path d="M9 6l6 6-6 6"/>', 16), pen = sv('<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>', 18);
+    var st = prov.verification_status || 'pending', ok = st === 'verified';
+    var stLabel = ok ? 'Verified' : (st.charAt(0).toUpperCase() + st.slice(1).replace(/_/g, ' '));
+    var tick = ok ? '<svg class="pp-tick" viewBox="0 0 24 24" width="20" height="20" aria-label="Verified"><path fill="#1D9BF0" d="M12 1.8l2.4 1.7 2.9-.2 1.2 2.7 2.6 1.4-.4 2.9 1.4 2.5-1.7 2.4.1 2.9-2.8 1-1.6 2.5-2.8-.8-2.7.8-1.6-2.5-2.8-1 .1-2.9-1.7-2.4 1.4-2.5-.4-2.9 2.6-1.4 1.2-2.7 2.9.2z"/><path d="M8.2 12.2l2.7 2.7 5-5.4" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '';
+    var rating = prov.rating_avg != null ? Number(prov.rating_avg).toFixed(1) : '–';
+    var banner = me && me.banner_url ? '<img src="' + LL.esc(me.banner_url) + '" alt="">' : '';
+    var avatar = me && me.avatar_url ? '<img src="' + LL.esc(me.avatar_url) + '" alt="">' : '<span>' + LL.esc(LL.initials((me && me.full_name) || prov.business_name)) + '</span>';
+    ppSvcs = (svcs || []).slice().sort(function (a, b) { return (b.active !== false) - (a.active !== false); });
+    var list = ppSvcs.slice(0, 6);
+    var tiles = list.length ? list.map(function (x) { return '<button type="button" class="pp-svc' + (x.active === false ? ' pp-svc-off' : '') + '" data-svc="' + LL.esc(x.id) + '"><span class="pp-svc-i">' + ppIcon(x.title) + '</span><span class="pp-svc-t">' + LL.esc(x.title) + (x.active === false ? '<small>Hidden</small>' : '') + '</span>' + chev + '</button>'; }).join('')
+      : '<button type="button" class="pp-svc pp-svc-add" data-svc=""><span class="pp-svc-i">' + sv('<path d="M12 5v14M5 12h14"/>') + '</span><span class="pp-svc-t">Add a service</span>' + chev + '</button>';
+    return '<div class="pp-m md:hidden">' +
+      '<div class="pp-bar"><a href="?section=overview" class="pp-bk" aria-label="Back">' + sv('<path d="M15 5l-7 7 7 7"/>', 24) + '</a><h1>Profile</h1><a href="settings.html" class="pp-bk" aria-label="Settings">' + sv('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3h0a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9v0a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/>', 24) + '</a></div>' +
+      '<div class="pp-cover">' + banner + '<button type="button" class="pp-chg" id="ppCoverBtn">' + sv('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>', 16) + '<span>Change Cover</span></button></div>' +
+      '<div class="pp-id"><div class="pp-av"><div class="pp-av-i">' + avatar + '</div><button type="button" class="pp-pen" id="ppAvBtn" aria-label="Change photo">' + sv('<path d="M4 20h4L19 9l-4-4L4 16z"/>', 14) + '</button></div>' +
+      '<div class="pp-nm"><h2><span>' + LL.esc(prov.business_name) + '</span>' + tick + '</h2><p>Provider Account</p><span class="pp-pill' + (ok ? '' : ' pp-pill-w') + '">' + (ok ? sv('<path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/>', 14) : '') + LL.esc(stLabel) + '</span></div></div>' +
+      '<div class="pp-stats"><div><b><span class="pp-star">★</span> ' + rating + '</b><em>(' + (revs || []).length + ' review' + ((revs || []).length === 1 ? '' : 's') + ')</em></div><i></i><div><b>' + sv('<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/>', 18) + ' ' + (prov.jobs_done || 0) + '</b><em>Jobs done</em></div></div>' +
+      '<div class="pp-sec"><h3>About me</h3><button type="button" class="pp-ed" data-pp-edit="pb" aria-label="Edit about">' + pen + '</button></div>' +
+      (prov.bio ? '<div class="pp-about">' + LL.esc(prov.bio) + '</div>' : '<button type="button" class="pp-about pp-about-e" data-pp-edit="pb">Tell customers about yourself and your work. Tap to add.</button>') +
+      '<div class="pp-sec"><h3>Services</h3><span class="pp-sec-r"><button type="button" class="pp-va" data-svc="">+ Add</button><a href="?section=services" class="pp-va">View all</a></span></div><div class="pp-grid">' + tiles + '</div>' +
+      '<button type="button" class="pp-edit" data-pp-edit="pn"><span>' + pen + '</span><b>Edit Profile</b>' + chev + '</button>' +
+      '<input type="file" id="ppCoverIn" accept="image/jpeg,image/png,image/webp" hidden><input type="file" id="ppAvIn" accept="image/jpeg,image/png,image/webp" hidden></div>';
+  }
+  var ppSvcs = [], ppCats = null;
+  function ppSheet(id) {
+    var sv0 = id ? ppSvcs.filter(function (x) { return x.id === id; })[0] : null;
+    var old = document.getElementById('ppSheet'); if (old) old.remove();
+    var el = document.createElement('div'); el.id = 'ppSheet'; el.className = 'pp-ov';
+    function close() { el.remove(); document.body.classList.remove('pp-lock'); }
+    function build(cats) {
+      el.innerHTML = '<div class="pp-sh" role="dialog" aria-modal="true"><div class="pp-sh-h"><b>' + (sv0 ? 'Edit service' : 'Add a service') + '</b><button type="button" id="ppX" aria-label="Close">✕</button></div>' +
+        '<form id="ppSf" novalidate><label class="lbl" for="ppT">Service title</label><input id="ppT" class="field" maxlength="120" value="' + LL.esc(sv0 ? sv0.title : '') + '">' +
+        '<label class="lbl" for="ppP">Starting price (₦)</label><input id="ppP" class="field" inputmode="decimal" value="' + (sv0 ? (sv0.base_price_kobo / 100) : '') + '">' +
+        '<label class="lbl" for="ppC">Category (optional)</label><select id="ppC" class="field"><option value="">None</option>' + cats.map(function (c) { return '<option value="' + LL.esc(c.id) + '"' + (sv0 && sv0.category_id === c.id ? ' selected' : '') + '>' + LL.esc(c.name) + '</option>'; }).join('') + '</select>' +
+        '<label class="lbl" for="ppD">Short description (optional)</label><input id="ppD" class="field" maxlength="500" value="' + LL.esc(sv0 && sv0.description || '') + '">' +
+        '<button id="ppSave" class="pp-save">' + (sv0 ? 'Save changes' : 'Add service') + '</button></form>' +
+        (sv0 ? '<div class="pp-sh-f"><button type="button" id="ppTog">' + (sv0.active === false ? 'Show' : 'Hide') + '</button><button type="button" id="ppDel" class="pp-del">Delete</button></div>' : '') + '</div>';
+      document.getElementById('ppX').onclick = close;
+      function done(msg) { close(); LL.toast(msg); render(true); }
+      function fail(er) { LL.toast((er && er.message) || 'Something went wrong.', true); }
+      document.getElementById('ppSf').onsubmit = function (e) {
+        e.preventDefault();
+        var t = document.getElementById('ppT').value.trim(), k = LL.toKobo(document.getElementById('ppP').value);
+        if (t.length < 2) { LL.toast('Enter a service title.', true); return; }
+        if (!isFinite(k) || k < 0) { LL.toast('Enter a valid price.', true); return; }
+        var o = { title: t, priceKobo: k, categoryId: document.getElementById('ppC').value || null, description: document.getElementById('ppD').value.trim() };
+        if (sv0) { o.id = sv0.id; o.active = sv0.active !== false; }
+        LL.busy(document.getElementById('ppSave'), 'Saving…', function () { return LLApi.provider.saveService(o); }).then(function () { done(sv0 ? 'Service updated.' : 'Service added.'); }, fail);
+      };
+      if (sv0) {
+        document.getElementById('ppTog').onclick = function () {
+          LLApi.provider.saveService({ id: sv0.id, title: sv0.title, description: sv0.description, priceKobo: sv0.base_price_kobo, categoryId: sv0.category_id, active: sv0.active === false }).then(function () { done(sv0.active === false ? 'Service is now visible.' : 'Service hidden.'); }, fail);
+        };
+        document.getElementById('ppDel').onclick = function () {
+          LL.confirm({ title: 'Delete this service?', confirmText: 'Delete', danger: true }).then(function (ok) { if (ok) LLApi.provider.deleteService(sv0.id).then(function () { done('Service deleted.'); }, fail); });
+        };
+      }
+    }
+    el.onclick = function (e) { if (e.target === el) close(); };
+    document.body.appendChild(el); document.body.classList.add('pp-lock');
+    if (ppCats) build(ppCats); else { build([]); LLApi.catalog.categories().then(function (c) { ppCats = c || []; if (document.getElementById('ppSheet') === el) build(ppCats); }, function () {}); }
+  }
+  function ppShrink(file) {
+    return new Promise(function (resolve) {
+      var img = new Image(), url = URL.createObjectURL(file);
+      img.onload = function () {
+        try {
+          var W = Math.min(1280, img.width), H = Math.round(W * 0.5), cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+          var r = Math.max(W / img.width, H / img.height), sw = W / r, sh = H / r;
+          cv.getContext('2d').drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, 0, 0, W, H);
+          cv.toBlob(function (b) { URL.revokeObjectURL(url); resolve(b ? new File([b], 'banner.jpg', { type: 'image/jpeg' }) : file); }, 'image/jpeg', 0.84);
+        } catch (e) { URL.revokeObjectURL(url); resolve(file); }
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); resolve(file); };
+      img.src = url;
+    });
+  }
+  function bindProfile() {
+    var cb = document.getElementById('ppCoverBtn'); if (!cb) return;
+    var ci = document.getElementById('ppCoverIn'), ab = document.getElementById('ppAvBtn'), ai = document.getElementById('ppAvIn');
+    cb.onclick = function () { ci.click(); };
+    ab.onclick = function () { ai.click(); };
+    ci.onchange = function () {
+      var f = ci.files[0]; if (!f) return;
+      LL.toast('Uploading cover…');
+      ppShrink(f).then(function (small) { return LLApi.uploadBanner(small); }).then(function (url) { me.banner_url = url; LL.toast('Cover updated.'); render(true); }).catch(function (e) {
+        var m = (e && e.message) || '';
+        LL.toast(/banner_url/.test(m) ? 'Banner is not set up yet. Run migration 009 in Supabase.' : (m || 'Could not upload the cover.'), true);
+      });
+    };
+    ai.onchange = function () {
+      var f = ai.files[0]; if (!f) return;
+      LL.toast('Uploading photo…');
+      LLApi.uploadAvatar(f).then(function (url) { me.avatar_url = url; LL.toast('Photo updated.'); render(true); }, function (e) { LL.toast(e.message || 'Could not upload the photo.', true); });
+    };
+    Array.prototype.forEach.call(document.querySelectorAll('[data-svc]'), function (b) { b.onclick = function () { ppSheet(b.getAttribute('data-svc')); }; });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-pp-edit]'), function (b) {
+      b.onclick = function () {
+        var f = document.getElementById('ppForm'); if (!f) return;
+        f.classList.add('open');
+        var t = document.getElementById(b.getAttribute('data-pp-edit'));
+        f.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (t) setTimeout(function () { try { t.focus({ preventScroll: true }); } catch (e) { t.focus(); } }, 350);
+      };
+    });
+  }
   function pvHeader(p, profile) {
     var hd = document.querySelector('header'); if (!hd || hd.querySelector('.pv-brand')) return;
     var left = hd.children[0], right = hd.children[1];
@@ -309,9 +436,10 @@
     document.body.classList.toggle('pv-home', section === 'overview');
     document.body.classList.toggle('pv-bk', section === 'bookings');
     document.body.classList.toggle('pv-msg', section === 'messages');
+    document.body.classList.toggle('pv-pf', section === 'profile');
     document.body.classList.toggle('pv-msg-list', section === 'messages' && !LL.q('c'));
     if (!quiet) app.innerHTML = LL.loading(TITLES[section].toLowerCase());
-    return S[section]().then(function (h) { app.innerHTML = h; bindBookingActions(); bindBkFilter(); bindMsgSearch(); syncSharing(); }).catch(function (e) { app.innerHTML = LL.error(e.message); });
+    return S[section]().then(function (h) { app.innerHTML = h; bindBookingActions(); bindBkFilter(); bindMsgSearch(); bindProfile(); syncSharing(); }).catch(function (e) { app.innerHTML = LL.error(e.message); });
   }
   LL.ready(function (profile) {
     me = profile;
