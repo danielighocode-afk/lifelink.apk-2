@@ -478,14 +478,45 @@
     var t = e.target.closest && e.target.closest('[data-pv-pro]');
     if (t && typeof LL.toast === 'function') LL.toast('Pro plans are coming soon.');
   });
+  /* Instant paint: the last-built HTML of list-style sections is shown at once (stale-while-revalidate), then replaced
+     by the fresh build only if it differs. Cleared on sign-out by LL.cache.clear(). Forms, wallet and open chats are always built fresh. */
+  var shown = null, mobileNow = function () { return window.matchMedia && window.matchMedia('(max-width: 767.98px)').matches; };
+  function ckey(s2) {
+    if (!me) return null;
+    var ok = s2 === 'overview' || s2 === 'bookings' || s2 === 'quotes' || s2 === 'reviews' || (s2 === 'messages' && !LL.q('c') && mobileNow());
+    return ok ? 'prov:' + me.id + ':' + s2 + ':' + (s2 === 'messages' ? (LL.q('cu') || '') : '') + (mobileNow() ? ':m' : ':d') : null;
+  }
+  function bindAll() { bindBookingActions(); bindBkFilter(); bindMsgSearch(); bindProfile(); }
   function render(quiet) {
     document.body.classList.toggle('pv-home', section === 'overview');
     document.body.classList.toggle('pv-bk', section === 'bookings');
     document.body.classList.toggle('pv-msg', section === 'messages');
-    document.body.classList.toggle('pv-pf', section === 'profile');
     document.body.classList.toggle('pv-msg-list', section === 'messages' && !LL.q('c'));
-    if (!quiet) app.innerHTML = LL.loading(TITLES[section].toLowerCase());
-    return S[section]().then(function (h) { app.innerHTML = h; bindBookingActions(); bindBkFilter(); bindMsgSearch(); bindProfile(); syncSharing(); }).catch(function (e) { app.innerHTML = LL.error(e.message); });
+    document.body.classList.toggle('pv-pf', section === 'profile');
+    var ck = ckey(section), cached = (!quiet && ck) ? LL.cache.get(ck) : null;
+    if (!quiet) { app.innerHTML = cached != null ? cached : LL.loading(TITLES[section].toLowerCase()); shown = cached; if (cached != null) bindAll(); }
+    return S[section]().then(function (h) {
+      if (ck) LL.cache.set(ck, h);
+      if (h !== shown) { app.innerHTML = h; shown = h; }
+      bindAll(); syncSharing();
+    }).catch(function (e) { if (!quiet && cached == null) app.innerHTML = LL.error(e.message); });
+  }
+  /* Quietly build the other main sections once this one has settled, so tapping them opens instantly. */
+  function warmSections() {
+    if (document.hidden || navigator.onLine === false || !me) return;
+    var last = +(LL.cache.get('warm:' + me.id) || 0);
+    if (Date.now() - last < 60000) return;
+    LL.cache.set('warm:' + me.id, String(Date.now()));
+    var todo = ['overview', 'bookings', 'quotes', 'reviews'].filter(function (x) { return x !== section; });
+    (function next() {
+      var x = todo.shift();
+      if (!x) {
+        Promise.all([LLApi.provider.requests(), LLApi.provider.myQuotes(), LLApi.names().catch(function () { return {}; })]).then(function (r) { LL.cache.set('prov:req:' + me.id, JSON.stringify(r)); }, function () {});
+        return;
+      }
+      var k = ckey(x);
+      S[x]().then(function (h) { if (k) LL.cache.set(k, h); }, function () {}).then(function () { setTimeout(next, 250); });
+    })();
   }
   LL.ready(function (profile) {
     me = profile;
@@ -498,6 +529,7 @@
       pvHeader(p, profile);
       LLApi.messages.unreadTotal(profile.id).then(function (n) { LL.setBadge('navMsgBadge', n); }, function () {});
       render();
+      (window.requestIdleCallback ? requestIdleCallback : function (f) { setTimeout(f, 1200); })(function () { setTimeout(warmSections, 800); });
       if (section !== 'messages' && section !== 'profile' && section !== 'services' && section !== 'wallet') LL.onLive(function () { LL.quiet(app, function () { return render(true); }); });
       setInterval(syncSharing, 30000);
     }).catch(function (e) { app.innerHTML = LL.error(e.message); });

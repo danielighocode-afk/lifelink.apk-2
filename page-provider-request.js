@@ -62,13 +62,21 @@
     apply();
   }
   function board() {
-    app.innerHTML = LL.loading('requests');
-    Promise.all([LLApi.provider.requests(), LLApi.provider.myQuotes(), LLApi.names().catch(function () { return {}; })]).then(function (r) {
+    var ck = LL.me ? 'prov:req:' + LL.me.id : null, raw = ck ? LL.cache.get(ck) : null;
+    function build(r) {
       var mine = {}; r[1].forEach(function (q) { if (!mine[q.request_id] || q.status === 'pending') mine[q.request_id] = q; });
       var rows = r[0].filter(function (x) { return x.status === 'open' || x.status === 'quoted' || mine[x.id]; });
       rqData = { rows: rows, mine: mine, names: r[2] };
       drawBoard();
-    }).catch(function (e) { app.innerHTML = LL.error(e.message); });
+    }
+    var painted = false;
+    if (raw) { try { build(JSON.parse(raw)); painted = true; } catch (e) { raw = null; } }
+    if (!painted) app.innerHTML = LL.loading('requests');
+    Promise.all([LLApi.provider.requests(), LLApi.provider.myQuotes(), LLApi.names().catch(function () { return {}; })]).then(function (r) {
+      var json = JSON.stringify(r);
+      if (ck) LL.cache.set(ck, json);
+      if (json !== raw) build(r);
+    }).catch(function (e) { if (!painted) app.innerHTML = LL.error(e.message); });
   }
 
   function detail(id) {
