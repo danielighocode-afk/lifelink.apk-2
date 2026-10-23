@@ -329,6 +329,10 @@ html.ll-native body { padding-top: 0; }
 }
 
 
+/* ---------- header profile picture (replaces the logo when signed in) ---------- */
+.ll-me { flex: none; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; object-fit: cover; overflow: hidden; vertical-align: middle; background: var(--ll-primary-soft); color: var(--ll-primary); border: 2px solid var(--ll-surface); box-shadow: 0 0 0 1.5px var(--ll-primary); font: 800 15px/1 "Plus Jakarta Sans", system-ui, sans-serif; letter-spacing: .02em; }
+span.ll-me { user-select: none; -webkit-user-select: none; }
+
 /* ---------- notification bell + panel (self-contained: works with or without Tailwind) ---------- */
 .ll-bell-btn { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border-radius: 16px; border: 1px solid var(--ll-border); background: var(--ll-surface-2, var(--ll-surface)); color: var(--ll-text-2); cursor: pointer; transition: transform .15s ease, background .15s ease, color .15s ease; }
 .ll-bell-btn:active { transform: scale(.94); } .ll-bell-btn:hover { color: var(--ll-primary); }
