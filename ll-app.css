@@ -794,3 +794,36 @@ html[data-theme="dark"] .pc-sh { background: #192723; color: #e8f1ee; }
 .pc-sh .pc-pr { font-size: 18px; }
 .pc-btn { display: block; width: 100%; margin-top: 12px; padding: 13px; border: 0; border-radius: 14px; background: #07865F; color: #fff; font-weight: 800; font-size: 15px; }
 .pc-note { font-size: 12px; opacity: .7; text-align: center; margin-top: 6px; }
+
+/* ---------- provider Profile: the profile-photo row overlaps the bottom of the cover and was catching taps meant for "Change Cover" ---------- */
+@media (max-width: 767.98px) {
+  .pp-id { pointer-events: none; }
+  .pp-id .pp-av, .pp-id .pp-pen, .pp-id button, .pp-id a { pointer-events: auto; }
+  .pp-chg { z-index: 3; min-height: 36px; touch-action: manipulation; }
+}
+
+/* ---------- online store link (Instagram-style blue link under About) ---------- */
+.ll-slink { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; margin-top: 8px; color: #1D5FD1; font-size: 15px; font-weight: 600; text-decoration: none; }
+.ll-slink svg { flex: none; }
+.ll-slink span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ll-slink:active { opacity: .7; }
+html[data-theme="dark"] .ll-slink { color: #7DB8F5; }
+
+/* ---------- "Complete your profile" card ---------- */
+.ll-pc { margin: 14px 0 0; padding: 14px 16px; border-radius: 20px; background: var(--ll-surface, #fff); border: 1px solid var(--ll-border, #e2e8f0); box-shadow: var(--ll-shadow, 0 6px 18px rgba(15,40,30,.08)); color: var(--ll-text, #0f172a); }
+.ll-pc-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.ll-pc-h b { font-size: 16px; font-weight: 800; }
+.ll-pc-h span { font-size: 14px; font-weight: 800; color: #07865F; }
+.ll-pc-bar { height: 8px; margin-top: 10px; border-radius: 99px; background: rgba(100,116,139,.2); overflow: hidden; }
+.ll-pc-bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #0A7A57, #1366B8); transition: width .4s ease; }
+.ll-pc-note { margin: 10px 0 0; font-size: 13px; font-weight: 700; color: #B45309; }
+.ll-pc-note a { color: inherit; text-decoration: underline; }
+.ll-pc-l { display: grid; gap: 4px; margin-top: 8px; }
+.ll-pc-i { display: flex; align-items: center; gap: 10px; padding: 9px 2px; text-decoration: none; color: inherit; font-size: 14.5px; font-weight: 600; border-top: 1px solid var(--ll-border, #e2e8f0); }
+.ll-pc-i:first-child { border-top: 0; }
+.ll-pc-i span:nth-child(2) { flex: 1; min-width: 0; }
+.ll-pc-i svg { flex: none; opacity: .5; }
+.ll-pc-dot { flex: none; width: 18px; height: 18px; border-radius: 50%; border: 2px solid #94A3B8; box-sizing: border-box; }
+.ll-pc-x { margin-top: 6px; padding: 6px 0; border: 0; background: none; font-size: 12.5px; font-weight: 700; color: var(--ll-text-2, #64748b); }
+html[data-theme="dark"] .ll-pc-note { color: #F5C26B; }
+html[data-theme="dark"] .ll-pc-h span { color: #6EE7B7; }

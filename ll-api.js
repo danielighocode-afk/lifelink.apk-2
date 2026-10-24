@@ -437,6 +437,55 @@
     }
   };
 
+  /* ------------------------------ profile checklist ------------------------------ */
+  // "Complete your profile" card: percentage + the next few steps. Pure display; the caller decides what counts as done.
+  var Checklist = {
+    // items: [{ label, done, href }]; null/undefined entries are skipped. opts: { key, note, noteHref }
+    html: function (items, opts) {
+      opts = opts || {};
+      var list = (items || []).filter(Boolean), total = list.length; if (!total) return '';
+      var done = list.filter(function (x) { return x.done; }).length, pct = Math.round(done * 100 / total);
+      if (done === total) return '';
+      var hideKey = 'llpc:' + (opts.key || 'x');
+      try { if (pct >= 80 && localStorage.getItem(hideKey) === '1') return ''; } catch (e) {}
+      var esc = function (v) { return window.LL && LL.esc ? LL.esc(v) : String(v); };
+      var todo = list.filter(function (x) { return !x.done; }).slice(0, 3);
+      return '<section class="ll-pc" aria-label="Complete your profile"><div class="ll-pc-h"><b>Complete your profile</b><span>' + pct + '%</span></div>' +
+        '<div class="ll-pc-bar" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + pct + '%"></i></div>' +
+        (opts.note ? '<p class="ll-pc-note">' + (opts.noteHref ? '<a href="' + esc(opts.noteHref) + '">' + esc(opts.note) + '</a>' : esc(opts.note)) + '</p>' : '') +
+        '<div class="ll-pc-l">' + todo.map(function (x) { return '<a href="' + esc(x.href) + '" class="ll-pc-i"><span class="ll-pc-dot"></span><span>' + esc(x.label) + '</span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>'; }).join('') + '</div>' +
+        (pct >= 80 ? '<button type="button" class="ll-pc-x" data-llpc-hide="' + esc(hideKey) + '">Hide for now</button>' : '') + '</section>';
+    },
+    customerItems: function (p, wallet) {
+      p = p || {};
+      return [
+        { label: 'Add your name and phone number', done: !!(String(p.full_name || '').trim() && String(p.phone || '').trim()), href: 'profile.html' },
+        { label: 'Add a profile photo', done: !!p.avatar_url, href: 'profile.html' },
+        { label: 'Tell us a little about you', done: !!(p.about || p.date_of_birth || p.gender), href: 'profile.html' },
+        { label: 'Choose the services you like', done: !!(p.onboarded || (p.interests && p.interests.length)), href: 'personalize.html' },
+        wallet ? { label: 'Add funds to your wallet', done: Number(wallet.available_kobo || 0) + Number(wallet.held_kobo || 0) > 0, href: 'dashboard.html?section=wallet' } : null
+      ];
+    },
+    // services / catalog / wallet may be null when they could not be loaded (the step is then left out).
+    providerItems: function (o) {
+      var me = o.me || {}, prov = o.prov || {}, P = '?section=profile';
+      return [
+        { label: 'Add a profile photo', done: !!me.avatar_url, href: P },
+        { label: 'Add a cover photo', done: !!me.banner_url, href: P },
+        { label: 'Write about you and your work', done: String(prov.bio || '').trim().length >= 20, href: P },
+        prov.provider_type === undefined ? null : { label: 'Choose your account type', done: !!prov.provider_type, href: P },
+        o.services ? { label: 'Add a service with a starting price', done: o.services.some(function (s) { return s.active !== false; }), href: '?section=services' } : null,
+        o.catalog ? { label: 'Add 3 photos to your catalogue', done: o.catalog.length >= 3, href: P } : null,
+        o.wallet ? { label: 'Add funds to your wallet', done: Number(o.wallet.available_kobo || 0) + Number(o.wallet.held_kobo || 0) > 0, href: '?section=wallet' } : null
+      ];
+    }
+  };
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest && e.target.closest('[data-llpc-hide]'); if (!b) return;
+    try { localStorage.setItem(b.getAttribute('data-llpc-hide'), '1'); } catch (er) {}
+    var s = b.closest('.ll-pc'); if (s) s.remove();
+  });
+
   /* ------------------------------- wallet ------------------------------- */
   // Reads come straight from RLS-protected tables / my_wallet(); deposits go through the Paystack Edge Functions.
   function callFn(name, body) {
@@ -475,6 +524,7 @@
     notifications: Notifications,
     admin: Admin,
     wallet: Wallet,
+    checklist: Checklist,
     tracking: Tracking,
     uniq: uniq,
     reports: {

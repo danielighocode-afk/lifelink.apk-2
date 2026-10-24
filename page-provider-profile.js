@@ -8,6 +8,7 @@
   var I_SHARE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>';
   var I_OK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>';
   var I_DOT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>';
+  var TICK = '<svg class="pp-tick" viewBox="0 0 24 24" role="img" aria-label="Verified provider"><title>Verified provider</title><circle cx="12" cy="12" r="11" fill="#7C3AED"/><path d="M7.3 12.4l3.3 3.3 6.1-6.6" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var sheetEl = null;
 
   function closeSheet() { if (sheetEl) { sheetEl.classList.remove('open'); document.body.style.overflow = ''; } }
@@ -37,14 +38,19 @@
 
   /* ---- Catalogue: work photos (no prices) and, for Business Owners, products with prices ---- */
   var CHAT_FEE = 50;
+  function storeLink(u) {
+    if (!u) return '';
+    var shown = String(u).replace(/^https?:\/\//i, '').replace(/\/$/, ''); if (shown.length > 38) shown = shown.slice(0, 37) + '…';
+    return '<a class="ll-slink" href="' + LL.esc(u) + '" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 00-5.7 0l-3 3A4 4 0 0011 18.7l1-1"/></svg><span>' + LL.esc(shown) + '</span></a>';
+  }
   function catalogueHtml(items, p) {
     var biz = p.provider_type === 'service_business';
-    if (!items.length && !(biz && p.store_url)) return '';
+    if (!items.length) return '';
     var hasProd = items.some(function (x) { return x.kind === 'product'; }), hasWork = items.some(function (x) { return x.kind === 'work'; });
     return '<h2 class="pp-h">Catalogue</h2><div class="pc-wrap">' +
       (hasProd && hasWork ? '<div class="pc-chips"><button type="button" data-pcf="all" aria-pressed="true">All</button><button type="button" data-pcf="work" aria-pressed="false">Work</button><button type="button" data-pcf="product" aria-pressed="false">Products</button></div>' : '') +
       '<div class="pc-grid" id="pcGrid">' + items.map(function (x) { return itemTile(x); }).join('') + '</div>' +
-      (biz && p.store_url ? '<a class="pc-store" href="' + LL.esc(p.store_url) + '" target="_blank" rel="noopener noreferrer">Visit their online store</a>' : '') + '</div>';
+      '</div>';
   }
   function itemTile(x) {
     return '<button type="button" class="pc-it" data-pci="' + LL.esc(x.id) + '" data-pck="' + LL.esc(x.kind) + '"><span class="pc-img"><img src="' + LL.esc(x.image_url) + '" alt="' + LL.esc(x.title) + '" loading="lazy" decoding="async"></span>' +
@@ -102,7 +108,7 @@
       var bookHref = me ? 'request.html?provider=' + encodeURIComponent(id) : 'signin.html?next=' + encodeURIComponent('request.html?provider=' + id);
       document.title = p.business_name + ' - LIFELINK';
 
-      var hero = '<div class="pp-hero">' + (p.avatar_url ? '<img src="' + LL.esc(p.avatar_url) + '" alt="' + LL.esc(p.business_name) + '" decoding="async">' : '<div class="ini" aria-hidden="true">' + LL.esc(LL.initials(p.business_name)) + '</div>') +
+      var hero = '<div class="pp-hero">' + (p.banner_url ? '<img src="' + LL.esc(p.banner_url) + '" alt="" decoding="async">' : '') +
         '<div class="pp-top"><button class="pp-ic" id="ppBack" aria-label="Back">' + I_BACK + '</button><button class="pp-ic" id="ppShare" aria-label="Share">' + I_SHARE + '</button></div></div>';
 
       var rating = p.rating_avg != null
@@ -113,7 +119,7 @@
       (p.skills || []).forEach(function (s) { if (tags.indexOf(s) < 0) tags.push(s); });
 
       var stats = [];
-      if (p.years_experience != null) stats.push('<div class="pp-stat"><b>' + LL.esc(p.years_experience) + (p.years_experience === 1 ? ' Year' : ' Years') + '</b><span>Experience</span></div>');
+      if (p.years_experience != null && Number(p.years_experience) > 0) stats.push('<div class="pp-stat"><b>' + LL.esc(p.years_experience) + (p.years_experience === 1 ? ' Year' : ' Years') + '</b><span>Experience</span></div>');
       stats.push('<' + (reviews.length ? 'button id="ppRev" class="pp-stat tap"' : 'div class="pp-stat"') + '><b>' + n + '</b><span>Reviews</span></' + (reviews.length ? 'button' : 'div') + '>');
       stats.push('<div class="pp-stat"><b>' + (p.jobs_done || 0) + '</b><span>Jobs done</span></div>');
 
@@ -123,11 +129,11 @@
           }).join('') + '</div>'
         : '<p class="pp-note">This provider has not listed services yet. Send a request to discuss your job.</p>';
 
-      app.innerHTML = hero + '<div class="pp-card"><span class="pp-vf">' + I_OK + 'Verified Provider</span>' +
-        '<h1 class="pp-n">' + LL.esc(p.business_name) + '</h1>' +
-        '<div class="pp-meta">' + rating + (p.service_area ? '<span>•</span><span>' + LL.esc(p.service_area) + '</span>' : '') + '<span>•</span><span class="pp-av' + (p.available ? ' on' : '') + '">' + (p.available ? 'Available' : 'Not taking work') + '</span></div>' +
+      app.innerHTML = hero + '<div class="pp-card"><div class="pp-pic"><span>' + (p.avatar_url ? '<img src="' + LL.esc(p.avatar_url) + '" alt="' + LL.esc(p.business_name) + '" decoding="async">' : LL.esc(LL.initials(p.business_name))) + '</span></div>' +
+        '<div class="pp-nrow"><h1 class="pp-n">' + LL.esc(p.business_name) + '</h1>' + TICK + '</div>' +
+        '<div class="pp-meta">' + rating + (p.service_area ? '<span>•</span><span>' + LL.esc(p.service_area) + '</span>' : '') + '<span>•</span><span class="pp-avl' + (p.available ? ' on' : '') + '">' + (p.available ? 'Available' : 'Not taking work') + '</span></div>' +
         (tags.length ? '<div class="pp-tags">' + tags.map(function (t) { return '<span>' + LL.esc(t) + '</span>'; }).join('') + '</div>' : '') +
-        (p.bio ? '<h2 class="pp-h">About</h2><p class="pp-about">' + LL.esc(p.bio) + '</p>' : '') +
+        (p.bio ? '<h2 class="pp-h">About</h2><p class="pp-about">' + LL.esc(p.bio) + '</p>' : '') + storeLink(p.store_url) +
         '<div class="pp-stats">' + stats.join('') + '</div>' +
         catalogueHtml(items, p) +
         '<h2 class="pp-h">Services &amp; Pricing</h2>' + svc +

@@ -16,6 +16,86 @@
   }
   function provMap() { return LLApi.catalog.providers().then(function (rows) { var m = {}; rows.forEach(function (p) { m[p.provider_id] = p; }); return m; }).catch(function () { return {}; }); }
 
+
+  /* ---- Messages (mobile): same layout as the provider side. One row per provider -> that provider's chats -> one open chat. ---- */
+  function cmIc(p, n) { n = n || 22; return '<svg viewBox="0 0 24 24" width="' + n + '" height="' + n + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>'; }
+  var CM = {
+    search: cmIc('<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>'),
+    edit: cmIc('<path d="M4 20h4L19 9a2.8 2.8 0 00-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>'),
+    back: cmIc('<path d="M15 6l-6 6 6 6"/>'),
+    pin: cmIc('<path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>', 15),
+    ticks: cmIc('<path d="M2 12.5l4 4L14 8M10 15.5l1.5 1.5L21 8"/>', 20)
+  };
+  function cmTime(ts) {
+    if (!ts) return '';
+    var d = new Date(ts), n = new Date(), day = 86400000, t0 = new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime();
+    if (d.getTime() >= t0) return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    if (d.getTime() >= t0 - day) return 'Yesterday';
+    if (d.getTime() >= t0 - 6 * day) return d.toLocaleDateString([], { weekday: 'long' });
+    return d.toLocaleDateString([], { day: 'numeric', month: 'short' });
+  }
+  function cmAvatar(name, url, id) {
+    var k = 0, str = String(id || name || ''); for (var i = 0; i < str.length; i++) k += str.charCodeAt(i);
+    return '<span class="pm-av pm-c' + (k % 3) + '">' + (url ? '<img src="' + LL.esc(url) + '" alt="">' : LL.esc(LL.initials(name))) + '</span>';
+  }
+  function cmMobile(convs, provs, sum) {
+    var sel = LL.q('c'), pvId = LL.q('pv');
+    return LLApi.customer.requests().catch(function () { return []; }).then(function (reqs) {
+      var rm = {}; (reqs || []).forEach(function (x) { rm[x.id] = x; });
+      var nameOf = function (c) { return (provs[c.provider_id] || {}).business_name || 'Provider'; };
+      var avOf = function (c) { var p = provs[c.provider_id] || {}; return cmAvatar(nameOf(c), p.avatar_url, c.provider_id); };
+      var ctx = function (c) { if (!c.request_id) return c.item_title ? 'About: ' + c.item_title : ''; var x = rm[c.request_id] || {}; return [x.category_text, x.location_area].filter(Boolean).join(' · '); };
+      var tOf = function (c) { var s = sum[c.id] || {}; return new Date(s.last ? s.last.created_at : c.created_at).getTime() || 0; };
+      var lastTxt = function (c) { var l = (sum[c.id] || {}).last; return l ? (l.sender_id === me.id ? 'You: ' : '') + l.body : 'No messages yet'; };
+      var cur = sel ? convs.filter(function (c) { return c.id === sel; })[0] : null;
+      /* 3) one open conversation: read it and reply */
+      if (cur) {
+        setTimeout(function () { var el = document.getElementById('chatMount'); if (el) chat = LLChat.mount(el, cur.id); }, 0);
+        return '<div class="pm-chat"><div class="pm-chat-h"><a href="?section=messages&pv=' + LL.esc(cur.provider_id) + '" class="pm-back" aria-label="Back to this provider\'s chats">' + CM.back + '</a>' + avOf(cur) +
+          '<div class="pm-chat-t"><b>' + LL.esc(nameOf(cur)) + '</b><em>' + LL.esc(ctx(cur) || 'Provider') + '</em></div>' + (cur.request_id ? '<a class="pm-view" href="compare-quotes.html?request=' + LL.esc(cur.request_id) + '">View request</a>' : '') + '</div><div class="pm-chat-b"><div id="chatMount"></div></div></div>';
+      }
+      /* group every conversation under its provider */
+      var g = {}, order = [];
+      convs.forEach(function (c) {
+        var o = g[c.provider_id]; if (!o) { o = g[c.provider_id] = { id: c.provider_id, convs: [], unread: 0, t: -1, top: c }; order.push(o); }
+        o.convs.push(c); o.unread += (sum[c.id] || {}).unread || 0;
+        if (tOf(c) > o.t) { o.t = tOf(c); o.top = c; }
+      });
+      order.sort(function (x, y) { return y.t - x.t; });
+      /* 2) one provider: all of your chats with them */
+      var grp = pvId ? g[pvId] : null;
+      if (grp) {
+        grp.convs.sort(function (x, y) { return tOf(y) - tOf(x); });
+        return '<div class="pm"><div class="pm-chat pm-cu"><div class="pm-chat-h"><a href="?section=messages" class="pm-back" aria-label="Back to messages">' + CM.back + '</a>' + avOf(grp.top) +
+          '<div class="pm-chat-t"><b>' + LL.esc(nameOf(grp.top)) + '</b><em>' + grp.convs.length + ' chat' + (grp.convs.length === 1 ? '' : 's') + (grp.unread ? ' · ' + grp.unread + ' unread' : '') + '</em></div></div></div>' +
+          '<div class="pm-list">' + grp.convs.map(function (c) {
+            var s = sum[c.id] || {}, l = s.last, mine = l && l.sender_id === me.id;
+            var right = s.unread ? '<span class="pm-badge">' + s.unread + '</span>' : (mine ? '<span class="pm-tick' + (l.read_at ? ' read' : '') + '">' + CM.ticks + '</span>' : '');
+            return '<a href="?section=messages&c=' + LL.esc(c.id) + '" class="pm-card' + (s.unread ? ' un' : '') + '"><div class="pm-m"><div class="pm-top"><b>' + LL.esc(ctx(c) || 'Chat') + '</b><time>' + LL.esc(cmTime(l ? l.created_at : c.created_at)) + '</time></div>' +
+              '<div class="pm-mid"><span class="pm-last">' + LL.esc(lastTxt(c)) + '</span>' + right + '</div></div></a>';
+          }).join('') + '</div></div>';
+      }
+      /* 1) one row per provider */
+      return '<div class="pm"><div class="pm-head"><div><h2>Messages</h2><p>Recent Chats</p></div><div class="pm-tools"><button type="button" data-pm-search aria-label="Search chats">' + CM.search + '</button><a href="request.html" class="pm-new" aria-label="Start a new request">' + CM.edit + '</a></div></div>' +
+        '<input type="search" class="pm-q" data-pm-q placeholder="Search chats" hidden>' +
+        '<div class="pm-list">' + order.map(function (o) {
+          var c = o.top, nmv = nameOf(c), n = o.convs.length;
+          var right = o.unread ? '<span class="pm-badge">' + o.unread + '</span>' : '';
+          var all = o.convs.map(function (x) { return ctx(x) + ' ' + ((sum[x.id] || {}).last ? sum[x.id].last.body : ''); }).join(' ');
+          return '<a href="?section=messages&pv=' + LL.esc(o.id) + '" class="pm-card' + (o.unread ? ' un' : '') + '" data-q="' + LL.esc((nmv + ' ' + all).toLowerCase()) + '">' + avOf(c) +
+            '<div class="pm-m"><div class="pm-top"><b>' + LL.esc(nmv) + '</b><time>' + LL.esc(cmTime(o.t ? new Date(o.t).toISOString() : c.created_at)) + '</time></div><div class="pm-mid"><span class="pm-last">' + LL.esc(lastTxt(c)) + '</span>' + right + '</div>' +
+            '<p class="pm-ctx">' + CM.pin + '<span>' + n + ' chat' + (n === 1 ? '' : 's') + '</span></p></div></a>';
+        }).join('') + '</div><p class="pv-none" data-pm-empty hidden>No chats match your search.</p></div>';
+    });
+  }
+  function bindMsgSearch() {
+    var inp = app.querySelector('[data-pm-q]'), btn = app.querySelector('[data-pm-search]'); if (!inp || !btn) return;
+    var cards = app.querySelectorAll('.pm-card'), empty = app.querySelector('[data-pm-empty]');
+    function apply() { var n = 0, q = inp.value.trim().toLowerCase(); cards.forEach(function (c) { var ok = !q || (c.getAttribute('data-q') || '').indexOf(q) >= 0; c.hidden = !ok; if (ok) n++; }); if (empty) empty.hidden = n > 0; }
+    inp.oninput = apply;
+    btn.onclick = function () { inp.hidden = !inp.hidden; if (!inp.hidden) inp.focus(); else { inp.value = ''; apply(); } };
+  }
+
   var S = {
     overview: function () {
       return Promise.all([LLApi.customer.requests(), LLApi.customer.bookings(), LLApi.messages.unreadTotal(me.id).catch(function () { return 0; }), provMap()]).then(function (r) {
@@ -47,7 +127,9 @@
       return Promise.all([LLApi.messages.conversations(), provMap()]).then(function (r) {
         var convs = r[0], provs = r[1];
         if (!convs.length) return LL.empty('No conversations yet', 'Message a provider from the quotes on your request.');
+        var mobile = window.matchMedia && window.matchMedia('(max-width: 767.98px)').matches;
         return LLApi.messages.summaries(convs, me.id).then(function (sum) {
+          if (mobile) return cmMobile(convs, provs, sum);
           var sel = LL.q('c') || convs[0].id;
           var list = convs.map(function (c) {
             var p = provs[c.provider_id] || {}, s = sum[c.id] || {};
@@ -89,11 +171,14 @@
     function ckey(s) { return 'cust:' + profile.id + ':' + s; }
     var shown = null;
     function paint(quiet) {
+      document.body.classList.toggle('pv-msg', section === 'messages');
+      document.body.classList.toggle('pv-msg-list', section === 'messages' && !LL.q('c'));
       var cached = (!quiet && cacheable(section)) ? LL.cache.get(ckey(section)) : null;
       if (!quiet) { app.innerHTML = cached != null ? cached : LL.loading(TITLES[section].toLowerCase()); shown = cached; }
       return S[section]().then(function (h) {
         if (cacheable(section)) LL.cache.set(ckey(section), h);
         if (h !== shown) { app.innerHTML = h; shown = h; }
+        bindMsgSearch();
         var m = document.getElementById('markAll'); if (m) m.onclick = function () { LLApi.notifications.markAllRead().then(function () { location.reload(); }); };
       }).catch(function (e) { if (!quiet && cached == null) app.innerHTML = LL.error(e.message); });
     }
