@@ -35,12 +35,69 @@
     try { navigator.clipboard.writeText(data.url || data.text).then(function () { LL.toast ? LL.toast('Link copied') : 0; }); } catch (e) {}
   }
 
+  /* ---- Catalogue: work photos (no prices) and, for Business Owners, products with prices ---- */
+  var CHAT_FEE = 50;
+  function catalogueHtml(items, p) {
+    var biz = p.provider_type === 'service_business';
+    if (!items.length && !(biz && p.store_url)) return '';
+    var hasProd = items.some(function (x) { return x.kind === 'product'; }), hasWork = items.some(function (x) { return x.kind === 'work'; });
+    return '<h2 class="pp-h">Catalogue</h2><div class="pc-wrap">' +
+      (hasProd && hasWork ? '<div class="pc-chips"><button type="button" data-pcf="all" aria-pressed="true">All</button><button type="button" data-pcf="work" aria-pressed="false">Work</button><button type="button" data-pcf="product" aria-pressed="false">Products</button></div>' : '') +
+      '<div class="pc-grid" id="pcGrid">' + items.map(function (x) { return itemTile(x); }).join('') + '</div>' +
+      (biz && p.store_url ? '<a class="pc-store" href="' + LL.esc(p.store_url) + '" target="_blank" rel="noopener noreferrer">Visit their online store</a>' : '') + '</div>';
+  }
+  function itemTile(x) {
+    return '<button type="button" class="pc-it" data-pci="' + LL.esc(x.id) + '" data-pck="' + LL.esc(x.kind) + '"><span class="pc-img"><img src="' + LL.esc(x.image_url) + '" alt="' + LL.esc(x.title) + '" loading="lazy" decoding="async"></span>' +
+      '<b>' + LL.esc(x.title) + '</b>' + (x.kind === 'product' && x.price_kobo != null ? '<span class="pc-pr">' + LL.esc(LL.naira(x.price_kobo)) + '</span>' : (x.description ? '<small>' + LL.esc(x.description.length > 40 ? x.description.slice(0, 40) + '…' : x.description) + '</small>' : '')) + '</button>';
+  }
+  function bindCatalogue(items, p, me) {
+    var grid = document.getElementById('pcGrid'); if (!grid) return;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-pcf]'), function (b) {
+      b.onclick = function () {
+        var f = b.getAttribute('data-pcf');
+        Array.prototype.forEach.call(document.querySelectorAll('[data-pcf]'), function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+        Array.prototype.forEach.call(grid.children, function (t) { t.style.display = (f === 'all' || t.getAttribute('data-pck') === f) ? '' : 'none'; });
+      };
+    });
+    grid.onclick = function (e) {
+      var t = e.target.closest && e.target.closest('[data-pci]'); if (!t) return;
+      var it = items.filter(function (x) { return x.id === t.getAttribute('data-pci'); })[0]; if (it) itemSheet(it, p, me);
+    };
+  }
+  function itemSheet(it, p, me) {
+    var isProd = it.kind === 'product', canChat = isProd && (!me || me.role === 'customer');
+    var el = document.createElement('div'); el.className = 'pc-ov';
+    el.innerHTML = '<div class="pc-sh" role="dialog" aria-modal="true"><img src="' + LL.esc(it.image_url) + '" alt="' + LL.esc(it.title) + '"><h3>' + LL.esc(it.title) + '</h3>' +
+      (isProd && it.price_kobo != null ? '<div class="pc-pr">' + LL.esc(LL.naira(it.price_kobo)) + '</div>' : '') +
+      (it.description ? '<p>' + LL.esc(it.description) + '</p>' : '') +
+      (canChat ? '<button type="button" class="pc-btn" id="pcChat">Chat about this</button><div class="pc-note">₦' + CHAT_FEE + ' from you and ₦' + CHAT_FEE + ' from the seller opens the chat. If they do not reply within 24 hours, your ₦' + CHAT_FEE + ' is returned.</div>' : '') +
+      '<button type="button" class="pc-btn" id="pcClose" style="background:transparent;color:inherit;border:1px solid rgba(100,116,139,.35)">Close</button></div>';
+    function close() { el.remove(); document.body.style.overflow = ''; }
+    el.onclick = function (e) { if (e.target === el) close(); };
+    document.body.appendChild(el); document.body.style.overflow = 'hidden';
+    document.getElementById('pcClose').onclick = close;
+    var cb = document.getElementById('pcChat');
+    if (cb) cb.onclick = function () {
+      if (!me) { location.href = 'signin.html?next=' + encodeURIComponent('provider-profile.html?id=' + id); return; }
+      LL.confirm({ title: 'Start a chat about this product?', body: '₦' + CHAT_FEE + ' will be taken from your wallet and ₦' + CHAT_FEE + ' from the seller. If the seller does not reply within 24 hours, your ₦' + CHAT_FEE + ' is returned. Reopening the same chat later is free.', confirmText: 'Start chat' }).then(function (ok) {
+        if (!ok) return;
+        LL.busy(cb, 'Opening…', function () { return LLApi.messages.openProduct(it.id); }).then(function (convId) {
+          location.href = 'dashboard.html?section=messages&c=' + encodeURIComponent(convId);
+        }, function (er) {
+          var m = (er && er.message) || 'Could not open the chat.';
+          if (/wallet needs at least/i.test(m)) { LL.toast(m, true); setTimeout(function () { location.href = 'dashboard.html?section=wallet'; }, 1600); }
+          else LL.toast(m, true);
+        });
+      });
+    };
+  }
+
   LL.whenAuth(function (me) {
     if (!id) { app.innerHTML = LL.empty('No provider selected', '', 'discovery.html', 'Find providers'); return; }
     app.innerHTML = '<div class="pp-hero"></div><div class="pp-sk"></div><div class="pp-sk"></div>';
-    Promise.all([LLApi.catalog.provider(id), LLApi.catalog.services(id), LLApi.catalog.reviews(id)]).then(function (r) {
+    Promise.all([LLApi.catalog.provider(id), LLApi.catalog.services(id), LLApi.catalog.reviews(id), LLApi.catalog.items(id).catch(function () { return []; })]).then(function (r) {
       var p = r[0]; if (!p) { app.innerHTML = LL.empty('Provider not found', 'They may not be verified yet.', 'discovery.html', 'Find providers'); return; }
-      var services = r[1] || [], reviews = r[2] || [], n = p.review_count != null ? p.review_count : reviews.length;
+      var items = r[3] || [], services = r[1] || [], reviews = r[2] || [], n = p.review_count != null ? p.review_count : reviews.length;
       var canReq = !me || me.role === 'customer';
       var bookHref = me ? 'request.html?provider=' + encodeURIComponent(id) : 'signin.html?next=' + encodeURIComponent('request.html?provider=' + id);
       document.title = p.business_name + ' - LIFELINK';
@@ -72,9 +129,11 @@
         (tags.length ? '<div class="pp-tags">' + tags.map(function (t) { return '<span>' + LL.esc(t) + '</span>'; }).join('') + '</div>' : '') +
         (p.bio ? '<h2 class="pp-h">About</h2><p class="pp-about">' + LL.esc(p.bio) + '</p>' : '') +
         '<div class="pp-stats">' + stats.join('') + '</div>' +
+        catalogueHtml(items, p) +
         '<h2 class="pp-h">Services &amp; Pricing</h2>' + svc +
         '</div>' + (canReq ? '<div class="pp-ctaw"><a class="pp-cta" href="' + bookHref + '">Book Now</a></div>' : '');
 
+      bindCatalogue(items, p, me);
       document.getElementById('ppBack').onclick = function () { if (history.length > 1) history.back(); else location.href = NATIVE ? 'home.html' : 'discovery.html'; };
       document.getElementById('ppShare').onclick = function () { share(p); };
       var open = function () { openReviews(p, reviews); };

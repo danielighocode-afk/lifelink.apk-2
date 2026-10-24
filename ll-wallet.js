@@ -98,11 +98,13 @@
     }
     function txRow(l, i) {
       var k = KIND[l.kind] || [l.kind, 'text-slate-700'];
+      if (l.kind === 'fee_charge' && /^Product chat/.test(l.note || '')) k = ['Product chat fee', 'text-slate-700'];
+      else if (l.kind === 'adjustment' && /^Product chat/.test(l.note || '')) k = ['Chat fee returned', 'text-emerald-700'];
       var ic = ICO[l.kind] || ICO.adjustment;
       var amt, col;
       if (l.kind === 'hold') { amt = '−' + LL.naira(-l.available_delta) + ' reserved'; col = '#b45309'; }
       else if (l.kind === 'release') { amt = '+' + LL.naira(l.available_delta); col = 'var(--ll-primary,#07865f)'; }
-      else if (l.kind === 'fee_charge') { amt = '−' + LL.naira(-l.held_delta); col = '#e11d48'; }
+      else if (l.kind === 'fee_charge') { amt = '−' + LL.naira(l.held_delta < 0 ? -l.held_delta : -l.available_delta); col = '#e11d48'; }
       else { amt = (l.available_delta >= 0 ? '+' : '−') + LL.naira(Math.abs(l.available_delta)); col = l.available_delta >= 0 ? 'var(--ll-primary,#07865f)' : '#e11d48'; }
       return '<div class="wl-tx" style="animation-delay:' + Math.min(i, 8) * 40 + 'ms"><span class="wl-ti" style="' + ic[1] + '">' + ic[0] + '</span><div class="m"><b>' + LL.esc(k[0]) + '</b><small>' + LL.esc(LL.dateTime(l.created_at)) + '</small></div><em style="color:' + col + '">' + LL.esc(amt) + '</em></div>';
     }
