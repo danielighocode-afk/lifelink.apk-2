@@ -95,7 +95,7 @@
           var nameOf = function (c) { return (nm[c.customer_id] || {}).display_name || 'Customer'; };
           setTimeout(function () { var el = document.getElementById('chatMount'); if (el) LLChat.mount(el, cur.id); }, 0);
           if (window.matchMedia && window.matchMedia('(max-width: 767.98px)').matches) return pmMobile(convs, nm, sum);
-          return '<div class="grid lg:grid-cols-3 gap-4"><div class="space-y-2">' + convs.map(function (c) { var s = sum[c.id] || {}; return '<a href="?section=messages&c=' + LL.esc(c.id) + '" class="flex items-center gap-3 p-3 rounded-2xl border ' + (c.id === cur.id ? 'border-emerald-400 bg-emerald-50/50' : 'border-slate-200 bg-white') + '">' + LL.avatar(nameOf(c), null, 'w-10 h-10') + '<div class="min-w-0 flex-1"><p class="font-extrabold text-sm truncate">' + LL.esc(nameOf(c)) + '</p><p class="text-xs text-slate-500 truncate">' + LL.esc(s.last ? s.last.body : 'No messages yet') + '</p></div>' + (s.unread ? '<span class="bg-emerald-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">' + s.unread + '</span>' : '') + '</a>'; }).join('') + '</div><div class="lg:col-span-2">' + card('<div class="flex justify-between"><h2 class="font-extrabold">' + LL.esc(nameOf(cur)) + '</h2><a class="text-xs font-extrabold text-emerald-700" href="provider-request.html?id=' + LL.esc(cur.request_id) + '">View request</a></div><div id="chatMount"></div>') + '</div></div>';
+          return '<div class="grid lg:grid-cols-3 gap-4"><div class="space-y-2">' + convs.map(function (c) { var s = sum[c.id] || {}; return '<a href="?section=messages&c=' + LL.esc(c.id) + '" class="flex items-center gap-3 p-3 rounded-2xl border ' + (c.id === cur.id ? 'border-emerald-400 bg-emerald-50/50' : 'border-slate-200 bg-white') + '">' + LL.avatar(nameOf(c), null, 'w-10 h-10') + '<div class="min-w-0 flex-1"><p class="font-extrabold text-sm truncate">' + LL.esc(nameOf(c)) + '</p><p class="text-xs text-slate-500 truncate">' + LL.esc(s.last ? s.last.body : 'No messages yet') + '</p></div>' + (s.unread ? '<span class="bg-emerald-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">' + s.unread + '</span>' : '') + '</a>'; }).join('') + '</div><div class="lg:col-span-2">' + card('<div class="flex justify-between"><h2 class="font-extrabold">' + LL.esc(nameOf(cur)) + '</h2>' + (cur.request_id ? '<a class="text-xs font-extrabold text-emerald-700" href="provider-request.html?id=' + LL.esc(cur.request_id) + '">View request</a>' : '') + '</div><div id="chatMount"></div>') + '</div></div>';
         });
       });
     },
@@ -122,8 +122,8 @@
       return LLApi.provider.reviews().then(function (rs) { return rs.length ? '<div class="space-y-3">' + rs.map(function (v) { return card('<div class="flex justify-between"><span class="text-amber-500 font-extrabold">' + '★'.repeat(v.rating) + '</span><span class="text-xs text-slate-400 font-semibold">' + LL.esc(LL.date(v.created_at)) + '</span></div>' + (v.comment ? '<p class="text-sm text-slate-700">' + LL.esc(v.comment) + '</p>' : '') + '<p class="text-xs font-semibold text-slate-500">' + (v.recommend ? 'Recommends you' : 'Does not recommend') + '</p>'); }).join('') + '</div>' : LL.empty('No reviews yet', 'Reviews appear after customers rate completed jobs.'); });
     },
     profile: function () {
-      return Promise.all([S.profileForm(), LLApi.provider.services().catch(function () { return []; }), LLApi.provider.reviews().catch(function () { return []; })]).then(function (r) {
-        return pvProfile(r[1], r[2]) + '<div id="ppForm" class="pp-form">' + r[0] + '</div>';
+      return Promise.all([S.profileForm(), LLApi.provider.services().catch(function () { return []; }), LLApi.provider.reviews().catch(function () { return []; }), LLApi.provider.catalog().catch(function () { return []; })]).then(function (r) {
+        return pvProfile(r[1], r[2], r[3]) + '<div id="ppForm" class="pp-form">' + r[0] + '</div>';
       });
     },
     profileForm: function () {
@@ -131,13 +131,17 @@
         document.getElementById('pf').onsubmit = function (e) {
           e.preventDefault();
           var y = document.getElementById('py').value;
+          var pt = document.getElementById('ptype').value, su = (document.getElementById('pstore').value || '').trim();
+          if (su && !/^https?:\/\//i.test(su)) su = 'https://' + su;
+          if (su && !/^https?:\/\/[^\s]+\.[^\s]+$/i.test(su)) { LL.toast('Enter a valid store link.', true); return; }
           LL.busy(document.getElementById('ps'), 'Saving…', function () {
-            return LLApi.provider.update({ business_name: document.getElementById('pn').value.trim(), bio: document.getElementById('pb').value.trim() || null, service_area: document.getElementById('pa').value.trim() || null, years_experience: y === '' ? null : Number(y), available: document.getElementById('pv').checked, skills: document.getElementById('pk').value.split(',').map(function (s) { return s.trim(); }).filter(Boolean) });
-          }).then(function () { LL.toast('Profile saved.'); }, function (er) { LL.toast(er.message, true); });
+            return LLApi.provider.update({ provider_type: pt, store_url: pt === 'service_business' ? (su || null) : null, business_name: document.getElementById('pn').value.trim(), bio: document.getElementById('pb').value.trim() || null, service_area: document.getElementById('pa').value.trim() || null, years_experience: y === '' ? null : Number(y), available: document.getElementById('pv').checked, skills: document.getElementById('pk').value.split(',').map(function (s) { return s.trim(); }).filter(Boolean) });
+          }).then(function () { prov.provider_type = pt; prov.store_url = pt === 'service_business' ? (su || null) : null; LL.toast('Profile saved.'); render(true); }, function (er) { LL.toast(/provider_type|store_url|schema cache/.test(er.message || '') ? 'Account types are not set up yet. Run migration 011 in Supabase.' : er.message, true); });
         };
+        var pty = document.getElementById('ptype'); if (pty) pty.onchange = function () { document.getElementById('pstoreW').classList.toggle('hidden', pty.value !== 'service_business'); };
         var av = document.getElementById('pav'); if (av) av.onchange = function () { if (av.files[0]) LLApi.uploadAvatar(av.files[0]).then(function () { LL.toast('Photo updated.'); setTimeout(function () { location.reload(); }, 600); }, function (er) { LL.toast(er.message, true); }); };
       }, 0);
-      return Promise.resolve(card('<h2 class="font-extrabold">Profile</h2><form id="pf" class="space-y-3" novalidate><div><label class="lbl">Photo (JPG or PNG, up to 2 MB)</label><input id="pav" type="file" accept="image/jpeg,image/png,image/webp" class="text-sm"></div><div><label class="lbl" for="pn">Business name</label><input id="pn" class="field" maxlength="120" value="' + LL.esc(prov.business_name) + '"></div><div><label class="lbl" for="pb">About you</label><textarea id="pb" rows="4" maxlength="1000" class="field resize-none">' + LL.esc(prov.bio || '') + '</textarea></div><div class="grid sm:grid-cols-2 gap-3"><div><label class="lbl" for="pa">Service area</label><input id="pa" class="field" maxlength="160" value="' + LL.esc(prov.service_area || '') + '"></div><div><label class="lbl" for="py">Years of experience</label><input id="py" type="number" min="0" max="80" class="field" value="' + (prov.years_experience == null ? '' : prov.years_experience) + '"></div></div><div><label class="lbl" for="pk">Skills (comma separated)</label><input id="pk" class="field" value="' + LL.esc((prov.skills || []).join(', ')) + '"></div><label class="flex items-center gap-2 text-sm font-bold"><input id="pv" type="checkbox"' + (prov.available ? ' checked' : '') + '> I am currently accepting work</label><button id="ps" class="w-full bg-emerald-600 text-white font-extrabold py-3 rounded-2xl">Save profile</button></form>'));
+      return Promise.resolve(card('<h2 class="font-extrabold">Profile</h2><form id="pf" class="space-y-3" novalidate><div><label class="lbl">Photo (JPG or PNG, up to 2 MB)</label><input id="pav" type="file" accept="image/jpeg,image/png,image/webp" class="text-sm"></div><div><label class="lbl" for="pn">Business name</label><input id="pn" class="field" maxlength="120" value="' + LL.esc(prov.business_name) + '"></div><div><label class="lbl" for="pb">About you</label><textarea id="pb" rows="4" maxlength="1000" class="field resize-none">' + LL.esc(prov.bio || '') + '</textarea></div><div class="grid sm:grid-cols-2 gap-3"><div><label class="lbl" for="pa">Service area</label><input id="pa" class="field" maxlength="160" value="' + LL.esc(prov.service_area || '') + '"></div><div><label class="lbl" for="py">Years of experience</label><input id="py" type="number" min="0" max="80" class="field" value="' + (prov.years_experience == null ? '' : prov.years_experience) + '"></div></div><div><label class="lbl" for="pk">Skills (comma separated)</label><input id="pk" class="field" value="' + LL.esc((prov.skills || []).join(', ')) + '"></div><div><label class="lbl" for="ptype">Account type</label><select id="ptype" class="field"><option value="service_only"' + (prov.provider_type !== 'service_business' ? ' selected' : '') + '>Service Provider only</option><option value="service_business"' + (prov.provider_type === 'service_business' ? ' selected' : '') + '>Service Provider / Business Owner</option></select><p class="text-xs text-slate-500 mt-1">Business Owners can also list products with prices. Switching back to Service Provider hides your products and prices (they return if you switch again) and removes your store link.</p></div><div id="pstoreW"' + (prov.provider_type === 'service_business' ? '' : ' class="hidden"') + '><label class="lbl" for="pstore">Link to your online store (optional)</label><input id="pstore" class="field" inputmode="url" maxlength="300" placeholder="https://" value="' + LL.esc(prov.store_url || '') + '"></div><label class="flex items-center gap-2 text-sm font-bold"><input id="pv" type="checkbox"' + (prov.available ? ' checked' : '') + '> I am currently accepting work</label><button id="ps" class="w-full bg-emerald-600 text-white font-extrabold py-3 rounded-2xl">Save profile</button></form>'));
     },
     wallet: function () { setTimeout(function () { LLWallet.mount(document.getElementById('walletMount'), { role: 'provider' }); }, 0); return Promise.resolve('<div id="walletMount"></div>'); }
   };
@@ -274,7 +278,7 @@
     var nameOf = function (c) { return (nm[c.customer_id] || {}).display_name || 'Customer'; };
     var avOf = function (c) { return pmAvatar(nameOf(c), (nm[c.customer_id] || {}).avatar_url, c.customer_id); };
     return reqMap(convs.map(function (c) { return c.request_id; })).then(function (rm) {
-      var ctx = function (c) { var x = rm[c.request_id] || {}; return [x.category_text, x.location_area].filter(Boolean).join(' · '); };
+      var ctx = function (c) { if (!c.request_id) return c.item_title ? 'About: ' + c.item_title : ''; var x = rm[c.request_id] || {}; return [x.category_text, x.location_area].filter(Boolean).join(' · '); };
       var tOf = function (c) { var s = sum[c.id] || {}; return new Date(s.last ? s.last.created_at : c.created_at).getTime() || 0; };
       var lastTxt = function (c) { var l = (sum[c.id] || {}).last; return l ? (l.sender_id === me.id ? 'You: ' : '') + l.body : 'No messages yet'; };
       var cur = sel ? convs.filter(function (c) { return c.id === sel; })[0] : null;
@@ -282,7 +286,7 @@
       if (cur) {
         setTimeout(function () { var el = document.getElementById('chatMount'); if (el) LLChat.mount(el, cur.id); }, 0);
         return '<div class="pm-chat"><div class="pm-chat-h"><a href="?section=messages&cu=' + LL.esc(cur.customer_id) + '" class="pm-back" aria-label="Back to this customer\'s chats">' + PM.back + '</a>' + avOf(cur) +
-          '<div class="pm-chat-t"><b>' + LL.esc(nameOf(cur)) + '</b><em>' + LL.esc(ctx(cur) || 'Customer') + '</em></div><a class="pm-view" href="provider-request.html?id=' + LL.esc(cur.request_id) + '">View request</a></div><div class="pm-chat-b"><div id="chatMount"></div></div></div>';
+          '<div class="pm-chat-t"><b>' + LL.esc(nameOf(cur)) + '</b><em>' + LL.esc(ctx(cur) || 'Customer') + '</em></div>' + (cur.request_id ? '<a class="pm-view" href="provider-request.html?id=' + LL.esc(cur.request_id) + '">View request</a>' : '') + '</div><div class="pm-chat-b"><div id="chatMount"></div></div></div>';
       }
       /* group every conversation under its customer */
       var g = {}, order = [];
@@ -339,7 +343,7 @@
     else p = '<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.4 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/>';
     return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>';
   }
-  function pvProfile(svcs, revs) {
+  function pvProfile(svcs, revs, cat) {
     var sv = function (d, w) { return '<svg viewBox="0 0 24 24" width="' + (w || 20) + '" height="' + (w || 20) + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>'; };
     var GEAR = '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3h0a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9v0a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/>';
     var chev = sv('<path d="M9 6l6 6-6 6"/>', 16), pen = sv('<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>', 18);
@@ -375,10 +379,104 @@
       '<div class="pp-stats"><div><b><span class="pp-star">★</span> ' + rating + '</b><em>(' + (revs || []).length + ' review' + ((revs || []).length === 1 ? '' : 's') + ')</em></div><i></i><div><b>' + sv('<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/>', 18) + ' ' + (prov.jobs_done || 0) + '</b><em>Jobs done</em></div></div>' +
       '<div class="pp-sec"><h3>About me</h3><button type="button" class="pp-ed" data-pp-edit="pb" aria-label="Edit about">' + pen + '</button></div>' +
       (prov.bio ? '<div class="pp-about">' + LL.esc(prov.bio) + '</div>' : '<button type="button" class="pp-about pp-about-e" data-pp-edit="pb">Tell customers about yourself and your work. Tap to add.</button>') +
+      catSection(cat) +
       '<div class="pp-sec"><h3>Services</h3><span class="pp-sec-r"><button type="button" class="pp-va" data-svc="">+ Add</button><a href="?section=services" class="pp-va">View all</a></span></div><div class="pp-grid">' + tiles + '</div>' +
       '<button type="button" class="pp-edit" data-pp-edit="pn"><span>' + pen + '</span><b>Edit Profile</b>' + chev + '</button>' +
       menu +
       '<input type="file" id="ppCoverIn" accept="image/jpeg,image/png,image/webp" hidden><input type="file" id="ppAvIn" accept="image/jpeg,image/png,image/webp" hidden></div>';
+  }
+  /* ---------- Catalogue (work photos for everyone; products + prices for Business Owners) ---------- */
+  var catItems = [], CAT_MAX = 10;
+  function isBiz() { return prov && prov.provider_type === 'service_business'; }
+  function catSection(items) {
+    catItems = items || [];
+    var biz = isBiz();
+    var sv = function (d, w) { return '<svg viewBox="0 0 24 24" width="' + (w || 20) + '" height="' + (w || 20) + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>'; };
+    var chev = sv('<path d="M9 6l6 6-6 6"/>', 16);
+    var tiles = catItems.map(function (x) {
+      var hiddenProd = x.kind === 'product' && !biz;
+      return '<button type="button" class="pp-ci' + (x.active === false || hiddenProd ? ' pp-ci-off' : '') + '" data-cat="' + LL.esc(x.id) + '"><span class="pp-ci-img"><img src="' + LL.esc(x.image_url) + '" alt="" loading="lazy"></span>' +
+        '<b>' + LL.esc(x.title) + '</b><small>' + (hiddenProd ? 'Hidden (Business account only)' : x.active === false ? 'Hidden' : (x.kind === 'product' && x.price_kobo != null ? LL.naira(x.price_kobo) : (x.description ? LL.esc(x.description) : 'Work'))) + '</small></button>';
+    }).join('');
+    var empty = '<button type="button" class="pp-ci-empty" data-cat="">' + sv('<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/>', 22) + '<span>' + (biz ? 'Show customers your work and the products you sell.' : 'Show customers photos of the work you have done.') + ' Tap to add.</span></button>';
+    return '<div class="pp-sec"><h3>' + sv('<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/>', 18) + ' Catalogue</h3><span class="pp-sec-r"><span class="pp-cnt">' + catItems.length + '/' + CAT_MAX + '</span><button type="button" class="pp-va" data-cat="">+ Add</button></span></div>' +
+      (catItems.length ? '<div class="pp-cat">' + tiles + '</div>' : empty) +
+      (biz && prov.store_url ? '<a class="pp-store" href="' + LL.esc(prov.store_url) + '" target="_blank" rel="noopener noreferrer">' + sv('<path d="M4 9l1.5-5h13L20 9M4 9h16M4 9v11h16V9M9 20v-6h6v6"/>', 18) + '<b>Visit my online store</b>' + chev + '</a>' : '');
+  }
+  function catShrink(file) {
+    return new Promise(function (resolve) {
+      var img = new Image(), url = URL.createObjectURL(file);
+      img.onload = function () {
+        try {
+          var r = Math.min(1, 1100 / Math.max(img.width, img.height)), W = Math.round(img.width * r), H = Math.round(img.height * r), cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+          cv.getContext('2d').drawImage(img, 0, 0, W, H);
+          cv.toBlob(function (b) { URL.revokeObjectURL(url); resolve(b ? new File([b], 'catalogue.jpg', { type: 'image/jpeg' }) : file); }, 'image/jpeg', 0.82);
+        } catch (e) { URL.revokeObjectURL(url); resolve(file); }
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); resolve(file); };
+      img.src = url;
+    });
+  }
+  function catSheet(id) {
+    var it = id ? catItems.filter(function (x) { return x.id === id; })[0] : null;
+    if (!it && catItems.length >= CAT_MAX) { LL.toast('You can add up to ' + CAT_MAX + ' photos. Delete one to add another.', true); return; }
+    var biz = isBiz(), kind = it ? it.kind : 'work', file = null;
+    var old = document.getElementById('ppSheet'); if (old) old.remove();
+    var el = document.createElement('div'); el.id = 'ppSheet'; el.className = 'pp-ov';
+    function close() { el.remove(); document.body.classList.remove('pp-lock'); }
+    function done(msg) { close(); LL.toast(msg); render(true); }
+    function fail(er) { LL.toast(/provider_catalog|schema cache/.test((er && er.message) || '') ? 'Catalogue is not set up yet. Run migration 011 in Supabase.' : ((er && er.message) || 'Something went wrong.'), true); }
+    el.innerHTML = '<div class="pp-sh" role="dialog" aria-modal="true"><div class="pp-sh-h"><b>' + (it ? 'Edit catalogue item' : 'Add to catalogue') + '</b><button type="button" id="ppX" aria-label="Close">✕</button></div><form id="ctF" novalidate>' +
+      (biz ? '<div class="ll-seg" role="group" aria-label="Type"><button type="button" data-ck="work" aria-pressed="' + (kind === 'work') + '">Work I\'ve done</button><button type="button" data-ck="product" aria-pressed="' + (kind === 'product') + '">Product I sell</button></div>' : '') +
+      '<label class="lbl" for="ctP">Photo' + (it ? ' (leave empty to keep the current one)' : '') + '</label>' + (it ? '<img class="pp-ct-prev" src="' + LL.esc(it.image_url) + '" alt="">' : '') + '<input id="ctP" type="file" accept="image/jpeg,image/png,image/webp" class="text-sm">' +
+      '<label class="lbl" for="ctT">Title</label><input id="ctT" class="field" maxlength="80" value="' + LL.esc(it ? it.title : '') + '">' +
+      '<label class="lbl" for="ctD">Description (optional)</label><textarea id="ctD" class="field resize-none" rows="3" maxlength="500">' + LL.esc(it && it.description || '') + '</textarea>' +
+      '<div id="ctPW"' + (kind === 'product' ? '' : ' class="hidden"') + '><label class="lbl" for="ctPr">Price (₦)</label><input id="ctPr" class="field" inputmode="decimal" value="' + (it && it.price_kobo != null ? it.price_kobo / 100 : '') + '"></div>' +
+      '<button id="ctS" class="pp-save">' + (it ? 'Save changes' : 'Add to catalogue') + '</button></form>' +
+      (it ? '<div class="pp-sh-f"><button type="button" id="ctTog">' + (it.active === false ? 'Show' : 'Hide') + '</button><button type="button" id="ctDel" class="pp-del">Delete</button></div>' : '') + '</div>';
+    el.onclick = function (e) { if (e.target === el) close(); };
+    document.body.appendChild(el); document.body.classList.add('pp-lock');
+    document.getElementById('ppX').onclick = close;
+    Array.prototype.forEach.call(el.querySelectorAll('[data-ck]'), function (b) {
+      b.onclick = function () { kind = b.getAttribute('data-ck'); Array.prototype.forEach.call(el.querySelectorAll('[data-ck]'), function (x) { x.setAttribute('aria-pressed', String(x === b)); }); document.getElementById('ctPW').classList.toggle('hidden', kind !== 'product'); };
+    });
+    document.getElementById('ctP').onchange = function () { file = this.files[0] || null; };
+    document.getElementById('ctF').onsubmit = function (e) {
+      e.preventDefault();
+      var t = document.getElementById('ctT').value.trim(), d = document.getElementById('ctD').value.trim(), k = null;
+      if (!it && !file) { LL.toast('Choose a photo.', true); return; }
+      if (t.length < 1) { LL.toast('Enter a title.', true); return; }
+      if (kind === 'product') { k = LL.toKobo(document.getElementById('ctPr').value); if (!isFinite(k) || k < 0) { LL.toast('Enter a valid price.', true); return; } }
+      LL.busy(document.getElementById('ctS'), 'Saving…', function () {
+        var up = file ? catShrink(file).then(function (f) { return LLApi.provider.uploadCatalogImage(f); }) : Promise.resolve(null);
+        return up.then(function (url) { return LLApi.provider.saveCatalogItem({ id: it && it.id, kind: kind, title: t, description: d, priceKobo: k, imageUrl: url, active: it ? it.active !== false : true }); });
+      }).then(function () { done(it ? 'Catalogue updated.' : 'Added to your catalogue.'); }, fail);
+    };
+    if (it) {
+      document.getElementById('ctTog').onclick = function () {
+        LLApi.provider.saveCatalogItem({ id: it.id, kind: it.kind, title: it.title, description: it.description, priceKobo: it.price_kobo, active: it.active === false }).then(function () { done(it.active === false ? 'Item is now visible.' : 'Item hidden.'); }, fail);
+      };
+      document.getElementById('ctDel').onclick = function () {
+        LL.confirm({ title: 'Delete this item?', confirmText: 'Delete', danger: true }).then(function (ok) { if (ok) LLApi.provider.deleteCatalogItem(it.id).then(function () { done('Item deleted.'); }, fail); });
+      };
+    }
+  }
+  /* One-time question for providers who have not chosen their account type yet. */
+  function typePicker() {
+    if (document.getElementById('ppType')) return;
+    var el = document.createElement('div'); el.id = 'ppType'; el.className = 'pp-ov';
+    el.innerHTML = '<div class="pp-sh" role="dialog" aria-modal="true"><div class="pp-sh-h"><b>How do you work?</b></div><p class="pp-ty-p">This decides what your Catalogue can show. You can change it later in Edit Profile.</p>' +
+      '<button type="button" class="pp-ty" data-ty="service_only"><b>Service Provider only</b><span>Your catalogue shows photos of work you have done, with an optional description. No prices.</span></button>' +
+      '<button type="button" class="pp-ty" data-ty="service_business"><b>Service Provider / Business Owner</b><span>Show your work and/or products you sell, with descriptions and prices. You can also link your online store.</span></button></div>';
+    document.body.appendChild(el); document.body.classList.add('pp-lock');
+    Array.prototype.forEach.call(el.querySelectorAll('[data-ty]'), function (b) {
+      b.onclick = function () {
+        var ty = b.getAttribute('data-ty'); b.disabled = true;
+        LLApi.provider.setType(ty).then(function () { prov.provider_type = ty; el.remove(); document.body.classList.remove('pp-lock'); LL.toast('Saved. You can change this in Edit Profile.'); render(true); }, function (er) {
+          b.disabled = false; LL.toast(/provider_type|schema cache/.test((er && er.message) || '') ? 'Account types are not set up yet. Run migration 011 in Supabase.' : ((er && er.message) || 'Could not save.'), true);
+        });
+      };
+    });
   }
   var ppSvcs = [], ppCats = null;
   function ppSheet(id) {
@@ -455,6 +553,7 @@
     Array.prototype.forEach.call(document.querySelectorAll('[data-pp-th]'), function (b) { b.onclick = function () { if (window.LLApp) LLApp.setTheme(b.getAttribute('data-pp-th')); }; });
     var so = document.querySelector('[data-pp-out]'); if (so) so.onclick = function () { if (LL.signOut) LL.signOut(); };
     Array.prototype.forEach.call(document.querySelectorAll('[data-svc]'), function (b) { b.onclick = function () { ppSheet(b.getAttribute('data-svc')); }; });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-cat]'), function (b) { b.onclick = function () { catSheet(b.getAttribute('data-cat')); }; });
     Array.prototype.forEach.call(document.querySelectorAll('[data-pp-edit]'), function (b) {
       b.onclick = function () {
         var f = document.getElementById('ppForm'); if (!f) return;
@@ -525,6 +624,7 @@
     LLApi.provider.me().then(function (p) {
       if (!p) { LL.go('provider-onboarding.html'); return; }
       prov = p;
+      if (p.provider_type === null) setTimeout(typePicker, 400);
       LL.setHeader(TITLES[section], p.business_name);
       pvHeader(p, profile);
       LLApi.messages.unreadTotal(profile.id).then(function (n) { LL.setBadge('navMsgBadge', n); }, function () {});

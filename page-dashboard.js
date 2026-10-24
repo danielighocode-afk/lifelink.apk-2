@@ -56,7 +56,7 @@
           }).join('');
           var cur = convs.filter(function (c) { return c.id === sel; })[0] || convs[0];
           setTimeout(function () { var el = document.getElementById('chatMount'); if (el) chat = LLChat.mount(el, cur.id); }, 0);
-          return '<div class="grid lg:grid-cols-3 gap-4"><div class="space-y-2">' + list + '</div><div class="lg:col-span-2">' + card('<div class="flex justify-between"><h2 class="font-extrabold">' + LL.esc((provs[cur.provider_id] || {}).business_name || 'Provider') + '</h2><a class="text-xs font-extrabold text-emerald-700" href="compare-quotes.html?request=' + LL.esc(cur.request_id) + '">View request</a></div><div id="chatMount"></div>') + '</div></div>';
+          return '<div class="grid lg:grid-cols-3 gap-4"><div class="space-y-2">' + list + '</div><div class="lg:col-span-2">' + card('<div class="flex justify-between"><h2 class="font-extrabold">' + LL.esc((provs[cur.provider_id] || {}).business_name || 'Provider') + '</h2>' + (cur.request_id ? '<a class="text-xs font-extrabold text-emerald-700" href="compare-quotes.html?request=' + LL.esc(cur.request_id) + '">View request</a>' : (cur.item_title ? '<span class="text-xs font-semibold text-slate-500 truncate">About: ' + LL.esc(cur.item_title) + '</span>' : '')) + '</div><div id="chatMount"></div>') + '</div></div>';
         });
       });
     },
@@ -77,6 +77,7 @@
 
   LL.ready(function (profile) {
     me = profile;
+    if (profile && profile.role === 'customer' && LLApi.messages && LLApi.messages.sweepRefunds) LLApi.messages.sweepRefunds();   // returns ₦50 for product chats left unanswered 24h
     if (!S[section]) section = 'overview';
     LL.initSidebar(profile, section);
     LL.setHeader(TITLES[section], 'Hi ' + (String(profile.full_name || '').split(' ')[0] || 'there'));

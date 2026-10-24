@@ -87,6 +87,10 @@
         return providerId ? b.eq('provider_id', providerId).order('base_price_kobo') : b;
       });
     },
+    // A provider's public catalogue (products + prices only appear for Business Owner accounts).
+    items: function (providerId) {
+      return q('public_catalog', function (t) { return t.select('id,provider_id,kind,title,description,price_kobo,image_url,created_at').eq('provider_id', providerId).order('created_at', { ascending: false }); });
+    },
     reviews: function (providerId) {
       return q('public_reviews', function (t) {
         var b = t.select('provider_id,rating,comment,recommend,created_on').order('created_on', { ascending: false });
@@ -194,7 +198,10 @@
   var Provider = {
     me: function () {
       return uid().then(function (id) {
-        return q('provider_profiles', function (t) { return t.select('profile_id,business_name,category,bio,service_area,verification_status,trust_score,rating_avg,jobs_done,available,years_experience,skills,created_at').eq('profile_id', id).maybeSingle(); });
+        var base = 'profile_id,business_name,category,bio,service_area,verification_status,trust_score,rating_avg,jobs_done,available,years_experience,skills,created_at';
+        // If migration 011 has not been run yet, fall back to the old columns so the dashboard still opens.
+        return q('provider_profiles', function (t) { return t.select(base + ',provider_type,store_url').eq('profile_id', id).maybeSingle(); })
+          .catch(function () { return q('provider_profiles', function (t) { return t.select(base).eq('profile_id', id).maybeSingle(); }); });
       });
     },
     apply: function (o) {
@@ -234,6 +241,31 @@
       });
     },
     deleteService: function (id) { return q('provider_services', function (t) { return t.delete().eq('id', id); }); },
+    // Provider type: 'service_only' (A) or 'service_business' (B). Migration 011.
+    setType: function (type, storeUrl) {
+      var patch = { provider_type: type };
+      if (storeUrl !== undefined) patch.store_url = type === 'service_business' ? (storeUrl || null) : null;
+      return Provider.update(patch);
+    },
+    // Catalogue (max 10 items, one photo each). Products + prices only for type B (enforced in the database).
+    catalog: function () {
+      return uid().then(function (id) {
+        return q('provider_catalog', function (t) { return t.select('id,kind,title,description,price_kobo,image_url,active,created_at').eq('provider_id', id).order('created_at', { ascending: false }); });
+      });
+    },
+    saveCatalogItem: function (o) {
+      return uid().then(function (id) {
+        var row = { kind: o.kind, title: o.title, description: o.description || null, price_kobo: o.kind === 'product' ? o.priceKobo : null, active: o.active !== false };
+        if (o.imageUrl) row.image_url = o.imageUrl;
+        if (o.id) return q('provider_catalog', function (t) { return t.update(row).eq('id', o.id).select('id'); });
+        row.provider_id = id;
+        return q('provider_catalog', function (t) { return t.insert(row).select('id'); });
+      });
+    },
+    deleteCatalogItem: function (id) { return q('provider_catalog', function (t) { return t.delete().eq('id', id); }); },
+    uploadCatalogImage: function (file) {
+      return upload('avatars', file).then(function (path) { return publicUrl('avatars', path); });
+    },
     // Requests this provider may see (open board + ones they are linked to). RLS decides.
     requests: function () {
       return q('service_requests', function (t) {
@@ -280,10 +312,14 @@
   /* ------------------------------ messaging ------------------------------ */
   var Messages = {
     open: function (requestId, providerId) { return rpc('open_conversation', { p_request: requestId, p_provider: providerId || null }); },
+    // Chat about a catalogue product: ₦50 from each side the first time (reopening is free).
+    openProduct: function (itemId) { return rpc('open_product_chat', { p_item: itemId }); },
+    // Returns the customer's ₦50 for product chats the seller left unanswered for 24h. Safe to call often.
+    sweepRefunds: function () { return rpc('refund_unanswered_chats', {}).catch(function () { return 0; }); },
     send: function (conversationId, body) { return rpc('send_message', { p_conversation: conversationId, p_body: body }); },
     markRead: function (conversationId) { return rpc('mark_conversation_read', { p_conversation: conversationId }); },
     conversations: function () {
-      return q('conversations', function (t) { return t.select('id,request_id,customer_id,provider_id,created_at,last_message_at').order('last_message_at', { ascending: false, nullsFirst: false }); });
+      return q('conversations', function (t) { return t.select('id,request_id,customer_id,provider_id,created_at,last_message_at,item_title').order('last_message_at', { ascending: false, nullsFirst: false }); });
     },
     thread: function (conversationId) {
       return q('messages', function (t) { return t.select('id,conversation_id,sender_id,body,created_at,read_at').eq('conversation_id', conversationId).order('created_at'); });
