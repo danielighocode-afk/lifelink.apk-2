@@ -35,7 +35,10 @@
         var tile = function (href, label, icon, tone) { return '<a href="' + href + '" class="pv-tile pv-' + tone + '">' + icon + '<span>' + label + '</span></a>'; };
         var recent = r[2].slice(0, 3);
         var statusLbl = function (s) { return ({ pending_payment: 'New booking received', paid: 'New booking received', confirmed: 'Booking confirmed', provider_on_the_way: 'You are on the way', arrived: 'You have arrived', in_progress: 'Job in progress', completed: 'Job completed', cancelled: 'Booking cancelled', disputed: 'Booking disputed' })[s] || 'Booking update'; };
-        return reqMap(recent.map(function (b) { return b.request_id; })).then(function (rm) {
+        var pcLoad = Promise.all([LLApi.provider.services().catch(function () { return null; }), LLApi.provider.catalog().catch(function () { return null; })]);
+        return Promise.all([reqMap(recent.map(function (b) { return b.request_id; })), pcLoad]).then(function (zz) {
+          var rm = zz[0], pcx = zz[1];
+          var pcard = LLApi.checklist.html(LLApi.checklist.providerItems({ me: me, prov: prov, services: pcx[0], catalog: pcx[1], wallet: r[4] }), { key: 'prov:' + (me && me.id), note: prov.verification_status !== 'verified' ? 'Complete your profile to get verified faster.' : '', noteHref: 'provider-verification.html' });
           var act = recent.length ? recent.map(function (b) {
             var x = rm[b.request_id] || {}, c = (r[5][b.customer_id] || {}).display_name || 'Customer';
             return '<a href="?section=bookings" class="pv-act"><span class="pv-act-i">' + I.jobs + '</span><span class="pv-act-t"><b>' + LL.esc(statusLbl(b.status)) + '</b><em>' + LL.esc(x.category_text || 'Job') + ' · ' + LL.esc(c) + '</em><small>' + LL.esc(LL.ago(b.created_at)) + '</small></span><span class="pv-act-p">' + LL.naira(b.price_kobo) + '</span></a>';
@@ -45,7 +48,7 @@
             '<div class="pv-stats"><a href="?section=reviews">' + I.star + '<b>' + (prov.rating_avg != null ? Number(prov.rating_avg).toFixed(1) : '–') + '</b><span>Your rating</span></a>' +
             '<a href="?section=bookings">' + I.cal + '<b>' + (prov.jobs_done || 0) + '</b><span>Jobs done</span></a>' +
             '<a href="?section=wallet">' + I.cash + '<b>' + bal + '</b><span>Wallet</span></a></div>' +
-            '<div class="pv-body">' + vb +
+            '<div class="pv-body">' + vb + pcard +
             '<a href="?section=profile" class="pv-strip"><span class="pv-strip-i">' + I.up + '</span><span class="pv-strip-t"><b>Keep your profile active</b><em>' + (prov.available ? 'More bookings, more income.' : 'You are hidden right now. Turn availability on.') + '</em></span>' + I.chev + '</a>' +
             '<h3 class="pv-h">Quick Actions</h3><div class="pv-tiles">' + tile('provider-request.html', 'Requests', I.search, 'b') + tile('?section=bookings', 'Bookings', I.jobs, 'g') + tile('?section=services', 'My services', I.tools, 'b') + tile('?section=wallet', 'Wallet', I.wallet, 'g') + '</div>' +
             '<div class="pv-pro" data-pv-pro role="button" tabindex="0"><span class="pv-pro-i">' + I.case + '</span><span class="pv-pro-t"><small>Grow Your Business</small><b>Upgrade to Pro</b><em>Get more visibility, priority support and higher earning opportunities.</em></span>' + I.chev + '</div>' +
@@ -379,6 +382,7 @@
       '<div class="pp-stats"><div><b><span class="pp-star">★</span> ' + rating + '</b><em>(' + (revs || []).length + ' review' + ((revs || []).length === 1 ? '' : 's') + ')</em></div><i></i><div><b>' + sv('<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/>', 18) + ' ' + (prov.jobs_done || 0) + '</b><em>Jobs done</em></div></div>' +
       '<div class="pp-sec"><h3>About me</h3><button type="button" class="pp-ed" data-pp-edit="pb" aria-label="Edit about">' + pen + '</button></div>' +
       (prov.bio ? '<div class="pp-about">' + LL.esc(prov.bio) + '</div>' : '<button type="button" class="pp-about pp-about-e" data-pp-edit="pb">Tell customers about yourself and your work. Tap to add.</button>') +
+      storeLink(prov.store_url) +
       catSection(cat) +
       '<div class="pp-sec"><h3>Services</h3><span class="pp-sec-r"><button type="button" class="pp-va" data-svc="">+ Add</button><a href="?section=services" class="pp-va">View all</a></span></div><div class="pp-grid">' + tiles + '</div>' +
       '<button type="button" class="pp-edit" data-pp-edit="pn"><span>' + pen + '</span><b>Edit Profile</b>' + chev + '</button>' +
@@ -401,7 +405,7 @@
     var empty = '<button type="button" class="pp-ci-empty" data-cat="">' + sv('<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/>', 22) + '<span>' + (biz ? 'Show customers your work and the products you sell.' : 'Show customers photos of the work you have done.') + ' Tap to add.</span></button>';
     return '<div class="pp-sec"><h3>' + sv('<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/>', 18) + ' Catalogue</h3><span class="pp-sec-r"><span class="pp-cnt">' + catItems.length + '/' + CAT_MAX + '</span><button type="button" class="pp-va" data-cat="">+ Add</button></span></div>' +
       (catItems.length ? '<div class="pp-cat">' + tiles + '</div>' : empty) +
-      (biz && prov.store_url ? '<a class="pp-store" href="' + LL.esc(prov.store_url) + '" target="_blank" rel="noopener noreferrer">' + sv('<path d="M4 9l1.5-5h13L20 9M4 9h16M4 9v11h16V9M9 20v-6h6v6"/>', 18) + '<b>Visit my online store</b>' + chev + '</a>' : '');
+      '';
   }
   function catShrink(file) {
     return new Promise(function (resolve) {
@@ -416,6 +420,11 @@
       img.onerror = function () { URL.revokeObjectURL(url); resolve(file); };
       img.src = url;
     });
+  }
+  function storeLink(u) {
+    if (!u) return '';
+    var shown = String(u).replace(/^https?:\/\//i, '').replace(/\/$/, ''); if (shown.length > 38) shown = shown.slice(0, 37) + '…';
+    return '<a class="ll-slink" href="' + LL.esc(u) + '" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 00-5.7 0l-3 3A4 4 0 0011 18.7l1-1"/></svg><span>' + LL.esc(shown) + '</span></a>';
   }
   function catSheet(id) {
     var it = id ? catItems.filter(function (x) { return x.id === id; })[0] : null;

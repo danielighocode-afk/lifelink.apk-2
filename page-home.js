@@ -16,6 +16,11 @@
       $('bell').hidden = true; $('signin').hidden = false;
     }
     if (profile && (profile.role === 'provider' || profile.role === 'admin')) $('pro').hidden = true;
+    if (profile && profile.role === 'customer' && window.LLApi && LLApi.checklist) {
+      var paint = function (w) { var m = $('pcMount'); if (m) m.innerHTML = LLApi.checklist.html(LLApi.checklist.customerItems(profile, w), { key: 'cust:' + profile.id }); };
+      paint(null);
+      LLApi.wallet.me().then(paint, function () {});
+    }
   }
   if (window.LL && LL.whenAuth) LL.whenAuth(who); else who(null);
 

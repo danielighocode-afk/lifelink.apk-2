@@ -24,15 +24,15 @@
   <style>
     .pp-old { }
     #app { padding: 0 !important; max-width: 640px !important; }
-    .pp-hero { position: relative; height: 280px; background: linear-gradient(135deg, #0b7a58, #18b785); overflow: hidden; }
+    .pp-hero { position: relative; height: 220px; background: linear-gradient(135deg, #0b7a58, #18b785); overflow: hidden; }
     .pp-hero img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; display: block; }
     .pp-hero .ini { position: absolute; inset: 0; display: grid; place-items: center; font-size: 84px; font-weight: 800; color: rgba(255,255,255,.9); letter-spacing: 2px; }
     .pp-hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,.35), rgba(0,0,0,0) 38%); pointer-events: none; }
-    .pp-top { position: absolute; left: 14px; right: 14px; top: calc(12px + env(safe-area-inset-top, 0px)); z-index: 2; display: flex; justify-content: space-between; }
+    .pp-top { position: absolute; left: 14px; right: 14px; top: 12px; z-index: 2; display: flex; justify-content: space-between; }
     .pp-ic { width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255,255,255,.92); color: #0f172a; display: grid; place-items: center; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,.18); transition: transform .15s ease; }
     .pp-ic:active { transform: scale(.92); }
     .pp-ic svg { width: 20px; height: 20px; }
-    .pp-card { position: relative; margin-top: -26px; background: var(--ll-bg, #f5f8f6); border-radius: 26px 26px 0 0; padding: 20px 18px 24px; animation: ppFade .45s ease both; }
+    .pp-card { position: relative; margin-top: -26px; background: var(--ll-bg, #f5f8f6); border-radius: 26px 26px 0 0; padding: 50px 18px 24px; animation: ppFade .45s ease both; }
     @keyframes ppFade { from { opacity: 0; } to { opacity: 1; } }
     @keyframes ppUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
     .pp-vf { position: absolute; right: 16px; top: -16px; display: inline-flex; align-items: center; gap: 6px; background: var(--ll-primary, #07865f); color: #fff; font-size: 12px; font-weight: 700; padding: 7px 13px; border-radius: 999px; box-shadow: 0 4px 14px rgba(7,134,95,.35); }
@@ -42,7 +42,12 @@
     .pp-rate { display: inline-flex; align-items: center; gap: 5px; background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; }
     .pp-rate b { color: var(--ll-text); font-weight: 800; } .pp-rate .st { color: #f5a30a; }
     .pp-rate.off { cursor: default; }
-    .pp-av { font-weight: 700; } .pp-av.on { color: var(--ll-primary); }
+    .pp-avl { font-weight: 700; } .pp-avl.on { color: var(--ll-primary); }
+    .pp-pic { position: absolute; left: 18px; top: -46px; width: 88px; height: 88px; border-radius: 50%; padding: 3px; box-sizing: border-box; background: var(--ll-surface, #fff); border: 3px solid #1FA971; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+    .pp-pic > span { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: linear-gradient(135deg, #07865F, #0f5aa8); color: #fff; font-weight: 800; font-size: 28px; }
+    .pp-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .pp-nrow { display: flex; align-items: center; gap: 8px; }
+    .pp-tick { flex: none; width: 22px; height: 22px; }
     .pp-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
     .pp-tags span { font-size: 12.5px; font-weight: 600; padding: 7px 13px; border-radius: 999px; background: var(--ll-surface-2, #e8eeeb); color: var(--ll-text-2, #475569); }
     .pp-h { margin: 22px 0 8px; font-size: 17px; font-weight: 800; color: var(--ll-text); }
@@ -84,7 +89,7 @@
   <meta name="apple-mobile-web-app-title" content="LifeLink">
   <link rel="stylesheet" href="ll-app.css">
 </head>
-<body class="min-h-screen flex flex-col bg-slate-50 antialiased selection:bg-emerald-100 selection:text-emerald-800" data-ll-page="provider-profile" data-ll-role="public">
+<body class="min-h-screen flex flex-col bg-slate-50 antialiased selection:bg-emerald-100 selection:text-emerald-800" data-ll-page="provider-profile" data-ll-role="public" data-ll-strip>
 <header class="pp-old bg-white border-b border-slate-200/80 sticky top-0 z-30"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
     <a href="index.html" aria-label="LifeLink home"><img src="images/lifelink-logo.png" alt="LifeLink" class="h-10 w-auto"></a>
     <nav class="hidden sm:flex items-center gap-6 text-sm font-extrabold text-slate-600"><a href="discovery.html" class="hover:text-emerald-600">Find providers</a><a href="provider-onboarding.html" class="hover:text-emerald-600">For providers</a><a href="trust-safety.html" class="hover:text-emerald-600">Trust &amp; Safety</a></nav>
