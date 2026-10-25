@@ -44,3 +44,16 @@ for (const d of fs.readdirSync(res)) {
   if (fs.existsSync(f)) { fs.copyFileSync(path.join(root, 'resources', 'splash.png'), f); splash++; }
 }
 console.log('splash: replaced ' + splash + ' splash images (original LifeLink logo on #F5F8F6)');
+
+/* App version: versionCode / versionName come from version.json in the project root (one place to edit per release).
+   Android only installs an update when versionCode is higher than the installed one. */
+try {
+  const vj = JSON.parse(fs.readFileSync(path.join(root, 'version.json'), 'utf8'));
+  const gf = path.join(root, 'android', 'app', 'build.gradle');
+  if (fs.existsSync(gf) && Number.isInteger(vj.versionCode) && vj.versionName) {
+    let g = fs.readFileSync(gf, 'utf8');
+    g = g.replace(/versionCode\s+\d+/, 'versionCode ' + vj.versionCode).replace(/versionName\s+"[^"]*"/, 'versionName "' + String(vj.versionName).replace(/[^0-9A-Za-z._-]/g, '') + '"');
+    fs.writeFileSync(gf, g);
+    console.log('version: versionCode ' + vj.versionCode + ', versionName ' + vj.versionName);
+  }
+} catch (e) { console.warn('version: could not apply version.json (' + e.message + ')'); }

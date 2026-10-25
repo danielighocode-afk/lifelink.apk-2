@@ -8,6 +8,7 @@
   if (NATIVE) document.documentElement.classList.add('ll-native');
   function plug(n) { return NATIVE && cap.Plugins && cap.Plugins[n] ? cap.Plugins[n] : null; }
   if (NATIVE) { try { var ps = document.createElement('script'); ps.src = 'll-push.js'; ps.defer = true; document.head.appendChild(ps); } catch (e) {} }   // push notifications (Android app only)
+  if (NATIVE) { try { var us = document.createElement('script'); us.src = 'll-update.js'; us.defer = true; document.head.appendChild(us); } catch (e) {} }   // update prompt (Android app only)
 
   /* ---------------- theme ---------------- */
   var mq = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
