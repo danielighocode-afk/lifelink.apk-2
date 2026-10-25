@@ -12,8 +12,9 @@
   function sget(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
   function sset(k, v) { try { sessionStorage.setItem(k, v); } catch (e) {} }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-  if (sget('ll_update_checked')) return;     // one check per app session, not on every page
-  sset('ll_update_checked', '1');
+  // "Checked" is only remembered AFTER a check has really finished, so leaving the screen early can never cancel it for good.
+  // It also checks again whenever the app is brought back to the front.
+  var K_OK = 'll_update_ok', K_LATER = 'll_update_later';
 
   // Native HTTP avoids browser cross-site (CORS) limits and follows GitHub's redirect to the file.
   function fetchJson() {
@@ -44,18 +45,32 @@
       try { window.open(v.apkUrl, '_system'); } catch (e) { location.href = v.apkUrl; }
     };
     var later = document.getElementById('llUpdLater');
-    if (later) later.onclick = function () { d.remove(); };   // hides it for this session only: it comes back the next time the app is opened
+    if (later) later.onclick = function () { sset(K_LATER, '1'); d.remove(); };   // hides it until the app is next opened
   }
 
-  function run() {
+  var running = false;
+  function run(tries) {
+    if (running || sget(K_LATER)) return;
+    running = true;
     Promise.all([installedBuild(), fetchJson()]).then(function (r) {
+      running = false;
       var cur = r[0], v = r[1];
-      if (!v || !v.apkUrl || !/^https:\/\//.test(v.apkUrl)) return;
+      if (!v || !v.apkUrl || !/^https:\/\//.test(v.apkUrl)) { sset(K_OK, '1'); return; }
       var latest = parseInt(v.versionCode, 10) || 0;
-      if (latest <= cur.code) return;
+      if (latest <= cur.code) { sset(K_OK, '1'); return; }   // up to date: done for this session
       var force = v.force === true;
-      show(v, force);
-    }).catch(function () { /* offline or no release yet: say nothing */ });
+      if (document.body) show(v, force); else document.addEventListener('DOMContentLoaded', function () { show(v, force); });
+    }).catch(function () {
+      running = false;   // offline or not ready yet: try again shortly (3 tries), otherwise stay silent
+      if ((tries || 0) < 3) setTimeout(function () { run((tries || 0) + 1); }, 2500 * ((tries || 0) + 1));
+    });
   }
-  if (document.readyState === 'complete') setTimeout(run, 2500); else window.addEventListener('load', function () { setTimeout(run, 2500); });
+  function start() { if (!sget(K_OK)) run(0); }
+  // Starts as soon as the page structure exists (does not wait for images or the 2.5 s timer that could be cut short).
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(start, 400); }); else setTimeout(start, 400);
+  // Coming back to the app from the background: look again.
+  try {
+    var A = cap.Plugins && cap.Plugins.App;
+    if (A && A.addListener) A.addListener('appStateChange', function (st) { if (st && st.isActive) { try { sessionStorage.removeItem(K_OK); sessionStorage.removeItem(K_LATER); } catch (e) {} setTimeout(start, 400); } });
+  } catch (e) {}
 })();
