@@ -1,7 +1,7 @@
 {
-  "versionCode": 7,
-  "versionName": "1.2.1",
+  "versionCode": 8,
+  "versionName": "1.2.2",
   "apkUrl": "https://github.com/danielighocode-afk/lifelink.apk-2/releases/latest/download/LifeLink.apk",
-  "notes": "More reliable update notifications. Message ticks and instant chats.",
+  "notes": "Cleaner message ticks that blend into the chat bubble.",
   "force": false
 }

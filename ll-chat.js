@@ -4,17 +4,16 @@
 (function () {
   'use strict';
 
-  /* ---- tick colours: deep purple in light mode, brighter violet in dark mode ---- */
+  /* ---- tick colours: blend into the bubble like WhatsApp; read = bright violet-lavender ---- */
   if (!document.getElementById('ll-tick-css')) {
     var st = document.createElement('style'); st.id = 'll-tick-css';
     st.textContent =
-      '.ll-ticks{display:inline-flex;align-items:center;margin-left:6px;padding:1px 5px;border-radius:999px;background:#fff;vertical-align:middle;line-height:0}' +
+      '.ll-ticks{display:inline-flex;align-items:center;margin-left:5px;vertical-align:middle;line-height:0}' +
       '.ll-ticks svg{width:15px;height:10px;display:block}' +
-      '.ll-ticks .t{fill:none;stroke:#94A3B8;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}' +
-      '.ll-ticks[data-s="read"] .t{stroke:#7C3AED}' +
-      'html[data-theme="dark"] .ll-ticks{background:rgba(15,23,20,.78)}' +
-      'html[data-theme="dark"] .ll-ticks .t{stroke:#CBD5E1}' +
-      'html[data-theme="dark"] .ll-ticks[data-s="read"] .t{stroke:#A78BFA}';
+      '.ll-ticks .t{fill:none;stroke:rgba(255,255,255,.78);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}' +
+      '.ll-ticks[data-s="read"] .t{stroke:#B794FF}' +
+      'html[data-theme="dark"] .ll-ticks .t{stroke:rgba(255,255,255,.7)}' +
+      'html[data-theme="dark"] .ll-ticks[data-s="read"] .t{stroke:#C084FC}';
     document.head.appendChild(st);
   }
   function tickSvg(status) {
