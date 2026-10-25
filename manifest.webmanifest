@@ -1,0 +1,18 @@
+{
+  "id": "./",
+  "name": "LifeLink",
+  "short_name": "LifeLink",
+  "description": "Find trusted local service providers in Benin City. Post a request, compare quotes and book.",
+  "start_url": "home.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "lang": "en-NG",
+  "background_color": "#F5F8F6",
+  "theme_color": "#F5F8F6",
+  "icons": [
+    { "src": "images/pwa/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "images/pwa/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "images/pwa/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
