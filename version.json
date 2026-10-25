@@ -1,7 +1,7 @@
 {
-  "versionCode": 3,
-  "versionName": "1.1.2",
+  "versionCode": 4,
+  "versionName": "1.1.3",
   "apkUrl": "https://github.com/danielighocode-afk/lifelink.apk-2/releases/latest/download/LifeLink.apk",
-  "notes": "Category photos and fixes.",
+  "notes": "Link to online store or other social media accounts added",
   "force": false
 }
