@@ -47,7 +47,8 @@
     'verification-docs': { max: 10485760, types: ['application/pdf', 'image/jpeg', 'image/png'] },
     'dispute-evidence': { max: 10485760, types: ['application/pdf', 'image/jpeg', 'image/png'] },
     'request-media': { max: 10485760, types: ['image/jpeg', 'image/png', 'image/webp'] },
-    'avatars': { max: 2097152, types: ['image/jpeg', 'image/png', 'image/webp'] }
+    'avatars': { max: 2097152, types: ['image/jpeg', 'image/png', 'image/webp'] },
+    'category-images': { max: 3145728, types: ['image/jpeg', 'image/png', 'image/webp'] }
   };
 
   /* ------------------------------ storage ------------------------------ */
@@ -78,7 +79,7 @@
 
   /* --------------------------- public catalogue --------------------------- */
   var Catalog = {
-    categories: function () { return q('service_categories', function (t) { return t.select('id,slug,name').eq('active', true).order('name'); }); },
+    categories: function () { return q('service_categories', function (t) { return t.select('id,slug,name,image_path').eq('active', true).order('name'); }); },
     providers: function () { return q('public_providers', function (t) { return t.select('*').order('rating_avg', { ascending: false, nullsFirst: false }); }); },
     provider: function (id) { return q('public_providers', function (t) { return t.select('*').eq('provider_id', id).maybeSingle(); }); },
     services: function (providerId) {
@@ -388,8 +389,8 @@
     },
     setVerification: function (providerId, status, note) { return rpc('set_verification', { p_provider: providerId, p_status: status, p_note: note || null }); },
     users: function () { return q('profiles', function (t) { return t.select('id,full_name,email,phone,role,created_at').order('created_at', { ascending: false }); }); },
-    categories: function () { return q('service_categories', function (t) { return t.select('id,slug,name,active,created_at').order('name'); }); },
-    setCategory: function (o) { return rpc('set_category', { p_id: o.id || null, p_slug: o.slug, p_name: o.name, p_active: o.active !== false }); },
+    categories: function () { return q('service_categories', function (t) { return t.select('id,slug,name,active,image_path,created_at').order('name'); }); },
+    setCategory: function (o) { return rpc('set_category', { p_id: o.id || null, p_slug: o.slug, p_name: o.name, p_active: o.active !== false, p_image_path: o.imagePath || null, p_remove_image: !!o.removeImage }); },
     requests: function () { return q('service_requests', function (t) { return t.select('id,customer_id,category_text,description,location_area,urgency,status,created_at').order('created_at', { ascending: false }).limit(200); }); },
     bookings: function () { return q('bookings', function (t) { return t.select('id,request_id,customer_id,provider_id,price_kobo,service_fee_kobo,status,fee_status,provider_arrived_at,customer_confirmed_arrival_at,fee_charged_at,scheduled_for,completed_at,created_at').order('created_at', { ascending: false }).limit(200); }); },
     disputes: function () {
@@ -510,7 +511,17 @@
     startDeposit: function (amountKobo) { return callFn('smart-service', { amount_kobo: amountKobo }); },
     verifyDeposit: function (reference) { return callFn('paystack-verify', { reference: reference }); }
   };
+  /* Category photo: uploaded photo > bundled photo for the original five > null (callers show a placeholder). */
+  var BUNDLED_CAT = { 'repair-maintenance': 1, 'cleaning': 1, 'beauty-personal-care': 1, 'home-services': 1, 'auto-repair': 1 };
+  function categoryImage(c) {
+    if (!c) return null;
+    if (c.image_path) { var cfg = window.LL_SUPABASE_CONFIG || {}; return String(cfg.url || '').replace(/\/$/, '') + '/storage/v1/object/public/category-images/' + String(c.image_path).split('/').map(encodeURIComponent).join('/'); }
+    return BUNDLED_CAT[c.slug] ? 'images/services/' + c.slug + '.jpeg' : null;
+  }
+  var PLACEHOLDER = "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 60"><rect width="80" height="60" fill="#ecfdf5"/><path d="M26 40l9-11 7 8 5-5 7 8z" fill="#a7f3d0"/><circle cx="53" cy="22" r="5" fill="#a7f3d0"/></svg>');
   window.LLApi = {
+    categoryImage: categoryImage,
+    categoryPlaceholder: PLACEHOLDER,
     friendly: friendly,
     uid: uid,
     upload: upload,

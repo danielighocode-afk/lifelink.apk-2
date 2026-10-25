@@ -70,8 +70,8 @@
     }).join('') + '<a href="discovery.html" style="animation-delay:180ms"><span>' + svg('<circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/>') + '</span>More</a>';
 
     $('cats').innerHTML = cats.map(function (c, i) {
-      var p = PHOTO[c.slug];
-      var inner = p ? '<img src="images/services/' + p + '.jpeg" alt="" loading="lazy" decoding="async">' : esc(String(c.name).charAt(0).toUpperCase());
+      var p = (window.LLApi && LLApi.categoryImage) ? LLApi.categoryImage(c) : (PHOTO[c.slug] ? 'images/services/' + PHOTO[c.slug] + '.jpeg' : null);
+      var inner = '<img src="' + esc(p || (window.LLApi && LLApi.categoryPlaceholder) || '') + '" alt="" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=window.LLApi?LLApi.categoryPlaceholder:\'\'">';
       return '<a class="hm-cat" href="' + esc(href(c)) + '" style="animation-delay:' + (i * 50) + 'ms"><div class="ph">' + inner + '</div><em>' + esc(c.name) + '</em></a>';
     }).join('');
   }

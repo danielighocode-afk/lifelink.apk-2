@@ -164,6 +164,8 @@
         cats.map(function (c) { return '<option value="' + LL.esc(c.id) + '">' + LL.esc(c.name) + '</option>'; }).join('');
       var want = LL.q('category');
       if (want) { var m = cats.filter(function (c) { return c.slug === want || c.name.toLowerCase() === want.toLowerCase(); })[0]; if (m) sel.value = m.id; }
+      function prev() { var c = cats.filter(function (x) { return x.id === sel.value; })[0], im = $('catPrev'); if (!im) return; if (!c) { im.classList.add('hidden'); return; } im.onerror = function () { im.onerror = null; im.src = LLApi.categoryPlaceholder; }; im.src = LLApi.categoryImage(c) || LLApi.categoryPlaceholder; im.alt = c.name; im.classList.remove('hidden'); }
+      sel.addEventListener('change', prev); prev();
     }).catch(function (e) { $('catNote').textContent = e.message; $('catNote').classList.remove('hidden'); });
 
     Promise.all([pCat, pDirect]).then(function () {

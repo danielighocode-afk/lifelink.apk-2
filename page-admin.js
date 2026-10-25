@@ -81,12 +81,37 @@
     reviews: function () { return LLApi.admin.reviews().then(function (rs) { return table(['Rating', 'Comment', 'Recommend', 'Date'], rs.map(function (r) { return ['<span class="text-amber-500 font-extrabold">' + '★'.repeat(r.rating) + '</span>', LL.esc(r.comment || '—'), r.recommend ? 'Yes' : 'No', LL.esc(LL.date(r.created_at))]; })); }); },
     categories: function () {
       return LLApi.admin.categories().then(function (cs) {
+        var newFile = null;
+        function thumb(c) { return '<img src="' + LL.esc(LLApi.categoryImage(c) || LLApi.categoryPlaceholder) + '" alt="" class="w-16 h-12 rounded-xl object-cover bg-slate-100 border border-slate-200" onerror="this.onerror=null;this.src=LLApi.categoryPlaceholder">'; }
+        function okFile(f) { if (!f) return false; if (['image/jpeg', 'image/png', 'image/webp'].indexOf(f.type) < 0 || f.size > 3145728) { LL.toast('Photo must be a JPG, PNG or WebP under 3 MB.', true); return false; } return true; }
         setTimeout(function () {
-          document.getElementById('cf').onsubmit = function (e) { e.preventDefault(); var n = document.getElementById('cn').value.trim(); var slug = n.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); if (n.length < 2) { LL.toast('Enter a category name.', true); return; } act(LLApi.admin.setCategory({ slug: slug, name: n }), 'Category saved.'); };
+          var pf = document.getElementById('cp'), pv = document.getElementById('cpv');
+          pf.onchange = function () { var f = this.files[0]; if (!f) { newFile = null; pv.src = LLApi.categoryPlaceholder; return; } if (!okFile(f)) { this.value = ''; newFile = null; pv.src = LLApi.categoryPlaceholder; return; } newFile = f; pv.src = URL.createObjectURL(f); };
+          document.getElementById('cf').onsubmit = function (e) {
+            e.preventDefault();
+            var n = document.getElementById('cn').value.trim(), slug = n.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+            if (n.length < 2) { LL.toast('Enter a category name.', true); return; }
+            var btn = e.target.querySelector('button');
+            LL.busy(btn, 'Saving…', function () { return (newFile ? LLApi.upload('category-images', newFile) : Promise.resolve(null)).then(function (path) { return LLApi.admin.setCategory({ slug: slug, name: n, imagePath: path }); }); })
+              .then(function () { LL.toast('Category saved.'); render(); }, function (err) { LL.toast(LLApi.friendly(err), true); });
+          };
           app.querySelectorAll('[data-cat]').forEach(function (b) { b.onclick = function () { var c = cs.filter(function (x) { return x.id === b.getAttribute('data-cat'); })[0]; act(LLApi.admin.setCategory({ id: c.id, slug: c.slug, name: c.name, active: !c.active }), 'Category updated.'); }; });
+          app.querySelectorAll('[data-catimg]').forEach(function (inp) { inp.onchange = function () {
+            var f = inp.files[0], c = cs.filter(function (x) { return x.id === inp.getAttribute('data-catimg'); })[0];
+            if (!f) return; if (!okFile(f)) { inp.value = ''; return; }
+            LLApi.upload('category-images', f).then(function (path) { return LLApi.admin.setCategory({ id: c.id, slug: c.slug, name: c.name, active: c.active, imagePath: path }); })
+              .then(function () { LL.toast('Photo updated.'); render(); }, function (err) { LL.toast(LLApi.friendly(err), true); inp.value = ''; });
+          }; });
+          app.querySelectorAll('[data-catrm]').forEach(function (b) { b.onclick = function () { var c = cs.filter(function (x) { return x.id === b.getAttribute('data-catrm'); })[0]; act(LLApi.admin.setCategory({ id: c.id, slug: c.slug, name: c.name, active: c.active, removeImage: true }), 'Photo removed.'); }; });
         }, 0);
-        return card('<form id="cf" class="flex gap-3"><input id="cn" class="field" maxlength="60" placeholder="New category name (e.g. Plumbing)"><button class="bg-emerald-600 text-white font-extrabold px-6 rounded-2xl">Add</button></form>') +
-          table(['Name', 'Slug', 'Status', ''], cs.map(function (c) { return [LL.esc(c.name), LL.esc(c.slug), c.active ? LL.badge('verified').replace('Verified', 'Active') : LL.badge('withdrawn').replace('Withdrawn', 'Hidden'), '<button data-cat="' + LL.esc(c.id) + '" class="text-xs font-extrabold text-slate-600">' + (c.active ? 'Hide' : 'Show') + '</button>']; }));
+        return card('<form id="cf" class="flex flex-col sm:flex-row gap-3 sm:items-center"><img id="cpv" src="' + LL.esc(LLApi.categoryPlaceholder) + '" alt="Photo preview" class="w-20 h-14 rounded-xl object-cover bg-slate-100 border border-slate-200"><input id="cn" class="field flex-1" maxlength="60" placeholder="New category name (e.g. Plumbing)"><label class="text-xs font-extrabold text-slate-600 cursor-pointer border border-slate-200 rounded-2xl px-4 py-3 text-center">Choose photo<input id="cp" type="file" accept="image/jpeg,image/png,image/webp" class="hidden"></label><button class="bg-emerald-600 text-white font-extrabold px-6 py-3 rounded-2xl">Add</button></form><p class="text-xs text-slate-500 font-semibold">Photo is optional (JPG, PNG or WebP, up to 3 MB). Categories without a photo show a placeholder.</p>') +
+          table(['Photo', 'Name', 'Slug', 'Status', ''], cs.map(function (c) {
+            var hasOwn = !!c.image_path;
+            return [thumb(c), LL.esc(c.name), LL.esc(c.slug), c.active ? LL.badge('verified').replace('Verified', 'Active') : LL.badge('withdrawn').replace('Withdrawn', 'Hidden'),
+              '<div class="flex flex-wrap gap-3 items-center"><label class="text-xs font-extrabold text-emerald-700 cursor-pointer">' + (hasOwn ? 'Replace photo' : 'Add photo') + '<input type="file" data-catimg="' + LL.esc(c.id) + '" accept="image/jpeg,image/png,image/webp" class="hidden"></label>' +
+              (hasOwn ? '<button data-catrm="' + LL.esc(c.id) + '" class="text-xs font-extrabold text-red-600">Remove photo</button>' : '') +
+              '<button data-cat="' + LL.esc(c.id) + '" class="text-xs font-extrabold text-slate-600">' + (c.active ? 'Hide' : 'Show') + '</button></div>'];
+          }));
       });
     },
     payments: function () { return LLApi.admin.deposits().then(function (ps) { return '<div class="rounded-2xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-700">Wallet deposits made through Paystack. Read-only: balances only change on the server after Paystack confirms a payment.</div>' + table(['Reference', 'Amount', 'Status', 'Credited', 'Date'], ps.map(function (p) { return [LL.esc(p.reference), LL.naira(p.amount_kobo), LL.badge(p.status), LL.esc(p.credited_at ? LL.dateTime(p.credited_at) : '—'), LL.esc(LL.date(p.created_at))]; })); }); },

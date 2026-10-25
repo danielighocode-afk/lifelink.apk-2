@@ -39,6 +39,7 @@
     LLApi.catalog.categories().then(function (cs) {
       $('category').innerHTML = cs.length ? '<option value="" disabled selected>Select your main category</option>' + cs.map(function (c) { return '<option value="' + LL.esc(c.id) + '">' + LL.esc(c.name) + '</option>'; }).join('') : '<option value="">No categories available yet</option>';
       if (!cs.length) { $('category').disabled = true; $('catNote').classList.remove('hidden'); }
+      $('category').addEventListener('change', function () { var c = cs.filter(function (x) { return x.id === $('category').value; })[0], im = $('catPrev'); if (!c) { im.classList.add('hidden'); return; } im.onerror = function () { im.onerror = null; im.src = LLApi.categoryPlaceholder; }; im.src = LLApi.categoryImage(c) || LLApi.categoryPlaceholder; im.alt = c.name; im.classList.remove('hidden'); });
     }, function (e) { LL.toast(e.message, true); });
     $('photo').onchange = function () { var f = this.files[0]; if (!f) return; if (['image/jpeg', 'image/png', 'image/webp'].indexOf(f.type) < 0 || f.size > 2097152) { LL.toast('Photo must be a JPG, PNG or WebP under 2 MB.', true); this.value = ''; return; } avatarFile = f; $('photoName').textContent = f.name; };
     $('doc').onchange = function () { var f = this.files[0]; if (!f) return; if (['application/pdf', 'image/jpeg', 'image/png'].indexOf(f.type) < 0 || f.size > 10485760) { LL.toast('Document must be a PDF, JPG or PNG under 10 MB.', true); this.value = ''; docFile = null; return; } docFile = f; $('docName').textContent = f.name; };
