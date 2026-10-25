@@ -9,10 +9,6 @@
   if (window.__llUpdate) return; window.__llUpdate = true;
 
   var VERSION_URL = 'https://github.com/danielighocode-afk/lifelink.apk-2/releases/latest/download/version.json';
-  var K_SKIP = 'll_update_skip';            // "<versionCode>:<timestamp>" of the version the person postponed
-  var LATER_MS = 24 * 60 * 60 * 1000;       // ask again after a day
-  function get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
-  function set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   function sget(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
   function sset(k, v) { try { sessionStorage.setItem(k, v); } catch (e) {} }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -48,7 +44,7 @@
       try { window.open(v.apkUrl, '_system'); } catch (e) { location.href = v.apkUrl; }
     };
     var later = document.getElementById('llUpdLater');
-    if (later) later.onclick = function () { set(K_SKIP, v.versionCode + ':' + Date.now()); d.remove(); };
+    if (later) later.onclick = function () { d.remove(); };   // hides it for this session only: it comes back the next time the app is opened
   }
 
   function run() {
@@ -58,7 +54,6 @@
       var latest = parseInt(v.versionCode, 10) || 0;
       if (latest <= cur.code) return;
       var force = v.force === true;
-      if (!force) { var s = (get(K_SKIP) || '').split(':'); if (parseInt(s[0], 10) === latest && Date.now() - parseInt(s[1], 10) < LATER_MS) return; }
       show(v, force);
     }).catch(function () { /* offline or no release yet: say nothing */ });
   }
