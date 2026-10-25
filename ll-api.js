@@ -319,11 +319,36 @@
     sweepRefunds: function () { return rpc('refund_unanswered_chats', {}).catch(function () { return 0; }); },
     send: function (conversationId, body) { return rpc('send_message', { p_conversation: conversationId, p_body: body }); },
     markRead: function (conversationId) { return rpc('mark_conversation_read', { p_conversation: conversationId }); },
+    // Ticks: the recipient's app records that it received the messages (needs 014_message_ticks.sql; failures are harmless).
+    markDelivered: function (conversationId) { return rpc('mark_conversation_delivered', { p_conversation: conversationId }).catch(function () {}); },
+    markAllDelivered: function () { return rpc('mark_all_delivered', {}).catch(function () {}); },
+    // Realtime: calls cb() whenever a message is added or changes (sent, delivered, read). Returns unsubscribe. The chat also polls as a fallback.
+    subscribe: function (conversationId, cb) {
+      var ch = null, dead = false;
+      client().then(function (c) {
+        if (dead || !c.channel) return;
+        ch = c.channel('msgs-' + conversationId + '-' + Date.now()).on('postgres_changes', { event: '*', schema: 'public', table: 'messages', filter: 'conversation_id=eq.' + conversationId }, function () { cb(); }).subscribe();
+      }).catch(function () {});
+      return function () { dead = true; if (ch) { client().then(function (c) { c.removeChannel(ch); }).catch(function () {}); } };
+    },
+    // Realtime for any message addressed to me (used by the global delivery receiver). Returns unsubscribe.
+    subscribeMine: function (cb) {
+      var ch = null, dead = false;
+      client().then(function (c) {
+        if (dead || !c.channel) return;
+        ch = c.channel('msgs-all-' + Date.now()).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, function (p) { if (p && p.new) cb(p.new); }).subscribe();
+      }).catch(function () {});
+      return function () { dead = true; if (ch) { client().then(function (c) { c.removeChannel(ch); }).catch(function () {}); } };
+    },
     conversations: function () {
       return q('conversations', function (t) { return t.select('id,request_id,customer_id,provider_id,created_at,last_message_at,item_title').order('last_message_at', { ascending: false, nullsFirst: false }); });
     },
     thread: function (conversationId) {
-      return q('messages', function (t) { return t.select('id,conversation_id,sender_id,body,created_at,read_at').eq('conversation_id', conversationId).order('created_at'); });
+      var cols = 'id,conversation_id,sender_id,body,created_at,read_at';
+      function get(withDelivered) { return q('messages', function (t) { return t.select(withDelivered ? cols + ',delivered_at' : cols).eq('conversation_id', conversationId).order('created_at'); }); }
+      if (Messages._noDelivered) return get(false);
+      // If 014_message_ticks.sql has not been run yet the column is missing: fall back and remember it.
+      return get(true).catch(function (e) { Messages._noDelivered = true; return get(false); });
     },
     // Latest message + unread count per conversation (for the inbox list).
     summaries: function (convs, myId) {
