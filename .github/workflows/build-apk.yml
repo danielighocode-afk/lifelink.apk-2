@@ -37,7 +37,7 @@ jobs:
           KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           if [ -z "$KS_B64" ]; then echo "Missing ANDROID_KEYSTORE_BASE64 secret. See UPDATES.md."; exit 1; fi
-          echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/lifelink-release.jks"
+            echo "$KS_B64" | tr -d '\r ' | grep -v -- '-----' | base64 -d > "$RUNNER_TEMP/lifelink-release.jks"
           BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
           UNSIGNED=$(ls android/app/build/outputs/apk/release/*.apk | head -1)
           "$BT/zipalign" -f -p 4 "$UNSIGNED" "$RUNNER_TEMP/aligned.apk"
