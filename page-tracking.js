@@ -43,7 +43,7 @@
   var I_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg>';
   var I_NEXT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>';
   var I_OK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-2px;display:inline-block"><path d="M5 12l5 5 9-10"/></svg>';
-  var info = { prov: null, req: null }, chatH = null, sheetEl = null;
+  var info = { prov: null, req: null, cust: null }, chatH = null, sheetEl = null, arrBusy = false;
 
   function shell(b) {
     var isProv = me.id === b.provider_id;
@@ -62,6 +62,7 @@
         '<p class="tk-sub" id="tkNow" style="display:none;color:var(--ll-text);font-weight:700"></p>' +
         '<p class="tk-addr hidden" id="trkAddr" style="display:none"></p>' +
         '<div id="tkChg"></div>' +
+        (isProv ? '<div class="tk-act" id="tkArr" style="grid-template-columns:1fr;display:none"></div>' : '') +
         (isProv ? '' : '<div class="tk-act" id="tkAct"><button type="button" class="tk-msgb" id="tkMsgBtn">' + I_CHAT + 'Message</button><button type="button" class="tk-canb" id="tkCanBtn" style="display:none">' + I_X + 'Cancel</button></div>') +
       '</section>' +
       '<a class="tk-sum" id="tkSum" href="' + (isProv ? 'provider-dashboard.html?section=bookings' : 'booking.html?id=' + LL.esc(b.id)) + '"><div><b>Booking #' + LL.esc(String(b.id).slice(0, 8).toUpperCase()) + '</b><small id="tkSumS">' + LL.naira(b.price_kobo) + '</small></div>' + I_NEXT + '</a>' +
@@ -84,7 +85,15 @@
       var ad = document.getElementById('trkAddr');
       if (ad && !ad.getAttribute('data-set') && info.req.location_area) { ad.innerHTML = I_PIN + '<span>' + LL.esc(info.req.location_area) + '</span>'; ad.style.display = 'flex'; ad.classList.remove('hidden'); }
     }
-    if (isProv || !info.prov) return;
+    if (isProv) {
+      var c = info.cust, nm = c && c.display_name;
+      if (nm) {
+        document.getElementById('tkName').textContent = nm;
+        document.getElementById('tkAv').innerHTML = c.avatar_url ? '<img src="' + LL.esc(c.avatar_url) + '" alt="">' : LL.esc(LL.initials(nm));
+      }
+      return;
+    }
+    if (!info.prov) return;
     var p = info.prov;
     document.getElementById('tkName').innerHTML = LL.esc(p.business_name) + ' ' + '<span style="color:var(--ll-primary)">' + I_OK + '</span>';
     document.getElementById('tkAv').innerHTML = p.avatar_url ? '<img src="' + LL.esc(p.avatar_url) + '" alt="">' : LL.esc(LL.initials(p.business_name));
@@ -93,10 +102,38 @@
   }
   function loadInfo(b) {
     var isProv = me.id === b.provider_id;
+    // Provider side: the customer's first name + initial and photo (the same limited details the app already shares between the two people on a booking).
+    if (isProv && LLApi.names) LLApi.names().then(function (m) { info.cust = (m && m[b.customer_id]) || null; fillInfo(b); }, function () {});
     return Promise.all([
       isProv ? Promise.resolve(null) : LLApi.catalog.provider(b.provider_id).catch(function () { return null; }),
       LLApi.customer && LLApi.customer.request ? LLApi.customer.request(b.request_id).catch(function () { return null; }) : Promise.resolve(null)
     ]).then(function (r) { info.prov = r[0]; info.req = r[1]; fillInfo(b); });
+  }
+  // Provider: "I have arrived" right here on the tracking page (same check as the button on the Bookings section).
+  function arrivalBtn(b, isProv) {
+    var el = document.getElementById('tkArr'); if (!el) return;
+    var show = isProv && b.status === 'provider_on_the_way';
+    if (!show) { el.style.display = 'none'; el.innerHTML = ''; return; }
+    el.style.display = '';
+    if (document.getElementById('tkArrBtn')) return;
+    el.innerHTML = '<button type="button" id="tkArrBtn" style="background:var(--ll-primary,#07865f);color:#fff">' + I_OK + 'I have arrived</button>';
+    var btn = document.getElementById('tkArrBtn');
+    btn.onclick = function () {
+      if (arrBusy) return;
+      arrBusy = true;
+      LL.busy(btn, 'Checking GPS…', function () { return LLApi.provider.arrived(b.id, false); }).then(function (mode) {
+        arrBusy = false;
+        LL.toast(mode === 'gps' ? 'Arrival verified by GPS. The LifeLink fee has been charged.' : 'The customer has been asked to confirm your arrival.'); refresh();
+      }, function (e) {
+        arrBusy = false;
+        if (/could not get a recent, accurate GPS/i.test(e.message)) {
+          LL.confirm({ title: 'GPS is not working?', body: 'If your phone cannot send a good location, the customer can confirm your arrival instead. If you are outdoors with location allowed, wait a few seconds and try again.', confirmText: 'Ask the customer to confirm' }).then(function (ok) {
+            if (!ok) return;
+            LL.busy(btn, 'Saving…', function () { return LLApi.provider.arrived(b.id, true); }).then(function () { LL.toast('The customer has been asked to confirm your arrival.'); refresh(); }, function (e2) { LL.toast(e2.message, true); });
+          });
+        } else LL.toast(e.message, true);
+      });
+    };
   }
   function openChat(b) {
     LLApi.messages.open(b.request_id, b.provider_id).then(function (conv) {
@@ -193,6 +230,7 @@
     if (bounds.length && !draw.fitted) { map.fitBounds(bounds, { padding: [40, 40], maxZoom: 17 }); draw.fitted = true; }
     else if (bounds.length > 1 && markers.prov) { /* keep the user's own zoom; only recentre if provider left the view */ if (!map.getBounds().contains(markers.prov.getLatLng())) map.fitBounds(bounds, { padding: [40, 40], maxZoom: 17 }); }
 
+    arrivalBtn(b, isProv);
     // Messages
     if (b.status === 'cancelled') { setMsg('This booking was cancelled.', 'Tracking has ended.'); return; }
     if (['in_progress', 'completed'].indexOf(b.status) >= 0) { setMsg('Tracking has ended.', 'The job ' + (b.status === 'completed' ? 'is complete.' : 'has started.')); return; }
