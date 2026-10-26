@@ -475,9 +475,11 @@
     return getJson(geoUrl(lng + ',' + lat, '&limit=5')).then(function (j) {
       var fs = j.features || [];
       if (!fs.length) return null;
-      var street = null, area = null, city = null;
+      var street = null, area = null, city = null, streetOnly = null, poi = null;
       fs.forEach(function (f) {
         var t = (f.place_type || [])[0];
+        if (!streetOnly && (t === 'address' || t === 'street')) streetOnly = ((f.address ? f.address + ' ' : '') + f.text).trim();
+        if (!poi && t === 'poi') poi = f.text;
         if (!street && (t === 'address' || t === 'street' || t === 'poi')) street = ((f.address ? f.address + ' ' : '') + f.text).trim();
         if (!area && (t === 'neighbourhood' || t === 'neighborhood' || t === 'locality' || t === 'suburb' || t === 'municipality')) area = f.text;
         if (!city && (t === 'place' || t === 'municipality' || t === 'county' || t === 'region')) city = f.text;
@@ -486,8 +488,25 @@
       if (!street) street = top.text;
       if (!area) area = ctx[0] || null;
       if (!city) city = ctx[1] || ctx[0] || null;
-      var out = { street: street, area: area && area !== street ? area : (ctx[0] || ''), city: city || '', line: [street, area, city].filter(function (x, i, a) { return x && a.indexOf(x) === i; }).join(', ') };
+      var out = { hasStreet: !!streetOnly, streetName: streetOnly || '', poi: poi || '', street: street, area: area && area !== street ? area : (ctx[0] || ''), city: city || '', line: [street, area, city].filter(function (x, i, a) { return x && a.indexOf(x) === i; }).join(', ') };
       revCache[k] = out; return out;
+    }).catch(function () { return null; });
+  }
+
+  // Nearest named place (shop, church, school...) within ~150 m of a point, for "near X" text. Never rejects (null if none).
+  var lmCache = {};
+  function landmark(lat, lng) {
+    var k = lat.toFixed(4) + ',' + lng.toFixed(4);
+    if (lmCache[k] !== undefined) return Promise.resolve(lmCache[k]);
+    return getJson(geoUrl(lng + ',' + lat, '&types=poi&limit=3')).then(function (j) {
+      var best = null, bd = 1e9;
+      (j.features || []).forEach(function (f) {
+        if (!f.center || !f.text) return;
+        var d = metres(lat, lng, f.center[1], f.center[0]);
+        if (d < bd) { bd = d; best = f; }
+      });
+      var out = best && bd <= 150 ? { name: best.text, distance: Math.round(bd) } : null;
+      lmCache[k] = out; return out;
     }).catch(function () { return null; });
   }
 
@@ -509,7 +528,7 @@
       wid = navigator.geolocation.watchPosition(function (p) {
         set(p.coords.latitude, p.coords.longitude, p.coords.accuracy);
         if (onFix) onFix(p, first); first = false;
-      }, function (e) { if (onErr) onErr(e); }, { enableHighAccuracy: true, maximumAge: 3000, timeout: 20000 });
+      }, function (e) { if (onErr) onErr(e); }, { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 });
     }
     return {
       start: start, set: set,
@@ -627,26 +646,100 @@
   }
 
   /* --------------------------- live sharing --------------------------- */
-  // Share this device's location for a booking: one update every `every` ms. Returns { stop }.
-  // Failures (denied permission, no signal) only change the status text; they never raise penalties server-side.
+  // Share this device's location for a booking. Returns { stop }.
+  //  - Android app: uses the phone's native location service in a foreground service, so it keeps working with the screen locked
+  //    (Android shows a "LifeLink is sharing your location" notice while it runs).
+  //  - Browser / iPhone site: uses the browser's location, which only works while the page is open and the screen is on.
+  // Quality: stale readings are dropped, weak readings never replace a good one, impossible jumps are ignored, and a light filter smooths
+  // the dot. It sends about every 4 s while moving and every 15 s when standing still. Failures only change the status text;
+  // they never raise penalties server-side.
+  var SHARE_MSG = 'LifeLink is sharing your location for your active booking.';
+  var BGP;
+  function nativeGeo() {
+    var cap = window.Capacitor;
+    if (!(cap && typeof cap.isNativePlatform === 'function' && cap.isNativePlatform())) return null;
+    if (BGP !== undefined) return BGP;
+    try { BGP = (cap.registerPlugin && cap.registerPlugin('BackgroundGeolocation')) || (cap.Plugins && cap.Plugins.BackgroundGeolocation) || null; } catch (e) { BGP = null; }
+    return BGP;
+  }
+  function metres(aLat, aLng, bLat, bLng) {
+    var R = 6371000, r = Math.PI / 180, dLat = (bLat - aLat) * r, dLng = (bLng - aLng) * r;
+    var x = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(aLat * r) * Math.cos(bLat * r) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(x)));
+  }
   function share(bookingId, onStatus, every) {
-    every = every || 8000;
-    var last = 0, wid = null, stopped = false;
-    function say(kind, msg) { if (onStatus) onStatus(kind, msg); }
-    if (!navigator.geolocation) { say('error', 'This device cannot share its location.'); return { stop: function () {} }; }
-    wid = navigator.geolocation.watchPosition(function (pos) {
+    var MOVE_MS = every || 4000, IDLE_MS = 15000;
+    var est = null, lastSent = null, streak = 0, startedAt = Date.now(), stopped = false, wid = null, bg = null, bgId = null, sending = false;
+    function say(kind, msg, extra) { if (onStatus && !stopped) onStatus(kind, msg, extra); }
+    function stop() {
+      stopped = true;
+      if (wid != null && navigator.geolocation) navigator.geolocation.clearWatch(wid);
+      if (bg && bgId != null) { try { bg.removeWatcher({ id: bgId }); } catch (e) {} }
+    }
+
+    // One reading in; decides whether it is trustworthy, smooths it, and sends it when it is time.
+    function onFix(f) {
       if (stopped) return;
-      var now = Date.now();
-      if (now - last < every) return;
-      last = now;
-      LLApi.tracking.pushLocation(bookingId, pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, new Date(pos.timestamp).toISOString())
-        .then(function (r) { say('ok', r && r.distance_m != null ? 'Sharing your location · about ' + r.distance_m + ' m from the job' : 'Sharing your location', r); },
-              function (e) { say('error', e.message || 'Could not send your location.'); });
-    }, function (err) {
-      say('error', err && err.code === 1 ? 'Location permission is off. Allow location for this site to share your position.' : 'Your phone has no GPS signal right now.');
-    }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 });
-    return { stop: function () { stopped = true; if (wid != null) navigator.geolocation.clearWatch(wid); } };
+      var now = Date.now(), acc = (f.acc == null || isNaN(f.acc)) ? 999 : Math.max(1, f.acc);
+      if (now - f.time > 20000) return;                                   // cached/old reading: never show it as "live"
+      if (!est) {
+        // First reading: rough ones (cell towers / Wi-Fi) are skipped for a short while so the dot does not start in the wrong street.
+        if (acc > 150 && now - startedAt < 25000) { say('warn', 'Finding your exact position…'); return; }
+        est = { lat: f.lat, lng: f.lng, acc: acc, t: f.time };
+      } else {
+        var dt = Math.max(0.2, (f.time - est.t) / 1000), jump = metres(est.lat, est.lng, f.lat, f.lng);
+        if (f.time <= est.t) return;                                      // out-of-order reading
+        if (jump / dt > 60 && acc > 30 && streak < 2) { streak++; return; }   // faster than 200 km/h with a weak signal: a glitch, ignore (but accept if it keeps happening)
+        streak = 0;
+        if (acc > Math.max(60, est.acc * 2.5) && f.time - est.t < 15000) return;   // noisy reading while we already know better
+        // Light 1-D Kalman filter: trust precise readings, damp noisy ones.
+        var q = Math.max(3, f.speed || 0), P = est.acc * est.acc + dt * q * q, R = acc * acc, K = P / (P + R);
+        est = { lat: est.lat + K * (f.lat - est.lat), lng: est.lng + K * (f.lng - est.lng), acc: Math.max(3, Math.sqrt((1 - K) * P)), t: f.time };
+      }
+      var moved = lastSent ? metres(lastSent.lat, lastSent.lng, est.lat, est.lng) : 1e9, since = lastSent ? now - lastSent.at : 1e9;
+      var due = !lastSent || (since >= MOVE_MS && moved >= 8) || since >= IDLE_MS;
+      if (!due || sending) return;
+      sending = true; lastSent = { lat: est.lat, lng: est.lng, at: now };
+      LLApi.tracking.pushLocation(bookingId, est.lat, est.lng, est.acc, new Date(Math.min(f.time, now)).toISOString()).then(function (r) {
+        sending = false;
+        var weak = est.acc > 50, d = r && r.distance_m != null ? ' · about ' + r.distance_m + ' m from the job' : '';
+        if (weak) say('warn', 'GPS signal is weak (about ' + Math.round(est.acc) + ' m). Move into the open for a better fix.' + d, r);
+        else say('ok', 'Sharing your exact location' + d, r);
+      }, function (e) {
+        sending = false;
+        var m = (e && e.message) || '';
+        if (/only shared while/i.test(m)) { say('ok', 'Location sharing has ended.'); stop(); return; }   // job started, finished or cancelled: stop the background service too
+        say('error', m || 'Could not send your location.');
+      });
+    }
+
+    function startWeb() {
+      if (!navigator.geolocation) { say('error', 'This device cannot share its location.'); return; }
+      wid = navigator.geolocation.watchPosition(function (pos) {
+        onFix({ lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy, time: pos.timestamp || Date.now(), speed: pos.coords.speed });
+      }, function (err) {
+        say('error', err && err.code === 1 ? 'Location permission is off. Allow location for this site to share your position.' : 'Your phone has no GPS signal right now.');
+      }, { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 });
+    }
+
+    bg = nativeGeo();
+    if (bg && bg.addWatcher) {
+      bg.addWatcher({ backgroundTitle: 'LifeLink is sharing your location', backgroundMessage: SHARE_MSG, requestPermissions: true, distanceFilter: 0, stale: false }, function (loc, err) {
+        if (stopped) return;
+        if (err) {
+          if (err.code === 'NOT_AUTHORIZED') {
+            say('error', 'Location permission is off. Tap here to open settings and allow location for LifeLink.', { openSettings: function () { try { bg.openSettings(); } catch (e) {} } });
+          } else say('error', 'Your phone has no GPS signal right now.');
+          return;
+        }
+        if (!loc) return;
+        if (loc.simulated === true) { say('warn', 'A fake (mock) location is turned on. Turn it off so your real position can be shared.'); return; }
+        onFix({ lat: loc.latitude, lng: loc.longitude, acc: loc.accuracy, time: loc.time || Date.now(), speed: loc.speed });
+      }).then(function (id) { if (stopped) { try { bg.removeWatcher({ id: id }); } catch (e) {} } else bgId = id; },
+              function () { if (!stopped) { bg = null; startWeb(); } });   // plugin missing in this build: fall back to the browser location
+    } else startWeb();
+    return { stop: stop };
   }
 
-  window.LLMap = { BENIN: BENIN, load: load, create: create, marker: marker, moveTo: moveTo, me: me, poiAt: poiAt, search: search, reverse: reverse, pickerModal: pickerModal, picker: pickerModal, share: share };
+  window.LLMap = { BENIN: BENIN, load: load, create: create, marker: marker, moveTo: moveTo, me: me, poiAt: poiAt, search: search, reverse: reverse, landmark: landmark, pickerModal: pickerModal, picker: pickerModal, share: share };
 })();

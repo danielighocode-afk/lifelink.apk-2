@@ -7,7 +7,6 @@
   function stat(l, n, h) { return '<a href="' + h + '" class="bg-white border border-slate-200 rounded-2xl p-5 hover:border-emerald-300 block"><p class="text-3xl font-extrabold">' + n + '</p><p class="text-xs font-extrabold uppercase tracking-wider text-slate-400 mt-1">' + l + '</p></a>'; }
   function reqMap(ids) { return LLApi.provider.requestsByIds(ids).then(function (rows) { var m = {}; rows.forEach(function (r) { m[r.id] = r; }); return m; }).catch(function () { return {}; }); }
 
-  var bindProfileForm = null;
   var S = {
     overview: function () {
       return Promise.all([LLApi.provider.requests(), LLApi.provider.myQuotes(), LLApi.provider.bookings(), LLApi.provider.reviews(), LLApi.wallet.me().catch(function () { return null; }), LLApi.names().catch(function () { return {}; })]).then(function (r) {
@@ -131,9 +130,7 @@
       });
     },
     profileForm: function () {
-      /* The Save / type / photo handlers are attached by bindProfileForm() once the form is on screen (see bindAll). */
-      bindProfileForm = function () {
-        if (!document.getElementById('pf')) return;
+      setTimeout(function () {
         document.getElementById('pf').onsubmit = function (e) {
           e.preventDefault();
           var y = document.getElementById('py').value;
@@ -146,7 +143,7 @@
         };
         var pty = document.getElementById('ptype'); if (pty) pty.onchange = function () { document.getElementById('pstoreW').classList.toggle('hidden', pty.value !== 'service_business'); };
         var av = document.getElementById('pav'); if (av) av.onchange = function () { if (av.files[0]) LLApi.uploadAvatar(av.files[0]).then(function () { LL.toast('Photo updated.'); setTimeout(function () { location.reload(); }, 600); }, function (er) { LL.toast(er.message, true); }); };
-      };
+      }, 0);
       return Promise.resolve(card('<h2 class="font-extrabold">Profile</h2><form id="pf" class="space-y-3" novalidate><div><label class="lbl">Photo (JPG or PNG, up to 2 MB)</label><input id="pav" type="file" accept="image/jpeg,image/png,image/webp" class="text-sm"></div><div><label class="lbl" for="pn">Business name</label><input id="pn" class="field" maxlength="120" value="' + LL.esc(prov.business_name) + '"></div><div><label class="lbl" for="pb">About you</label><textarea id="pb" rows="4" maxlength="1000" class="field resize-none">' + LL.esc(prov.bio || '') + '</textarea></div><div class="grid sm:grid-cols-2 gap-3"><div><label class="lbl" for="pa">Service area</label><input id="pa" class="field" maxlength="160" value="' + LL.esc(prov.service_area || '') + '"></div><div><label class="lbl" for="py">Years of experience</label><input id="py" type="number" min="0" max="80" class="field" value="' + (prov.years_experience == null ? '' : prov.years_experience) + '"></div></div><div><label class="lbl" for="pk">Skills (comma separated)</label><input id="pk" class="field" value="' + LL.esc((prov.skills || []).join(', ')) + '"></div><div><label class="lbl" for="ptype">Account type</label><select id="ptype" class="field"><option value="service_only"' + (prov.provider_type !== 'service_business' ? ' selected' : '') + '>Service Provider only</option><option value="service_business"' + (prov.provider_type === 'service_business' ? ' selected' : '') + '>Service Provider / Business Owner</option></select><p class="text-xs text-slate-500 mt-1">Business Owners can also list products with prices. Switching back to Service Provider hides your products and prices (they return if you switch again) and removes your store link.</p></div><div id="pstoreW"' + (prov.provider_type === 'service_business' ? '' : ' class="hidden"') + '><label class="lbl" for="pstore">Link to your online store (optional)</label><input id="pstore" class="field" inputmode="url" maxlength="300" placeholder="https://" value="' + LL.esc(prov.store_url || '') + '"></div><label class="flex items-center gap-2 text-sm font-bold"><input id="pv" type="checkbox"' + (prov.available ? ' checked' : '') + '> I am currently accepting work</label><button id="ps" class="w-full bg-emerald-600 text-white font-extrabold py-3 rounded-2xl">Save profile</button></form>'));
     },
     wallet: function () { setTimeout(function () { LLWallet.mount(document.getElementById('walletMount'), { role: 'provider' }); }, 0); return Promise.resolve('<div id="walletMount"></div>'); }
@@ -174,7 +171,7 @@
 
   // Booking action buttons on the Bookings section.
   function bindBookingActions() {
-    var acts = { way: ['markOnTheWay', 'Customer notified. Keep the app open so your location can be shared.'], start: ['startBooking', 'Job started.'], done: ['completeBooking', 'Job marked completed.'] };
+    var acts = { way: ['markOnTheWay', 'Customer notified. Your location is shared while you travel.'], start: ['startBooking', 'Job started.'], done: ['completeBooking', 'Job marked completed.'] };
     Object.keys(acts).forEach(function (k) {
       app.querySelectorAll('[data-' + k + ']').forEach(function (b) {
         b.onclick = function () {
@@ -597,7 +594,7 @@
     var ok = s2 === 'overview' || s2 === 'bookings' || s2 === 'quotes' || s2 === 'reviews' || (s2 === 'messages' && !LL.q('c') && mobileNow());
     return ok ? 'prov:' + me.id + ':' + s2 + ':' + (s2 === 'messages' ? (LL.q('cu') || '') : '') + (mobileNow() ? ':m' : ':d') : null;
   }
-  function bindAll() { bindBookingActions(); bindBkFilter(); bindMsgSearch(); bindProfile(); if (bindProfileForm) bindProfileForm(); }
+  function bindAll() { bindBookingActions(); bindBkFilter(); bindMsgSearch(); bindProfile(); }
   function render(quiet) {
     document.body.classList.toggle('pv-home', section === 'overview');
     document.body.classList.toggle('pv-bk', section === 'bookings');

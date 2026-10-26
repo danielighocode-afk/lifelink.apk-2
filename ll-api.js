@@ -41,6 +41,21 @@
   }
   function q(table, build) { return client().then(function (c) { return data(build(c.from(table))); }); }
   function rpc(name, args) { return client().then(function (c) { return data(c.rpc(name, args || {})); }); }
+  // Android app only: call a database function through the native HTTP plugin (keeps working while the app is in the background).
+  // Returns null when not available (browser, or no native plugin). Rejects with { server: true } for errors the database itself gave.
+  function nativeRpc(name, args) {
+    var cap = window.Capacitor, H = cap && cap.Plugins && cap.Plugins.CapacitorHttp, cfg = window.LL_SUPABASE_CONFIG;
+    if (!(cap && typeof cap.isNativePlatform === 'function' && cap.isNativePlatform() && H && H.post && cfg && cfg.url && cfg.anonKey && window.LLSB)) return null;
+    return window.LLSB.getSession().then(function (r) {
+      var tok = r && r.session && r.session.access_token; if (!tok) throw new Error('no session');
+      return H.post({ url: String(cfg.url).trim().replace(/\/$/, '') + '/rest/v1/rpc/' + name, headers: { apikey: String(cfg.anonKey).trim(), Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, data: args || {} });
+    }).then(function (res) {
+      if (res && res.status >= 200 && res.status < 300) return res.data;
+      var d = res && res.data; if (typeof d === 'string') { try { d = JSON.parse(d); } catch (e) { d = null; } }
+      if (res && (res.status === 401 || res.status === 0)) throw new Error('retry');           // expired token / no network: let the normal path try
+      var err = new Error(friendly({ message: (d && (d.message || d.error)) || ('Request failed (' + (res && res.status) + ')') })); err.server = true; throw err;
+    });
+  }
   function uniq(a) { return a.filter(function (v, i) { return v && a.indexOf(v) === i; }); }
 
   var LIMITS = {
@@ -444,20 +459,34 @@
           if (!b) return null;
           return Promise.all([
             data(c.from('request_locations').select('lat,lng').eq('request_id', b.request_id).maybeSingle()).catch(function () { return null; }),
-            data(c.from('booking_locations').select('user_id,lat,lng,accuracy_m,updated_at').eq('booking_id', bookingId)).catch(function () { return []; })
-          ]).then(function (r) { return { booking: b, pin: r[0], points: r[1] || [] }; });
+            data(c.from('booking_locations').select('user_id,lat,lng,accuracy_m,updated_at').eq('booking_id', bookingId)).catch(function () { return []; }),
+            // A job-location change the customer asked for and the provider has not answered yet (needs 015_pin_change_requests.sql).
+            data(c.from('pin_change_requests').select('id,requested_by,new_lat,new_lng,new_line,status,created_at').eq('booking_id', bookingId).eq('status', 'pending').order('created_at', { ascending: false }).limit(1)).catch(function () { return []; })
+          ]).then(function (r) {
+            var pend = (r[2] || [])[0] || null;
+            if (pend && Date.now() - new Date(pend.created_at).getTime() > 15 * 60 * 1000) pend = null;   // same 15 minutes the database allows
+            return { booking: b, pin: r[0], points: r[1] || [], change: pend };
+          });
         });
       });
     },
     pushLocation: function (bookingId, lat, lng, accuracy, capturedIso) {
-      return rpc('update_my_location', { p_booking: bookingId, p_lat: lat, p_lng: lng, p_accuracy: accuracy == null ? null : accuracy, p_captured_at: capturedIso || new Date().toISOString() });
+      var args = { p_booking: bookingId, p_lat: lat, p_lng: lng, p_accuracy: accuracy == null ? null : accuracy, p_captured_at: capturedIso || new Date().toISOString() };
+      // In the Android app, send through the native network layer: the web view's own requests are slowed down once the app is in the background.
+      var nat = nativeRpc('update_my_location', args);
+      return nat ? nat.catch(function (e) { if (e && e.server) throw e; return rpc('update_my_location', args); }) : rpc('update_my_location', args);
     },
+    // Customer: ask to move the job location. Provider: accept / decline. Customer: withdraw.
+    requestChange: function (bookingId, lat, lng, line) { return rpc('request_pin_change', { p_booking: bookingId, p_lat: lat, p_lng: lng, p_line: line || null }); },
+    respondChange: function (changeId, accept) { return rpc('respond_pin_change', { p_change: changeId, p_accept: !!accept }); },
+    cancelChange: function (changeId) { return rpc('cancel_pin_change', { p_change: changeId }); },
     // Realtime: calls cb when either party's point changes. Returns an unsubscribe function. Falls back silently (page polls anyway).
     subscribe: function (bookingId, cb) {
       var ch = null, dead = false;
       client().then(function (c) {
         if (dead || !c.channel) return;
-        ch = c.channel('bloc-' + bookingId).on('postgres_changes', { event: '*', schema: 'public', table: 'booking_locations', filter: 'booking_id=eq.' + bookingId }, function () { cb(); }).subscribe();
+        ch = c.channel('bloc-' + bookingId).on('postgres_changes', { event: '*', schema: 'public', table: 'booking_locations', filter: 'booking_id=eq.' + bookingId }, function () { cb(); })
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'pin_change_requests', filter: 'booking_id=eq.' + bookingId }, function () { cb(); }).subscribe();
       }).catch(function () {});
       return function () { dead = true; if (ch) { client().then(function (c) { c.removeChannel(ch); }).catch(function () {}); } };
     }

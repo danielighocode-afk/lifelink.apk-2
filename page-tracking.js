@@ -7,6 +7,25 @@
   var id = LL.q('id');
   var me = null, ctx = null, shareHandle = null, unsub = null, poll = null;
   var mapObj = null, markers = {}, circles = [], routeLine = null, addrDone = false, myDot = null, accRings = {};
+  var nearLast = null, nearBusy = false, chgKey = '', lastChg = null, lastPinKey = null;
+
+  // Moving dashes along the route: a pure CSS animation of the dash offset (done by the graphics hardware, no JavaScript per frame).
+  // It is switched off by the phone's "reduce motion" setting, while the page is hidden, and if the phone turns out to be too slow for it.
+  (function () {
+    if (document.getElementById('ll-route-css')) return;
+    var st = document.createElement('style'); st.id = 'll-route-css';
+    st.textContent = '.ll-route{animation:llRouteFlow 1.1s linear infinite}@keyframes llRouteFlow{to{stroke-dashoffset:-11}}' +
+      '@media (prefers-reduced-motion:reduce){.ll-route{animation:none}}html.ll-route-still .ll-route{animation:none}';
+    document.head.appendChild(st);
+    document.addEventListener('visibilitychange', function () { document.documentElement.classList.toggle('ll-route-still', document.hidden || document.documentElement.hasAttribute('data-ll-slow')); });
+    // Quick speed test (1.2 s after the route first appears): if frames take longer than ~45 ms on average, keep the line still.
+    window.__llRouteTest = function () {
+      if (window.__llRouteTested || !window.requestAnimationFrame) return; window.__llRouteTested = true;
+      var n = 0, t0 = performance.now();
+      (function f() { n++; var t = performance.now(); if (t - t0 < 1200) return requestAnimationFrame(f);
+        if ((t - t0) / n > 45) { document.documentElement.setAttribute('data-ll-slow', '1'); document.documentElement.classList.add('ll-route-still'); } })();
+    };
+  })();
 
   function dist(a, b, c, d) {
     var R = 6371000, r = Math.PI / 180, dLat = (c - a) * r, dLng = (d - b) * r;
@@ -40,7 +59,9 @@
       '<section class="tk-card">' +
         '<div class="tk-pv"><div class="av" id="tkAv">' + (isProv ? 'C' : '·') + '</div><div style="min-width:0;flex:1"><h2 id="tkName">' + (isProv ? 'Your customer' : 'Your provider') + '</h2><p class="st" id="trkMsg"></p><p class="rt" id="tkRate"></p></div></div>' +
         '<p class="tk-sub" id="trkSub"></p>' +
+        '<p class="tk-sub" id="tkNow" style="display:none;color:var(--ll-text);font-weight:700"></p>' +
         '<p class="tk-addr hidden" id="trkAddr" style="display:none"></p>' +
+        '<div id="tkChg"></div>' +
         (isProv ? '' : '<div class="tk-act" id="tkAct"><button type="button" class="tk-msgb" id="tkMsgBtn">' + I_CHAT + 'Message</button><button type="button" class="tk-canb" id="tkCanBtn" style="display:none">' + I_X + 'Cancel</button></div>') +
       '</section>' +
       '<a class="tk-sum" id="tkSum" href="' + (isProv ? 'provider-dashboard.html?section=bookings' : 'booking.html?id=' + LL.esc(b.id)) + '"><div><b>Booking #' + LL.esc(String(b.id).slice(0, 8).toUpperCase()) + '</b><small id="tkSumS">' + LL.naira(b.price_kobo) + '</small></div>' + I_NEXT + '</a>' +
@@ -117,13 +138,13 @@
     }
     el.classList.remove('hidden');
     if (isProv) {
-      el.innerHTML = '<h2 class="font-extrabold text-slate-900">Your location</h2><p id="shareStat" class="text-sm font-semibold text-slate-600">Starting…</p><p class="text-xs font-semibold text-slate-400">Keep this page open and your screen on. Phones pause location sharing when the screen locks or the page goes to the background.</p>';
-      if (!shareHandle) shareHandle = LLMap.share(b.id, function (k, m) { var s = document.getElementById('shareStat'); if (s) { s.textContent = m; s.className = 'text-sm font-semibold ' + (k === 'ok' ? 'text-emerald-700' : 'text-amber-700'); } });
+      el.innerHTML = '<h2 class="font-extrabold text-slate-900">Your location</h2><p id="shareStat" class="text-sm font-semibold text-slate-600">Starting…</p><p class="text-xs font-semibold text-slate-400">In the LifeLink app, sharing keeps going when the screen locks (you will see a LifeLink notification). If it stops when the screen locks, set LifeLink to Unrestricted in your phone\'s battery settings. On the website, keep this page open and your screen on.</p>';
+      if (!shareHandle) shareHandle = LLMap.share(b.id, function (k, m, x) { var s = document.getElementById('shareStat'); if (s) { s.onclick = x && x.openSettings ? x.openSettings : null; s.textContent = m; s.className = 'text-sm font-semibold ' + (k === 'ok' ? 'text-emerald-700' : 'text-amber-700'); } });
     } else {
       el.innerHTML = '<h2 class="font-extrabold text-slate-900">Share my location (optional)</h2><p class="text-xs font-semibold text-slate-500">Helps your provider find you. Only your provider can see it.</p><p id="shareStat" class="text-sm font-semibold text-slate-600"></p><button id="shareBtn" class="bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-sm px-5 py-2.5 rounded-xl">' + (shareHandle ? 'Stop sharing' : 'Share my location') + '</button>';
       document.getElementById('shareBtn').onclick = function () {
         if (shareHandle) { shareHandle.stop(); shareHandle = null; sharePanel(b); return; }
-        shareHandle = LLMap.share(b.id, function (k, m) { var s = document.getElementById('shareStat'); if (s) { s.textContent = m; s.className = 'text-sm font-semibold ' + (k === 'ok' ? 'text-emerald-700' : 'text-amber-700'); } });
+        shareHandle = LLMap.share(b.id, function (k, m, x) { var s = document.getElementById('shareStat'); if (s) { s.onclick = x && x.openSettings ? x.openSettings : null; s.textContent = m; s.className = 'text-sm font-semibold ' + (k === 'ok' ? 'text-emerald-700' : 'text-amber-700'); } });
         sharePanel(b);
       };
     }
@@ -140,6 +161,13 @@
     }
     function drop(key) { if (markers[key]) { map.removeLayer(markers[key]); delete markers[key]; } }
     if (pin) {
+      var pk = pin.lat + ',' + pin.lng;
+      if (lastPinKey && lastPinKey !== pk) {
+        circles.forEach(function (c) { c.setLatLng([pin.lat, pin.lng]); });
+        addrDone = false; draw.fitted = false;
+        var ad0 = document.getElementById('trkAddr'); if (ad0) ad0.removeAttribute('data-set');
+      }
+      lastPinKey = pk;
       put('job', [pin.lat, pin.lng], '#e11d48', 'J', 'Job location');
       if (!circles.length) { circles.push(L.circle([pin.lat, pin.lng], { radius: 100, color: '#059669', weight: 1.5, dashArray: '4 4', fillOpacity: 0.06 }).addTo(map)); circles.push(L.circle([pin.lat, pin.lng], { radius: 200, color: '#94a3b8', weight: 1, dashArray: '2 6', fillOpacity: 0 }).addTo(map)); }
     }
@@ -156,7 +184,7 @@
     var active = ACTIVE.indexOf(b.status) >= 0;
     if (active && provPt && pin) {
       var seg = [[provPt.lat, provPt.lng], [pin.lat, pin.lng]];
-      if (routeLine) routeLine.setLatLngs(seg); else routeLine = L.polyline(seg, { color: '#059669', weight: 4, opacity: .75, dashArray: '2 9', lineCap: 'round' }).addTo(map);
+      if (routeLine) routeLine.setLatLngs(seg); else { routeLine = L.polyline(seg, { color: '#059669', weight: 4, opacity: .75, dashArray: '2 9', lineCap: 'round', className: 'll-route', interactive: false }).addTo(map); if (window.__llRouteTest) setTimeout(window.__llRouteTest, 400); }
     } else if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
     if (pin && !addrDone) {
       addrDone = true;
@@ -173,16 +201,82 @@
     if (b.status === 'arrived') { setMsg(isProv ? 'You have arrived.' : 'Your provider has arrived.', b.arrival_method === 'gps' ? 'Arrival verified by GPS.' : 'Arrival confirmation comes from the customer.'); return; }
     // provider_on_the_way
     if (!provPt) { setMsg(isProv ? 'Waiting for your location…' : 'Waiting for your provider\'s location…', 'Location is shared once the provider\'s phone reports a position.'); return; }
+    nowNear(provPt, isProv);
     var a = age(provPt.updated_at), stale = a > 60;
     var d = pin ? dist(provPt.lat, provPt.lng, pin.lat, pin.lng) : null;
     if (isProv) setMsg(d != null ? 'You are about ' + fmt(d) + ' from the job location.' : 'Your location is being shared.', stale ? 'Your last location update was ' + a + ' s ago. Check your signal.' : 'Within ' + 100 + ' m you can tap "I have arrived".');
     else setMsg(d != null ? 'On the way · about ' + fmt(d) + ' away' : 'On the way', stale ? 'Location not updating (last update ' + a + ' s ago).' : 'Updated ' + a + ' s ago.');
   }
 
+  // "Provider is on <street>, near <landmark>": looked up only after the person has moved ~30 m (and at most every 8 s), so it stays cheap.
+  function nowNear(pt, isProv) {
+    var el = document.getElementById('tkNow'); if (!el || !pt || nearBusy) return;
+    var t = Date.now();
+    if (nearLast && (dist(nearLast.lat, nearLast.lng, pt.lat, pt.lng) < 30 || t - nearLast.t < 8000)) return;
+    nearBusy = true; var mine = { lat: pt.lat, lng: pt.lng, t: t };
+    Promise.all([LLMap.reverse(pt.lat, pt.lng), LLMap.landmark ? LLMap.landmark(pt.lat, pt.lng) : null]).then(function (r) {
+      nearBusy = false; nearLast = mine;
+      var a = r[0], lm = r[1], lead = isProv ? 'You are ' : 'Your provider is ', txt = '';
+      if (a && a.hasStreet) txt = lead + 'on ' + a.streetName + (a.area && a.area !== a.streetName ? ', ' + a.area : '');
+      else if (a && a.area) txt = lead + 'in the ' + a.area + ' area';
+      if (lm && lm.name && (!a || lm.name !== a.streetName)) txt = (txt || lead.replace(/ $/, '')) + (txt ? ', ' : ' ') + 'near ' + lm.name;
+      el.textContent = txt; el.style.display = txt ? '' : 'none';
+    }, function () { nearBusy = false; });
+  }
+
+  // ---- Job location change: customer asks, provider answers. The location itself never changes without the provider accepting. ----
+  function renderChange(snap) {
+    var el = document.getElementById('tkChg'); if (!el || !me) return;
+    var b = snap.booking, isProv = me.id === b.provider_id, ch = snap.change || null;
+    var can = !!snap.pin && ['confirmed', 'provider_on_the_way'].indexOf(b.status) >= 0;
+    // The other side answered: tell the customer what happened.
+    if (lastChg && !ch && !isProv) {
+      var moved = snap.pin && lastPinKey && (snap.pin.lat + ',' + snap.pin.lng) !== lastPinKey;
+      LL.toast(moved || (snap.pin && Math.abs(snap.pin.lat - lastChg.new_lat) < 1e-5 && Math.abs(snap.pin.lng - lastChg.new_lng) < 1e-5) ? 'Your provider accepted the new job location.' : 'The change request ended. The original job location stays.');
+    }
+    lastChg = ch;
+    // New-place marker (amber) while a request is waiting.
+    if (ch && mapObj && window.L) {
+      var ll = [ch.new_lat, ch.new_lng];
+      if (markers.chg) markers.chg.setLatLng(ll); else markers.chg = LLMap.marker(window.L, ll, '#f59e0b', 'N', 'Requested new location').addTo(mapObj);
+    } else if (markers.chg && mapObj) { mapObj.removeLayer(markers.chg); delete markers.chg; }
+
+    var key = (ch ? ch.id : (can ? 'ask' : 'none')) + (isProv ? 'p' : 'c');
+    if (key === chgKey) return; chgKey = key;
+    if (!ch && !can) { el.innerHTML = ''; return; }
+    var box = 'margin-top:14px;padding:14px;border-radius:16px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35)';
+    if (ch && isProv) {
+      var d = snap.pin ? fmt(dist(snap.pin.lat, snap.pin.lng, ch.new_lat, ch.new_lng)) : '';
+      el.innerHTML = '<div style="' + box + '"><b style="font-size:14.5px">Customer wants to change the job location</b>' +
+        '<p id="chgAddr" class="tk-sub" style="color:var(--ll-text)">Looking up the new place…</p>' + (d ? '<p class="tk-sub">The new place is about ' + d + ' from the current one. It is shown with an N on the map.</p>' : '') +
+        '<div class="tk-act"><button type="button" class="tk-msgb" id="chgYes">Accept</button><button type="button" class="tk-canb" id="chgNo" style="display:flex">Decline</button></div></div>';
+      LLMap.reverse(ch.new_lat, ch.new_lng).then(function (a) { var t = document.getElementById('chgAddr'); if (t) t.textContent = (a && a.line) || ch.new_line || 'Selected place'; });
+      var yes = document.getElementById('chgYes'), no = document.getElementById('chgNo');
+      yes.onclick = function () { LL.busy(yes, 'Saving…', function () { return LLApi.tracking.respondChange(ch.id, true); }).then(function () { LL.toast('Job location updated.'); refresh(); }, function (e) { LL.toast(e.message, true); refresh(); }); };
+      no.onclick = function () { LL.busy(no, 'Saving…', function () { return LLApi.tracking.respondChange(ch.id, false); }).then(function () { LL.toast('Kept the original location.'); refresh(); }, function (e) { LL.toast(e.message, true); refresh(); }); };
+    } else if (ch) {
+      el.innerHTML = '<div style="' + box + '"><b style="font-size:14.5px">Waiting for your provider</b><p class="tk-sub">You asked to move the job location' + (ch.new_line ? ' to ' + LL.esc(ch.new_line) : '') + '. The provider has 15 minutes to answer. The location only changes if they accept.</p>' +
+        '<div class="tk-act" style="grid-template-columns:1fr"><button type="button" class="tk-canb" id="chgCancel" style="display:flex">Cancel request</button></div></div>';
+      var cc = document.getElementById('chgCancel');
+      cc.onclick = function () { LL.busy(cc, 'Cancelling…', function () { return LLApi.tracking.cancelChange(ch.id); }).then(function () { chgKey = ''; refresh(); }, function (e) { LL.toast(e.message, true); }); };
+    } else if (!isProv) {
+      el.innerHTML = '<p class="tk-sub">The job location is locked so your provider knows where to go.</p><div class="tk-act" style="grid-template-columns:1fr"><button type="button" id="chgAsk" style="background:rgba(7,134,95,.1);color:var(--ll-primary,#07865f)">' + I_PIN + 'Ask to change the job location</button></div>';
+      document.getElementById('chgAsk').onclick = function () {
+        LLMap.pickerModal({
+          initial: snap.pin ? { lat: snap.pin.lat, lng: snap.pin.lng } : null,
+          title: 'Where should the job be instead?', confirmText: 'Ask my provider to move it',
+          onConfirm: function (p) {
+            LLApi.tracking.requestChange(b.id, p.lat, p.lng, p.line).then(function () { LL.toast('Request sent. Your provider will answer shortly.'); chgKey = ''; refresh(); }, function (e) { LL.toast(e.message, true); });
+          }
+        });
+      };
+    } else { el.innerHTML = ''; }
+  }
+
   function refresh() {
     return LLApi.tracking.snapshot(id).then(function (snap) {
       if (!snap) return;
-      ctx = snap; sharePanel(snap.booking); cancelVisible(snap.booking); draw(snap);
+      ctx = snap; sharePanel(snap.booking); cancelVisible(snap.booking); draw(snap); renderChange(snap);
     }).catch(function () {});
   }
 
@@ -202,7 +296,7 @@
         };
         var fit = document.getElementById('trkFit');
         if (fit) fit.onclick = function () { var pts = Object.keys(markers).map(function (k) { return markers[k].getLatLng(); }); if (pts.length > 1) mapObj.flyToBounds(pts, { padding: [50, 50], maxZoom: 17, duration: 0.8 }); else if (pts.length) mapObj.flyTo(pts[0], 17, { duration: 0.8 }); };
-        wireActions(snap.booking); loadInfo(snap.booking); sharePanel(snap.booking); cancelVisible(snap.booking); draw(snap);
+        wireActions(snap.booking); loadInfo(snap.booking); sharePanel(snap.booking); cancelVisible(snap.booking); draw(snap); renderChange(snap);
         unsub = LLApi.tracking.subscribe(id, refresh);
         LL.onLive(refresh);
         poll = setInterval(refresh, 10000);

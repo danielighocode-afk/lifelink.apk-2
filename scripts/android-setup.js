@@ -7,7 +7,7 @@ const manifest = path.join(root, 'android', 'app', 'src', 'main', 'AndroidManife
 if (!fs.existsSync(manifest)) { console.error('android/ not found. Run: npm run android:add'); process.exit(1); }
 
 let xml = fs.readFileSync(manifest, 'utf8'), added = [];
-for (const p of ['ACCESS_FINE_LOCATION', 'ACCESS_COARSE_LOCATION', 'ACCESS_NETWORK_STATE', 'POST_NOTIFICATIONS']) {
+for (const p of ['ACCESS_FINE_LOCATION', 'ACCESS_COARSE_LOCATION', 'ACCESS_NETWORK_STATE', 'POST_NOTIFICATIONS', 'FOREGROUND_SERVICE', 'FOREGROUND_SERVICE_LOCATION', 'WAKE_LOCK']) {
   if (!xml.includes('android.permission.' + p)) { xml = xml.replace('</manifest>', '    <uses-permission android:name="android.permission.' + p + '" />\n</manifest>'); added.push(p); }
 }
 if (!xml.includes('android.hardware.location.gps')) xml = xml.replace('</manifest>', '    <uses-feature android:name="android.hardware.location.gps" android:required="false" />\n</manifest>');
