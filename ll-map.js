@@ -724,7 +724,8 @@
 
     bg = nativeGeo();
     if (bg && bg.addWatcher) {
-      bg.addWatcher({ backgroundTitle: 'LifeLink is sharing your location', backgroundMessage: SHARE_MSG, requestPermissions: true, distanceFilter: 0, stale: false }, function (loc, err) {
+      var started;
+      try { started = bg.addWatcher({ backgroundTitle: 'LifeLink is sharing your location', backgroundMessage: SHARE_MSG, requestPermissions: true, distanceFilter: 0, stale: false }, function (loc, err) {
         if (stopped) return;
         if (err) {
           if (err.code === 'NOT_AUTHORIZED') {
@@ -735,8 +736,10 @@
         if (!loc) return;
         if (loc.simulated === true) { say('warn', 'A fake (mock) location is turned on. Turn it off so your real position can be shared.'); return; }
         onFix({ lat: loc.latitude, lng: loc.longitude, acc: loc.accuracy, time: loc.time || Date.now(), speed: loc.speed });
-      }).then(function (id) { if (stopped) { try { bg.removeWatcher({ id: id }); } catch (e) {} } else bgId = id; },
-              function () { if (!stopped) { bg = null; startWeb(); } });   // plugin missing in this build: fall back to the browser location
+      }); } catch (e) { started = Promise.reject(e); }
+      // Depending on the Capacitor version, addWatcher gives back the watcher id directly or as a promise: handle both.
+      Promise.resolve(started).then(function (id) { if (stopped) { try { bg.removeWatcher({ id: id }); } catch (e) {} } else bgId = id; },
+              function () { if (!stopped) { bg = null; startWeb(); } });   // plugin missing or failing in this build: fall back to the browser location
     } else startWeb();
     return { stop: stop };
   }

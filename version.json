@@ -1,7 +1,7 @@
 {
-  "versionCode": 9,
-  "versionName": "1.3.0",
+  "versionCode": 10,
+  "versionName": "1.3.1",
   "apkUrl": "https://github.com/danielighocode-afk/lifelink.apk-2/releases/latest/download/LifeLink.apk",
-  "notes": "Accurate live GPS that keeps working with the screen locked, live street names, moving route line, and a safe way to change the job location.",
+  "notes": "Fixes the map error. Accurate live GPS that keeps working with the screen locked.",
   "force": false
 }
