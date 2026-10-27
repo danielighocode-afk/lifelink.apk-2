@@ -13,7 +13,7 @@
     }, function (e) { $('cats').innerHTML = LL.error(e.message); });
     $('save').onclick = function () {
       LL.busy($('save'), 'Saving…', function () { return window.LLAuth.updateProfile({ interests: picked, home_area: $('area').value.trim() || null, onboarded: true }).then(function (r) { if (r && r.error) throw r.error; }); })
-        .then(function () { LL.toast('Saved.'); setTimeout(function () { LL.go('dashboard.html'); }, 600); }, function (e) { LL.toast(LLApi.friendly(e), true); });
+        .then(function () { LL.toast('Saved.'); setTimeout(function () { LL.go(LL.home('customer')); }, 600); }, function (e) { LL.toast(LLApi.friendly(e), true); });
     };
   });
 })();

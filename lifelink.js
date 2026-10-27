@@ -196,10 +196,18 @@
       var done = function () { btn.disabled = false; btn.style.opacity = ''; btn.innerHTML = old; };
       return Promise.resolve().then(fn).then(function (r) { done(); return r; }, function (e) { done(); throw e; });
     },
+    // True in the Android app, the installed Home Screen app and phone browsers: they all use the app's new Home screen (home.html). Desktop keeps the dashboard.
+    appLike: function () {
+      try {
+        var cap = window.Capacitor;
+        return !!((cap && typeof cap.isNativePlatform === 'function' && cap.isNativePlatform()) || navigator.standalone ||
+          (window.matchMedia && (matchMedia('(display-mode: standalone)').matches || matchMedia('(max-width: 820px) and (pointer: coarse)').matches)));
+      } catch (e) { return false; }
+    },
     home: function (role) {
       if (role === 'admin') return 'admin.html';
       if (role === 'provider') return 'provider-dashboard.html';
-      return 'dashboard.html';
+      return LL.appLike() ? 'home.html' : 'dashboard.html';
     },
     me: null,        // { id, role, name, email, profile } once known
     _waiters: [],

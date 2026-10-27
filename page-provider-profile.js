@@ -10,6 +10,21 @@
   var I_DOT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>';
   var TICK = '<svg class="pp-tick" viewBox="0 0 24 24" role="img" aria-label="Verified provider"><title>Verified provider</title><circle cx="12" cy="12" r="11" fill="#7C3AED"/><path d="M7.3 12.4l3.3 3.3 6.1-6.6" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var sheetEl = null;
+  // Icon for a service tile, picked from words in its name (neutral star when nothing matches).
+  function ppIcon(t) {
+    var k = String(t || '').toLowerCase(), p;
+    if (/data entry|typing|document|admin/.test(k)) p = '<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h4M10 13h5M10 17h5"/>';
+    else if (/web dev|develop|code|software|app/.test(k)) p = '<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M10 9l-3 3 3 3M14 9l3 3-3 3"/>';
+    else if (/design|graphic|logo|art/.test(k)) p = '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>';
+    else if (/video|film|edit|photo|camera/.test(k)) p = '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9.5v5l4.5-2.5z"/>';
+    else if (/bot|ai |^ai|chat/.test(k)) p = '<rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4M9.5 13h.01M14.5 13h.01M9.5 16h5"/>';
+    else if (/data|annot|database|analy/.test(k)) p = '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/>';
+    else if (/clean|laundry|wash/.test(k)) p = '<path d="M12 3s6 6.5 6 11a6 6 0 01-12 0c0-4.5 6-11 6-11z"/>';
+    else if (/repair|fix|plumb|electric|mechanic|tool/.test(k)) p = '<path d="M14.7 6.3a4 4 0 005 5L21 12.6 12.6 21a2.1 2.1 0 01-3-3L18 9.6"/><path d="M14.7 6.3l-3-3"/>';
+    else p = '<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.4 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/>';
+    return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>';
+  }
+  var CHEV = '<svg class="ps-c" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
 
   function closeSheet() { if (sheetEl) { sheetEl.classList.remove('open'); document.body.style.overflow = ''; } }
   function openReviews(p, list) {
@@ -24,6 +39,17 @@
       list.map(function (v) {
         return '<div class="pp-rv"><div class="t"><i>' + '★'.repeat(Math.max(0, Math.min(5, v.rating || 0))) + '</i><span>' + LL.esc(LL.date(v.created_on)) + '</span></div>' + (v.comment ? '<p>' + LL.esc(v.comment) + '</p>' : '') + '</div>';
       }).join('') + '</div>';
+    sheetEl.querySelector('.pp-scrim').onclick = closeSheet;
+    sheetEl.classList.add('open'); document.body.style.overflow = 'hidden';
+  }
+  // Tap a service tile: its details, price and a Book Now button.
+  function openService(sv, canReq, bookHref) {
+    if (!sheetEl) { sheetEl = document.createElement('div'); sheetEl.className = 'pp-sheet dc-sheet'; sheetEl.setAttribute('role', 'dialog'); document.body.appendChild(sheetEl); }
+    sheetEl.setAttribute('aria-label', 'Service details');
+    sheetEl.innerHTML = '<div class="pp-scrim"></div><div class="pp-panel"><div class="pp-grab"></div>' +
+      '<div class="ps-sh"><span class="ps-i">' + ppIcon(sv.title) + '</span><div><h2 class="pp-h" style="margin:0">' + LL.esc(sv.title) + '</h2><p class="pp-note">From <b>' + LL.esc(LL.naira(sv.base_price_kobo)) + '</b></p></div></div>' +
+      (sv.description ? '<p class="pp-about" style="margin-top:12px">' + LL.esc(sv.description) + '</p>' : '<p class="pp-note" style="margin-top:12px">No extra details were added for this service.</p>') +
+      (canReq ? '<a class="pp-cta" style="margin-top:16px" href="' + bookHref + '">Book Now</a>' : '') + '</div>';
     sheetEl.querySelector('.pp-scrim').onclick = closeSheet;
     sheetEl.classList.add('open'); document.body.style.overflow = 'hidden';
   }
@@ -124,8 +150,8 @@
       stats.push('<div class="pp-stat"><b>' + (p.jobs_done || 0) + '</b><span>Jobs done</span></div>');
 
       var svc = services.length
-        ? '<div class="pp-list">' + services.map(function (s, i) {
-            return '<div class="pp-row" style="animation-delay:' + Math.min(i, 8) * 50 + 'ms">' + I_DOT + '<div><b>' + LL.esc(s.title) + '</b>' + (s.description ? '<small>' + LL.esc(s.description) + '</small>' : '') + '</div><em>' + LL.naira(s.base_price_kobo) + '+</em></div>';
+        ? '<div class="ps-grid">' + services.map(function (s, i) {
+            return '<button type="button" class="ps-t" data-ps="' + i + '" style="animation-delay:' + Math.min(i, 8) * 50 + 'ms"><span class="ps-i">' + ppIcon(s.title) + '</span><span class="ps-x"><b>' + LL.esc(s.title) + '</b><small>From ' + LL.esc(LL.naira(s.base_price_kobo)) + '</small></span>' + CHEV + '</button>';
           }).join('') + '</div>'
         : '<p class="pp-note">This provider has not listed services yet. Send a request to discuss your job.</p>';
 
@@ -133,13 +159,14 @@
         '<div class="pp-nrow"><h1 class="pp-n">' + LL.esc(p.business_name) + '</h1>' + TICK + '</div>' +
         '<div class="pp-meta">' + rating + (p.service_area ? '<span>•</span><span>' + LL.esc(p.service_area) + '</span>' : '') + '<span>•</span><span class="pp-avl' + (p.available ? ' on' : '') + '">' + (p.available ? 'Available' : 'Not taking work') + '</span></div>' +
         (tags.length ? '<div class="pp-tags">' + tags.map(function (t) { return '<span>' + LL.esc(t) + '</span>'; }).join('') + '</div>' : '') +
-        (p.bio ? '<h2 class="pp-h">About</h2><p class="pp-about">' + LL.esc(p.bio) + '</p>' : '') + storeLink(p.store_url) +
         '<div class="pp-stats">' + stats.join('') + '</div>' +
+        (p.bio ? '<h2 class="pp-h">About</h2><p class="pp-about">' + LL.esc(p.bio) + '</p>' : '') + storeLink(p.store_url) +
         catalogueHtml(items, p) +
         '<h2 class="pp-h">Services &amp; Pricing</h2>' + svc +
         '</div>' + (canReq ? '<div class="pp-ctaw"><a class="pp-cta" href="' + bookHref + '">Book Now</a></div>' : '');
 
       bindCatalogue(items, p, me);
+      app.querySelectorAll('[data-ps]').forEach(function (t) { t.onclick = function () { var sv = services[Number(t.getAttribute('data-ps'))]; if (sv) openService(sv, canReq, bookHref); }; });
       document.getElementById('ppBack').onclick = function () { if (history.length > 1) history.back(); else location.href = NATIVE ? 'home.html' : 'discovery.html'; };
       document.getElementById('ppShare').onclick = function () { share(p); };
       var open = function () { openReviews(p, reviews); };

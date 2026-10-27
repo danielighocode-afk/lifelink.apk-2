@@ -25,6 +25,24 @@
   } catch (e) {}
 })();
 
+/* ---- Phones and the app: never draw the old customer dashboard, and never draw the customer Home for a provider.
+   Uses the role remembered on this device and redirects before the first paint (this script runs in <head>), so nothing old can flash. ---- */
+(function () {
+  try {
+    var cap = window.Capacitor, mm = window.matchMedia;
+    var appLike = !!((cap && typeof cap.isNativePlatform === 'function' && cap.isNativePlatform()) || navigator.standalone ||
+      (mm && (mm('(display-mode: standalone)').matches || mm('(max-width: 820px) and (pointer: coarse)').matches)));
+    if (!appLike) return;
+    var role = null, c = JSON.parse(localStorage.getItem('ll-profile-cache-v1') || 'null');
+    if (c && c.profile && c.profile.id) role = c.profile.role;
+    if (!role) return;
+    var file = location.pathname.split('/').pop() || 'index.html', sec = (location.search.match(/[?&]section=([^&]*)/) || [])[1];
+    if (file === 'dashboard.html' && role === 'customer' && (!sec || sec === 'overview')) location.replace('home.html');
+    else if (file === 'home.html' && role === 'provider') location.replace('provider-dashboard.html');
+    else if (file === 'home.html' && role === 'admin') location.replace('admin.html');
+  } catch (e) {}
+})();
+
 /* ---- page slide direction (used by the view-transition CSS in ll-app.css). Must run in <head>, before first paint. ---- */
 (function () {
   var de = document.documentElement, KEY = 'll-nav-dir';
