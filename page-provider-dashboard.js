@@ -602,12 +602,12 @@
     document.body.classList.toggle('pv-msg-list', section === 'messages' && !LL.q('c'));
     document.body.classList.toggle('pv-pf', section === 'profile');
     var ck = ckey(section), cached = (!quiet && ck) ? LL.cache.get(ck) : null;
-    if (!quiet) { app.innerHTML = cached != null ? cached : LL.loading(TITLES[section].toLowerCase()); shown = cached; if (cached != null) bindAll(); }
+    if (!quiet) { app.innerHTML = cached != null ? cached : LL.loading(TITLES[section].toLowerCase()); shown = cached; if (cached != null) bindAll(); requestAnimationFrame(function () { try { window.llReady && window.llReady(); } catch (e) {} }); }
     return S[section]().then(function (h) {
       if (ck) LL.cache.set(ck, h);
       if (h !== shown) { app.innerHTML = h; shown = h; }
-      bindAll(); syncSharing();
-    }).catch(function (e) { if (!quiet && cached == null) app.innerHTML = LL.error(e.message); });
+      bindAll(); syncSharing(); try { window.llReady && window.llReady(); } catch (e) {}
+    }).catch(function (e) { if (!quiet && cached == null) app.innerHTML = LL.error(e.message); try { window.llReady && window.llReady(); } catch (e) {} });
   }
   /* Quietly build the other main sections once this one has settled, so tapping them opens instantly. */
   function warmSections() {
@@ -641,6 +641,6 @@
       (window.requestIdleCallback ? requestIdleCallback : function (f) { setTimeout(f, 1200); })(function () { setTimeout(warmSections, 800); });
       if (section !== 'messages' && section !== 'profile' && section !== 'services' && section !== 'wallet') LL.onLive(function () { LL.quiet(app, function () { return render(true); }); });
       setInterval(syncSharing, 30000);
-    }).catch(function (e) { app.innerHTML = LL.error(e.message); });
+    }).catch(function (e) { app.innerHTML = LL.error(e.message); try { window.llReady && window.llReady(); } catch (e) {} });
   });
 })();

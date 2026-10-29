@@ -1,7 +1,7 @@
 {
-  "versionCode": 13,
-  "versionName": "1.3.4",
+  "versionCode": 14,
+  "versionName": "1.3.5",
   "apkUrl": "https://github.com/danielighocode-afk/lifelink.apk-2/releases/latest/download/LifeLink.apk",
-  "notes": "New provider profile look with service prices, and new users now land on the new Home screen with no old page flashing.",
+  "notes": "New opening animation, and no old page flashing when you refresh.",
   "force": false
 }

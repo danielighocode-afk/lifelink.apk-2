@@ -43,7 +43,7 @@ for (const d of fs.readdirSync(res)) {
   const f = path.join(res, d, 'splash.png');
   if (fs.existsSync(f)) { fs.copyFileSync(path.join(root, 'resources', 'splash.png'), f); splash++; }
 }
-console.log('splash: replaced ' + splash + ' splash images (original LifeLink logo on #F5F8F6)');
+console.log('splash: replaced ' + splash + ' splash images (LifeLink gradient + white logo)');
 
 /* App version: versionCode / versionName come from version.json in the project root (one place to edit per release).
    Android only installs an update when versionCode is higher than the installed one. */
