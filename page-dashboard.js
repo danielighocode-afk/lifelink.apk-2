@@ -174,14 +174,13 @@
       document.body.classList.toggle('pv-msg', section === 'messages');
       document.body.classList.toggle('pv-msg-list', section === 'messages' && !LL.q('c'));
       var cached = (!quiet && cacheable(section)) ? LL.cache.get(ckey(section)) : null;
-      if (!quiet) { app.innerHTML = cached != null ? cached : LL.loading(TITLES[section].toLowerCase()); shown = cached; requestAnimationFrame(function () { try { window.llReady && window.llReady(); } catch (e) {} }); }
+      if (!quiet) { app.innerHTML = cached != null ? cached : LL.loading(TITLES[section].toLowerCase()); shown = cached; }
       return S[section]().then(function (h) {
         if (cacheable(section)) LL.cache.set(ckey(section), h);
         if (h !== shown) { app.innerHTML = h; shown = h; }
         bindMsgSearch();
         var m = document.getElementById('markAll'); if (m) m.onclick = function () { LLApi.notifications.markAllRead().then(function () { location.reload(); }); };
-        try { window.llReady && window.llReady(); } catch (e) {}
-      }).catch(function (e) { if (!quiet && cached == null) app.innerHTML = LL.error(e.message); try { window.llReady && window.llReady(); } catch (e) {} });
+      }).catch(function (e) { if (!quiet && cached == null) app.innerHTML = LL.error(e.message); });
     }
     paint(false);
     // Preload the other sections quietly once this one has settled, so tapping them opens instantly.
