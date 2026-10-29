@@ -19,16 +19,29 @@
 
   /* ---- 3) save this phone's token for the signed-in person (the database function also moves a token that
          used to belong to someone else who signed out on this phone) ---- */
+  function getBuild() {                                         // the app's version code (set from version.json at build time)
+    try {
+      var A = cap.Plugins && cap.Plugins.App;
+      if (A && A.getInfo) return A.getInfo().then(function (i) { var n = parseInt(i && i.build, 10); return isFinite(n) ? n : null; }, function () { return null; });
+    } catch (e) {}
+    return Promise.resolve(null);
+  }
+  function zone() { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || null; } catch (e) { return null; } }
   function saveToken(token) {
     var uid = meId();
     if (!uid || !token) return;
     set(K_TOKEN, token);
-    var stamp = uid + ':' + token;
-    if (get(K_SAVED) === stamp) return;                       // already saved for this person on this phone
-    client()
-      .then(function (sb) { return sb.rpc('register_device_token', { p_token: token, p_platform: 'android' }); })
-      .then(function (r) { if (r && r.error) throw r.error; set(K_SAVED, stamp); })
-      .catch(function (e) { console.warn('[push] could not save the device token:', e && e.message); });
+    getBuild().then(function (build) {
+      var stamp = uid + ':' + token + ':' + (build || '');
+      if (get(K_SAVED) === stamp) return;                       // already saved for this person, phone and app version
+      return client().then(function (sb) {
+        return sb.rpc('register_device_token', { p_token: token, p_platform: 'android', p_app_version: build, p_tz: zone() }).then(function (r) {
+          // If the database has not been updated yet, fall back to the original two-argument call so notifications keep working.
+          if (r && r.error && /function|schema cache|could not find/i.test(r.error.message || '')) return sb.rpc('register_device_token', { p_token: token, p_platform: 'android' });
+          return r;
+        });
+      }).then(function (r) { if (r && r.error) throw r.error; set(K_SAVED, stamp); });
+    }).catch(function (e) { console.warn('[push] could not save the device token:', e && e.message); });
   }
 
   /* ---- 4) where does a tapped notification go? (same rule as the in-app pop-up: "on the way" opens live tracking) ---- */
@@ -59,7 +72,12 @@
   /* ---- 1) + 2) permission, notification channel, register ---- */
   function start() {
     try {
-      if (PN.createChannel) PN.createChannel({ id: 'lifelink_default', name: 'LifeLink notifications', description: 'Bookings, quotes, payments and messages', importance: 4, visibility: 1, vibration: true });
+      if (PN.createChannel) {
+        PN.createChannel({ id: 'lifelink_default', name: 'LifeLink notifications', description: 'Bookings, quotes, payments and messages', importance: 4, visibility: 1, vibration: true });
+        // Separate channels let a person mute greetings in Android settings without muting booking and payment alerts.
+        PN.createChannel({ id: 'daily_greeting', name: 'Daily greeting', description: 'A friendly good morning from LifeLink', importance: 3, visibility: 1, vibration: false });
+        PN.createChannel({ id: 'app_updates', name: 'App updates', description: 'When a new version of LifeLink is available', importance: 4, visibility: 1, vibration: true });
+      }
     } catch (e) {}
     PN.checkPermissions().then(function (p) {
       var s = p && p.receive;
