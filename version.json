@@ -1,7 +1,7 @@
 {
-  "versionCode": 14,
-  "versionName": "1.3.5",
+  "versionCode": 1,
+  "versionName": "1.3.6",
   "apkUrl": "https://github.com/danielighocode-afk/lifelink.apk-2/releases/latest/download/LifeLink.apk",
-  "notes": "Live wallet top-up enabled.",
+  "notes": "New users get double on their first top-up, plus wallet improvements.",
   "force": false
 }
