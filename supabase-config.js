@@ -19,9 +19,9 @@ window.LL_SUPABASE_CONFIG = {
   url: 'https://nbveptszvpvkajrsduej.supabase.co',
   // Publishable key (a.k.a. anon key). Safe for the browser; RLS still applies.
   anonKey: 'sb_publishable_g2jNHO833fRZWjFyGhm7Zg_fgE6Y0cP',
-  // Paystack PUBLIC test key (pk_test_...). Safe in the browser. The SECRET key (sk_...) must never go here:
+  // Paystack PUBLIC live key (pk_live_...). Safe in the browser. The SECRET key (sk_...) must never go here:
   // it lives only in Supabase Edge Function secrets (PAYSTACK_SECRET_KEY).
-  paystackPublicKey: 'pk_test_6ec15d3a1484eb0fdc998b0ec746fea0880a4dc8',
+  paystackPublicKey: 'pk_live_e3c71ece358f6c6086b3d9eee17e36f16a0558ad',
   // MapTiler PUBLIC map-tiles key. Browser-safe, but restrict it in the MapTiler dashboard (Allowed HTTP origins)
   // to http://localhost:8000 and your real site address so others cannot use your quota.
   maptilerKey: 'mBs7KYTvxc3377tUw2Em'

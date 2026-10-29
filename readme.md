@@ -9,11 +9,11 @@ There is no dummy data in the pages: empty tables show empty states.
 3. Sign up in the app with the email you want as administrator, then run once in the SQL editor: `select public.bootstrap_first_admin('you@example.com');`
 4. Serve this folder statically (`python -m http.server 8000`) and open `http://localhost:8000`. `supabase-config.js` holds the project URL and *publishable* key only — never put a secret/service-role key in frontend files.
 5. In Supabase Auth settings, add your site URL(s) to the redirect list so password-reset links work.
-6. **Paystack (test mode) — wallet top-ups.** `supabase-config.js` already holds your *public* test key (`pk_test_…`).
-   - Supabase dashboard → **Edge Functions → Secrets** → add `PAYSTACK_SECRET_KEY` = your Paystack **test secret** key (`sk_test_…`). It goes ONLY there, never in this folder or in chat.
+6. **Paystack (LIVE mode) — wallet top-ups.** `supabase-config.js` holds your *public* live key (`pk_live_…`).
+   - Supabase dashboard → **Edge Functions → Secrets** → add `PAYSTACK_SECRET_KEY` = your Paystack **live secret** key (`sk_live_…`). It goes ONLY there, never in this folder or in chat.
    - Deploy three functions from `supabase/functions/`: `paystack-init` and `paystack-verify` (JWT verification **on**) and `paystack-webhook` (JWT verification **off**). Dashboard: Edge Functions → *Deploy a new function* → paste each `index.ts`. CLI: `supabase functions deploy paystack-init paystack-verify paystack-webhook` (uses `supabase/config.toml`).
-   - Paystack dashboard → Settings → API Keys & Webhooks → set the **Test webhook URL** to `https://<your-project-ref>.supabase.co/functions/v1/paystack-webhook`.
-   - Test: Dashboard → Wallet → add ₦500 → pay with a Paystack test card. The balance updates from the server; the browser never credits anything.
+   - Paystack dashboard → Settings → API Keys & Webhooks → set the **Live webhook URL** to `https://<your-project-ref>.supabase.co/functions/v1/paystack-webhook`.
+   - Check: Dashboard → Wallet → add the minimum amount → pay with a real card (real money; refundable from the Paystack dashboard). The balance updates from the server; the browser never credits anything.
 
 7. **Maps (Stage 2).** Run `supabase/migrations/006_maps.sql` in the SQL editor (after 005). It also tries to enable `pg_cron` and schedule `process_arrival_reminders()` every minute; if you see a NOTICE that pg_cron could not be enabled, turn it on in Dashboard -> Database -> Extensions and re-run the last block of the file. Then in Dashboard -> Database -> Replication make sure `booking_locations` is in the realtime publication (the file attempts this itself; the tracking page polls every 10 s if realtime is off).
    - `supabase-config.js` holds `maptilerKey` (the public MapTiler key). In the MapTiler dashboard restrict it to `http://localhost:8000` and your real site address. MapTiler's free plan may be non-commercial only: check their terms before launch.
