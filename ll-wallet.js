@@ -7,6 +7,7 @@
   var PS_SRC = 'https://js.paystack.co/v2/inline.js';
   var KIND = {
     deposit: ['Deposit (Paystack)', 'text-emerald-700'],
+    bonus: ['First top-up bonus', 'text-emerald-700'],
     hold: ['Fee reserved for a booking', 'text-amber-700'],
     release: ['Reserved fee returned', 'text-emerald-700'],
     fee_charge: ['LifeLink platform fee', 'text-slate-700'],
@@ -134,6 +135,7 @@
       sheetEl = document.createElement('div'); sheetEl.className = 'wl-sheet dc-sheet'; sheetEl.setAttribute('role', 'dialog'); sheetEl.setAttribute('aria-label', 'Add funds');
       sheetEl.innerHTML = '<div class="wl-scrim"></div><div class="wl-panel"><div class="wl-grab"></div><h3>Add funds</h3>' +
         '<p>Pay securely with Paystack (card, bank transfer or USSD). Minimum ' + LL.naira(min) + '.</p>' +
+        (w.first_deposit_bonus ? '<p style="margin:0 0 10px;padding:10px 12px;border-radius:12px;background:#ecfdf5;color:#047857;font-weight:700;font-size:13px">🎁 First top-up bonus: we double it! Add ₦500 and get ₦1,000.</p>' : '') +
         '<div class="wl-chips" id="wChips">' + [50000, 100000, 200000, 500000].map(function (k) { return '<button type="button" data-amt="' + k + '">' + LL.naira(k) + '</button>'; }).join('') + '</div>' +
         '<form id="wForm" novalidate><label for="wAmt">Amount (₦)</label><input id="wAmt" inputmode="numeric" placeholder="' + (min / 100) + '" value="' + (min / 100) + '">' +
         '<button id="wBtn" class="wl-pay">Pay with Paystack</button></form>' +
