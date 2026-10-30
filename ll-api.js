@@ -515,8 +515,8 @@
       p = p || {};
       return [
         { label: 'Add your name and phone number', done: !!(String(p.full_name || '').trim() && String(p.phone || '').trim()), href: 'profile.html' },
-        { label: 'Add a profile photo', done: !!p.avatar_url, href: 'profile.html' },
-        { label: 'Tell us a little about you', done: !!(p.about || p.date_of_birth || p.gender), href: 'profile.html' },
+        { label: 'Add a profile photo', done: !!p.avatar_url, href: 'complete-profile.html' },
+        { label: 'Tell us a little about you', done: !!(p.about || p.date_of_birth || p.gender), href: 'complete-profile.html' },
         { label: 'Choose the services you like', done: !!(p.onboarded || (p.interests && p.interests.length)), href: 'personalize.html' },
         wallet ? { label: 'Add funds to your wallet', done: Number(wallet.available_kobo || 0) + Number(wallet.held_kobo || 0) > 0, href: 'dashboard.html?section=wallet' } : null
       ];

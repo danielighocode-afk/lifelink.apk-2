@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Complete your profile - LIFELINK</title>
+  <script src="ll-theme-init.js"></script>
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="LifeLink">
+  <link rel="stylesheet" href="ll-app.css">
+  <style>
+    body { margin: 0; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+    .cp { --g: #0B7A55; --g2: #0F9D6B; max-width: 520px; margin: 0 auto; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; padding: calc(env(safe-area-inset-top, 0px) + 14px) 20px calc(env(safe-area-inset-bottom, 0px) + 20px); box-sizing: border-box; }
+    .cp-top { display: flex; align-items: center; justify-content: space-between; }
+    .cp-logo { height: 34px; width: auto; display: block; }
+    .cp-x { width: 40px; height: 40px; border-radius: 999px; border: 0; background: var(--ll-surface-2, #EEF3F0); color: var(--ll-text, #0F172A); font-size: 20px; line-height: 1; cursor: pointer; }
+    .cp h1 { margin: 18px 0 6px; font-size: 30px; line-height: 1.08; font-weight: 800; letter-spacing: -.02em; color: var(--g); }
+    html[data-theme="dark"] .cp h1 { color: #5BE0AE; }
+    .cp-sub { margin: 0; font-size: 15px; line-height: 1.45; color: var(--ll-muted, #5B6B66); font-weight: 600; }
+    .cp-pr { margin-top: 18px; }
+    .cp-pr-h { display: flex; justify-content: space-between; font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+    .cp-bar { height: 10px; border-radius: 999px; background: var(--ll-surface-2, #E3EAE6); overflow: hidden; }
+    .cp-bar i { display: block; height: 100%; width: 0; min-width: 10px; border-radius: 999px; background: linear-gradient(90deg, var(--g), var(--g2)); transition: width .35s ease; }
+    .cp-ph { display: flex; flex-direction: column; align-items: center; margin: 24px 0 6px; }
+    .cp-av { position: relative; width: 104px; height: 104px; border: 0; padding: 0; border-radius: 999px; background: color-mix(in srgb, var(--g) 14%, transparent); color: var(--g); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .cp-av img { width: 100%; height: 100%; border-radius: 999px; object-fit: cover; display: block; }
+    .cp-av svg { width: 40px; height: 40px; }
+    .cp-plus { position: absolute; right: -2px; bottom: 2px; width: 32px; height: 32px; border-radius: 999px; background: var(--g); color: #fff !important; border: 3px solid var(--ll-bg, #F5F8F6); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; }
+    .cp-ph b { margin-top: 12px; font-size: 17px; }
+    .cp-ph span { font-size: 13px; color: var(--ll-muted, #5B6B66); font-weight: 600; margin-top: 2px; }
+    .cp-f { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
+    .cp-row { display: flex; align-items: flex-start; gap: 14px; padding: 12px 16px; border-radius: 18px; background: var(--ll-surface, #fff); border: 1px solid var(--ll-border, #E3EAE6); }
+    .cp-row:focus-within { border-color: var(--g); }
+    .cp-row svg { width: 22px; height: 22px; flex: none; margin-top: 18px; color: var(--ll-text, #0F172A); opacity: .75; }
+    .cp-row label { display: block; font-size: 14px; font-weight: 700; }
+    .cp-row label em { font-style: normal; font-weight: 600; color: var(--ll-muted, #7A8883); }
+    .cp-row input, .cp-row select, .cp-row textarea { width: 100%; border: 0; outline: 0; background: transparent; padding: 4px 0 2px; font: inherit; font-size: 15px; font-weight: 600; color: var(--ll-text, #0F172A); resize: none; }
+    .cp-row input::placeholder, .cp-row textarea::placeholder { color: var(--ll-muted, #8A9792); font-weight: 500; }
+    .cp-cnt { text-align: right; font-size: 12px; color: var(--ll-muted, #7A8883); font-weight: 600; }
+    .cp-w { flex: 1; min-width: 0; }
+    .cp-err { display: none; margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: #FFF1F2; border: 1px solid #FECDD3; color: #9F1239; font-size: 14px; font-weight: 700; }
+    .cp-btn { margin-top: 22px; width: 100%; height: 56px; border: 0; border-radius: 999px; background: var(--g); color: #fff; font: inherit; font-size: 17px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .cp-btn[disabled] { opacity: .6; }
+    .cp-skip { margin: 14px auto 0; background: none; border: 0; font: inherit; font-size: 14px; font-weight: 700; color: var(--ll-muted, #5B6B66); cursor: pointer; padding: 8px 12px; }
+    .cp-note { text-align: center; font-size: 12.5px; color: var(--ll-muted, #7A8883); font-weight: 600; margin: 4px 0 0; }
+  </style>
+</head>
+<body data-ll-page="complete-profile" data-ll-role="customer">
+  <main class="cp">
+    <div class="cp-top">
+      <img class="cp-logo" src="images/lifelink-logo.png" alt="LifeLink">
+      <button class="cp-x" id="cpX" type="button" aria-label="Skip for now">&times;</button>
+    </div>
+    <h1>Complete Your Profile</h1>
+    <p class="cp-sub">Let's get to know you better. Add a few details to personalise your experience.</p>
+    <div class="cp-pr">
+      <div class="cp-pr-h"><span>Profile completion</span><span id="cpPct">0%</span></div>
+      <div class="cp-bar" role="progressbar" id="cpBar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="cpFill"></i></div>
+    </div>
+
+    <div class="cp-ph">
+      <button class="cp-av" id="cpAv" type="button" aria-label="Add profile photo">
+        <span id="cpAvIn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
+        <span class="cp-plus">+</span>
+      </button>
+      <b>Add Profile Photo</b>
+      <span>Help people recognise you. You can change this anytime.</span>
+      <input type="file" id="cpFile" accept="image/*" hidden>
+    </div>
+
+    <div class="cp-f">
+      <div class="cp-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>
+        <div class="cp-w"><label for="cpName">Full Name</label><input id="cpName" maxlength="120" autocomplete="name" placeholder="Enter your full name"></div></div>
+      <div class="cp-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+        <div class="cp-w"><label for="cpDob">Date of Birth <em>(Optional)</em></label><input id="cpDob" type="date" min="1900-01-01"></div></div>
+      <div class="cp-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5"/><path d="M12 14v8M9 19h6"/></svg>
+        <div class="cp-w"><label for="cpGender">Gender <em>(Optional)</em></label><select id="cpGender"><option value="">Select your gender</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option><option value="prefer_not_to_say">Prefer not to say</option></select></div></div>
+      <div class="cp-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 01-11.6 7.1L3 21l1.9-6.4A8 8 0 1121 12z"/></svg>
+        <div class="cp-w"><label for="cpAbout">About Me <em>(Optional)</em></label><textarea id="cpAbout" rows="3" maxlength="200" placeholder="Tell us a little about yourself..."></textarea><div class="cp-cnt"><span id="cpCnt">0</span>/200</div></div></div>
+      <div class="cp-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11a7 7 0 0114 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+        <div class="cp-w"><label for="cpArea">Location <em>(Optional)</em></label><input id="cpArea" maxlength="160" autocomplete="address-level2" placeholder="e.g. Benin City, Edo State"></div></div>
+    </div>
+
+    <div class="cp-err" id="cpErr" role="alert"></div>
+    <button class="cp-btn" id="cpSave" type="button"><span id="cpSaveLbl">Complete Profile</span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    <button class="cp-skip" id="cpSkip" type="button">Skip for now</button>
+    <p class="cp-note">You can always update your information later.</p>
+  </main>
+<script src="supabase-config.js"></script>
+<script src="supabase-client.js"></script>
+<script src="supabase-auth.js"></script>
+<script src="ll-oauth.js"></script>
+<script src="ll-api.js"></script>
+<script src="lifelink.js"></script>
+<script src="page-complete-profile.js"></script>
+<script src="ll-app.js" defer></script>
+</body>
+</html>

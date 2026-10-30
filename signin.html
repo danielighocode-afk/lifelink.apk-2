@@ -353,6 +353,8 @@
           var next = new URLSearchParams(location.search).get('next');
           // Accounts with no phone number yet (e.g. created with Google) add one first.
           if (window.LLOAuth && LLOAuth.needsPhone(r.profile)) { location.replace('add-phone.html' + (LLOAuth.safeNext(next) ? '?next=' + encodeURIComponent(LLOAuth.safeNext(next)) : '')); return; }
+          // Brand-new customers see the full-screen "Complete your profile" once (skippable).
+          if (window.LLOAuth && LLOAuth.needsIntro(r.user, r.profile)) { location.replace('complete-profile.html' + (LLOAuth.safeNext(next) ? '?next=' + encodeURIComponent(LLOAuth.safeNext(next)) : '')); return; }
           if (window.LL) LL.toast(msg);
 
           // Never redirect back to the sign-in page (this caused an auth loop

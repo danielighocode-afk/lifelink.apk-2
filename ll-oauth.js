@@ -15,21 +15,48 @@
 
   function needsPhone(p) { return !!p && p.role !== 'admin' && !(p.phone && String(p.phone).trim()); }
   function safeNext(n) {
-    try { var s = decodeURIComponent(n || '').trim(); if (/^[a-zA-Z0-9_-]+\.html(?:\?[a-zA-Z0-9_=&%-]*)?$/.test(s) && !/^(signin|signout|signup|add-phone)\.html/i.test(s)) return s; } catch (e) {}
+    try { var s = decodeURIComponent(n || '').trim(); if (/^[a-zA-Z0-9_-]+\.html(?:\?[a-zA-Z0-9_=&%-]*)?$/.test(s) && !/^(signin|signout|signup|add-phone|complete-profile)\.html/i.test(s)) return s; } catch (e) {}
     return '';
   }
   function go(url) { location.replace(url); }
+
+  /* ---- first-time "Complete your profile" screen: brand-new customers only, once, always skippable ---- */
+  var INTRO_DAYS = 3;
+  function introDone(user) {
+    try { if (user && localStorage.getItem('ll-intro:' + user.id) === '1') return true; } catch (e) {}
+    return !!(user && user.user_metadata && user.user_metadata.profile_intro === true);
+  }
+  function needsIntro(user, p) {
+    if (!user || !p || p.role !== 'customer' || introDone(user)) return false;
+    var t = Date.parse(user.created_at || ''); if (!t || Date.now() - t > INTRO_DAYS * 86400000) return false;   // new sign-ups only
+    var filled = [p.avatar_url, p.date_of_birth, p.gender, p.about, p.home_area].filter(Boolean).length;
+    return filled < 2;
+  }
+  function markIntroDone() {
+    client().then(function (sb) {
+      return sb.auth.getUser().then(function (u) {
+        var user = u && u.data && u.data.user; if (!user) return;
+        try { localStorage.setItem('ll-intro:' + user.id, '1'); } catch (e) {}
+        return sb.auth.updateUser({ data: { profile_intro: true } });
+      });
+    }).catch(function () {});
+  }
+  function goHome(p, next) {
+    var n = safeNext(next);
+    if (n) go(n);
+    else if (p && p.role === 'provider') go('provider-dashboard.html');
+    else if (p && p.role === 'admin') go('admin.html');
+    else go(NATIVE ? 'home.html' : 'dashboard.html');
+  }
 
   // Where a signed-in person lands (same destinations as the email sign-in in signin.html).
   function afterSignIn(next) {
     return window.LLAuth.getProfile().then(function (r) {
       if (r.error || !r.profile) { toast('Signed in, but your profile could not be loaded. Please try again.', true); return false; }
-      var p = r.profile, n = safeNext(next);
-      if (needsPhone(p)) { go('add-phone.html' + (n ? '?next=' + encodeURIComponent(n) : '')); return true; }
-      if (n) { go(n); return true; }
-      if (p.role === 'provider') go('provider-dashboard.html');
-      else if (p.role === 'admin') go('admin.html');
-      else go(NATIVE ? 'home.html' : 'dashboard.html');
+      var p = r.profile, n = safeNext(next), q = n ? '?next=' + encodeURIComponent(n) : '';
+      if (needsPhone(p)) { go('add-phone.html' + q); return true; }
+      if (needsIntro(r.user, p)) { go('complete-profile.html' + q); return true; }
+      goHome(p, n);
       return true;
     });
   }
@@ -87,5 +114,5 @@
     }
   }
 
-  window.LLOAuth = { start: start, afterSignIn: afterSignIn, needsPhone: needsPhone, safeNext: safeNext, native: NATIVE };
+  window.LLOAuth = { start: start, afterSignIn: afterSignIn, needsPhone: needsPhone, needsIntro: needsIntro, markIntroDone: markIntroDone, goHome: goHome, safeNext: safeNext, native: NATIVE };
 })();

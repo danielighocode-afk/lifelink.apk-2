@@ -3,7 +3,7 @@
 (function () {
   'use strict';
   var page = (document.body && document.body.getAttribute('data-ll-page')) || '';
-  var HIDE = { signin: 1, admin: 1, welcome: 1 };
+  var HIDE = { signin: 1, admin: 1, welcome: 1, 'add-phone': 1, 'complete-profile': 1 };
   var cap = window.Capacitor, NATIVE = !!(cap && typeof cap.isNativePlatform === 'function' && cap.isNativePlatform());
   if (NATIVE) document.documentElement.classList.add('ll-native');
   function plug(n) { return NATIVE && cap.Plugins && cap.Plugins[n] ? cap.Plugins[n] : null; }
