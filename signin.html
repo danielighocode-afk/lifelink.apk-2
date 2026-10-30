@@ -195,8 +195,8 @@
 
           <div class="au-or">or</div>
 
-          <!-- CONTINUE WITH GOOGLE (look only; same as before, not wired up yet) -->
-          <button type="button" class="au-g">
+          <!-- CONTINUE WITH GOOGLE: signs in, or creates a new customer account the first time (see ll-oauth.js) -->
+          <button type="button" class="au-g" id="googleBtn">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -262,6 +262,7 @@
 <script src="supabase-config.js"></script>
 <script src="supabase-client.js"></script>
 <script src="supabase-auth.js"></script>
+<script src="ll-oauth.js"></script>
 <script src="lifelink.js"></script>
   <!-- AUTH LOGIC: genuine Supabase Auth (no demo users, no simulated success). -->
   <script>
@@ -350,6 +351,8 @@
           if (r.error || !r.profile) { showError('Signed in, but your profile could not be loaded. Try again.'); return; }
           var role = r.profile.role;
           var next = new URLSearchParams(location.search).get('next');
+          // Accounts with no phone number yet (e.g. created with Google) add one first.
+          if (window.LLOAuth && LLOAuth.needsPhone(r.profile)) { location.replace('add-phone.html' + (LLOAuth.safeNext(next) ? '?next=' + encodeURIComponent(LLOAuth.safeNext(next)) : '')); return; }
           if (window.LL) LL.toast(msg);
 
           // Never redirect back to the sign-in page (this caused an auth loop
@@ -381,6 +384,33 @@
 
       document.addEventListener('DOMContentLoaded', function () {
         applyMode();
+        // ---- Continue with Google ----
+        var gb = el('googleBtn');
+        if (gb) gb.addEventListener('click', function () {
+          if (!window.LLOAuth) { showError('Google sign-in is not available right now. Please use your email.'); return; }
+          showError(''); gb.disabled = true; gb.style.opacity = '.6';
+          var nx = new URLSearchParams(location.search).get('next');
+          LLOAuth.start(nx).catch(function (e) {
+            gb.disabled = false; gb.style.opacity = '';
+            var m = (e && e.message) || '';
+            showError(/provider is not enabled|unsupported provider/i.test(m) ? 'Google sign-in has not been switched on yet. Please use your email for now.' : (m || 'Could not start Google sign-in. Please try again.'));
+          });
+          setTimeout(function () { gb.disabled = false; gb.style.opacity = ''; }, 8000);   // never leave the button stuck
+        });
+        // Back from Google on the website: finish sign-in (supabase-js has already read the session from the address).
+        var qs = new URLSearchParams(location.search), hs = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+        if (hs.get('error_description') || qs.get('error_description')) showError(hs.get('error_description') || qs.get('error_description'));
+        else if (qs.get('oauth') === '1' && window.LLOAuth) {
+          setBusy(true, 'Signing you in…');
+          var tries = 0;
+          (function wait() {
+            window.LLSB.getSession().then(function (s) {
+              if (s && s.session) { LLOAuth.afterSignIn(qs.get('next')).then(function (ok) { if (!ok) setBusy(false); }); return; }
+              if (++tries < 20) return setTimeout(wait, 250);
+              setBusy(false); showError('Google sign-in did not finish. Please try again.');
+            });
+          })();
+        }
         var tg = el('modeToggle');
         if (tg) tg.addEventListener('click', function (e) {
           e.preventDefault();

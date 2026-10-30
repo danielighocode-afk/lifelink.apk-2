@@ -11,6 +11,12 @@ for (const p of ['ACCESS_FINE_LOCATION', 'ACCESS_COARSE_LOCATION', 'ACCESS_NETWO
   if (!xml.includes('android.permission.' + p)) { xml = xml.replace('</manifest>', '    <uses-permission android:name="android.permission.' + p + '" />\n</manifest>'); added.push(p); }
 }
 if (!xml.includes('android.hardware.location.gps')) xml = xml.replace('</manifest>', '    <uses-feature android:name="android.hardware.location.gps" android:required="false" />\n</manifest>');
+/* Google sign-in: let com.lifelink.app://auth open the app (the way back from Google's sign-in page). */
+if (!xml.includes('android:scheme="com.lifelink.app"')) {
+  const filter = '        <intent-filter>\n            <action android:name="android.intent.action.VIEW" />\n            <category android:name="android.intent.category.DEFAULT" />\n            <category android:name="android.intent.category.BROWSABLE" />\n            <data android:scheme="com.lifelink.app" android:host="auth" />\n        </intent-filter>\n';
+  const i = xml.indexOf('</activity>');
+  if (i > 0) { xml = xml.slice(0, i) + filter + '    ' + xml.slice(i); added.push('deep link com.lifelink.app://auth'); }
+}
 fs.writeFileSync(manifest, xml);
 console.log('manifest: permissions added -> ' + (added.join(', ') || 'none needed'));
 

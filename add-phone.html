@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Add your phone number - LIFELINK</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: {
+  colors: { emerald: { 50:'#ecfdf5', 100:'#d1fae5', 500:'#10b981', 600:'#059669', 700:'#047857' },
+            charcoal: { 50:'#f8fafc', 100:'#f1f5f9', 200:'#e2e8f0', 300:'#cbd5e1', 400:'#94a3b8', 500:'#64748b', 600:'#475569', 700:'#334155', 800:'#1e293b', 900:'#0f172a' } },
+  fontFamily: { sans: ['Plus Jakarta Sans','sans-serif'] } } } }
+  </script>
+  <style>
+    body { background-color: #F8FAFC; color: #0F172A; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .field { width: 100%; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 1rem; padding: .75rem 1rem; font-size: .875rem; font-weight: 600; color: #0f172a; outline: none; }
+    .field:focus { border-color: #059669; background: #fff; }
+    .lbl { display: block; font-size: .75rem; font-weight: 800; color: #334155; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .375rem; }
+  </style>
+  <script src="ll-theme-init.js"></script>
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="LifeLink">
+  <link rel="stylesheet" href="ll-app.css">
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 antialiased selection:bg-emerald-100 selection:text-emerald-800" data-ll-page="add-phone" data-ll-role="any">
+  <header class="bg-white border-b border-slate-200/80">
+    <div class="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
+      <img src="images/lifelink-logo.png" alt="LifeLink" class="h-10 w-auto object-contain">
+      <button id="skipOut" type="button" class="text-xs font-extrabold text-slate-500 hover:text-rose-600">Sign out</button>
+    </div>
+  </header>
+  <main class="flex-grow max-w-2xl w-full mx-auto px-4 py-8 space-y-5">
+    <div>
+      <h1 class="text-2xl font-extrabold">One last step</h1>
+      <p class="text-sm font-semibold text-slate-500 mt-1">Add your phone number so providers and customers can reach you about a job. It is never shown on your public profile.</p>
+    </div>
+    <section class="bg-white border border-slate-200 rounded-3xl p-6 space-y-4">
+      <div id="nameWrap" class="hidden"><label class="lbl" for="fullName">Your full name</label><input id="fullName" class="field" maxlength="120" autocomplete="name" placeholder="e.g. Ada Okafor"></div>
+      <div><label class="lbl" for="phone">Phone number</label><input id="phone" class="field" type="tel" inputmode="tel" maxlength="32" autocomplete="tel" placeholder="e.g. 0803 000 0000"></div>
+      <p id="err" class="hidden text-sm font-bold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-4 py-3" role="alert"></p>
+      <button id="save" type="button" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3.5 rounded-2xl">Continue</button>
+    </section>
+  </main>
+<script src="supabase-config.js"></script>
+<script src="supabase-client.js"></script>
+<script src="supabase-auth.js"></script>
+<script src="ll-oauth.js"></script>
+<script src="lifelink.js"></script>
+<script src="page-add-phone.js"></script>
+<script src="ll-app.js" defer></script>
+</body>
+</html>

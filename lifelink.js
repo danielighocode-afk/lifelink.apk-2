@@ -462,6 +462,16 @@
   var need = (body && body.getAttribute('data-ll-role')) || 'public';
   var file = (location.pathname.split('/').pop() || 'index.html') + location.search;
 
+  // Anyone without a phone number (for example a new Google sign-up) adds one first. Admins are exempt.
+  var PAGE = (body && body.getAttribute('data-ll-page')) || '';
+  function phoneGate(p) {
+    if (!p || p.role === 'admin' || PAGE === 'add-phone' || PAGE === 'signin') return false;
+    if (need === 'public' && PAGE !== 'home-app') return false;
+    if (p.phone && String(p.phone).trim()) return false;
+    LL.go('add-phone.html?next=' + encodeURIComponent(file));
+    return true;
+  }
+
   function bootstrap(retries) {
     if (!window.LLAuth || typeof window.LLAuth.getProfile !== 'function') {
       if (retries > 0) return setTimeout(function () { bootstrap(retries - 1); }, 150);
@@ -475,6 +485,7 @@
     if (fast && !LL._authKnown) {
       var fr = fast.profile.role, fok = need === 'public' || need === 'any' || fr === need || fr === 'admin';
       if (fok) {
+        if (phoneGate(fast.profile)) return;
         LL._resolveAuth(fast.profile, fast.user);
         try { document.documentElement.style.visibility = ''; } catch (e) {}
         mountChrome(fast.profile);
@@ -496,6 +507,7 @@
     }
     window.LLAuth.getProfile().then(function (r) {
       var profile = (!r.error && r.user && r.profile) ? r.profile : null;
+      if (profile && phoneGate(profile)) return;
       if (need === 'public') { LL._resolveAuth(profile, r.user); mountChrome(profile); return; }
       if (!profile) {
         // Distinguish "not signed in" from "backend unreachable".

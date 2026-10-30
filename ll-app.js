@@ -7,6 +7,7 @@
   var cap = window.Capacitor, NATIVE = !!(cap && typeof cap.isNativePlatform === 'function' && cap.isNativePlatform());
   if (NATIVE) document.documentElement.classList.add('ll-native');
   function plug(n) { return NATIVE && cap.Plugins && cap.Plugins[n] ? cap.Plugins[n] : null; }
+  if (NATIVE && !window.LLOAuth) { try { var os = document.createElement('script'); os.src = 'll-oauth.js'; os.defer = true; document.head.appendChild(os); } catch (e) {} }   // catches the Google sign-in return link (Android app only)
   if (NATIVE) { try { var ps = document.createElement('script'); ps.src = 'll-push.js'; ps.defer = true; document.head.appendChild(ps); } catch (e) {} }   // push notifications (Android app only)
   if (NATIVE) { try { var us = document.createElement('script'); us.src = 'll-update.js'; us.defer = true; document.head.appendChild(us); } catch (e) {} }   // update prompt (Android app only)
 
