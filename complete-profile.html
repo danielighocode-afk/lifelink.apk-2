@@ -11,81 +11,245 @@
   <link rel="stylesheet" href="ll-app.css">
   <style>
     body { margin: 0; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; }
-    .cp { --g: #0B7A55; --g2: #0F9D6B; max-width: 520px; margin: 0 auto; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; padding: calc(env(safe-area-inset-top, 0px) + 14px) 20px calc(env(safe-area-inset-bottom, 0px) + 20px); box-sizing: border-box; }
+    .cp { --g: #0B7A55; --g2: #0F9D6B; --b: #2F6BFF; --b2: #5B8CFF; --v: #7C6CF0; --lv: #B8A6F8; --lv-soft: #F1ECFF; --lv-line: #D5C9FB; --blue-soft: #EAF0FF;
+      max-width: 520px; margin: 0 auto; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; padding: calc(env(safe-area-inset-top, 0px) + 14px) 20px calc(env(safe-area-inset-bottom, 0px) + 20px); box-sizing: border-box; position: relative; }
+    html[data-theme="dark"] .cp { --lv-soft: rgba(184,166,248,.12); --lv-line: rgba(184,166,248,.38); --blue-soft: rgba(91,140,255,.14); }
+    .cp > *:not(.cp-bg) { position: relative; z-index: 1; }
+    .cp-pane[hidden] { display: none !important; }
+
+    /* soft floating colour behind everything */
+    .cp-bg { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+    .cp-bg i { position: absolute; border-radius: 50%; filter: blur(60px); opacity: .5; }
+    .cp-bg i:nth-child(1) { width: 260px; height: 260px; right: -80px; top: -60px; background: radial-gradient(circle, #8FB0FF, transparent 70%); animation: cpFloat 11s ease-in-out infinite alternate; }
+    .cp-bg i:nth-child(2) { width: 300px; height: 300px; left: -120px; top: 34%; background: radial-gradient(circle, #CDBFFA, transparent 70%); animation: cpFloat 14s ease-in-out -4s infinite alternate; }
+    .cp-bg i:nth-child(3) { width: 220px; height: 220px; right: -60px; bottom: -40px; background: radial-gradient(circle, #A9C2FF, transparent 70%); animation: cpFloat 12s ease-in-out -7s infinite alternate; }
+    html[data-theme="dark"] .cp-bg i { opacity: .22; }
+    @keyframes cpFloat { from { transform: translate(0, 0) scale(1); } to { transform: translate(-24px, 30px) scale(1.12); } }
+
     .cp-top { display: flex; align-items: center; justify-content: space-between; }
+    .cp-l { display: flex; align-items: center; gap: 10px; }
     .cp-logo { height: 34px; width: auto; display: block; }
-    .cp-x { width: 40px; height: 40px; border-radius: 999px; border: 0; background: var(--ll-surface-2, #EEF3F0); color: var(--ll-text, #0F172A); font-size: 20px; line-height: 1; cursor: pointer; }
-    .cp h1 { margin: 18px 0 6px; font-size: 30px; line-height: 1.08; font-weight: 800; letter-spacing: -.02em; color: var(--g); }
-    html[data-theme="dark"] .cp h1 { color: #5BE0AE; }
+    .cp-x, .cp-back { width: 40px; height: 40px; border-radius: 999px; border: 0; background: var(--ll-surface-2, #EEF3F0); color: var(--ll-text, #0F172A); font-size: 20px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform .2s ease, background .2s ease; }
+    .cp-x:active, .cp-back:active { transform: scale(.92); }
+    .cp-back[hidden] { display: none; }
+    .cp-back svg { width: 20px; height: 20px; }
+
+    /* two-step indicator */
+    .cp-steps { display: flex; gap: 8px; margin-top: 16px; }
+    .cp-seg { flex: 1; height: 6px; border-radius: 999px; background: var(--blue-soft); overflow: hidden; }
+    .cp-seg i { display: block; height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, var(--b), var(--lv)); transition: width .55s cubic-bezier(.2,.8,.2,1); }
+    .cp-seg.on i { width: 100%; }
+    .cp-stept { margin-top: 8px; font-size: 12.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--b); }
+    html[data-theme="dark"] .cp-stept { color: #8FB0FF; }
+
+    .cp-pane { display: flex; flex-direction: column; flex: 1; }
+    .cp-pane.in-r { animation: cpInR .5s cubic-bezier(.2,.8,.2,1) backwards; }
+    .cp-pane.in-l { animation: cpInL .5s cubic-bezier(.2,.8,.2,1) backwards; }
+    @keyframes cpInR { from { opacity: 0; transform: translateX(36px); } to { opacity: 1; transform: none; } }
+    @keyframes cpInL { from { opacity: 0; transform: translateX(-36px); } to { opacity: 1; transform: none; } }
+    @keyframes cpUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+    .cp h1 { margin: 14px 0 6px; font-size: 30px; line-height: 1.08; font-weight: 800; letter-spacing: -.02em; background: linear-gradient(90deg, #0B7A55 0%, #2F6BFF 70%, #7C6CF0 100%); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
+    html[data-theme="dark"] .cp h1 { background: linear-gradient(90deg, #5BE0AE 0%, #8FB0FF 70%, #C4B8FA 100%); -webkit-background-clip: text; background-clip: text; }
     .cp-sub { margin: 0; font-size: 15px; line-height: 1.45; color: var(--ll-muted, #5B6B66); font-weight: 600; }
     .cp-pr { margin-top: 18px; }
     .cp-pr-h { display: flex; justify-content: space-between; font-size: 14px; font-weight: 700; margin-bottom: 8px; }
-    .cp-bar { height: 10px; border-radius: 999px; background: var(--ll-surface-2, #E3EAE6); overflow: hidden; }
-    .cp-bar i { display: block; height: 100%; width: 0; min-width: 10px; border-radius: 999px; background: linear-gradient(90deg, var(--g), var(--g2)); transition: width .35s ease; }
+    .cp-bar { height: 10px; border-radius: 999px; background: var(--blue-soft); overflow: hidden; }
+    .cp-bar i { display: block; height: 100%; width: 0; min-width: 10px; border-radius: 999px; background: linear-gradient(90deg, var(--g), var(--b), var(--lv)); transition: width .45s cubic-bezier(.2,.8,.2,1); }
     .cp-ph { display: flex; flex-direction: column; align-items: center; margin: 24px 0 6px; }
-    .cp-av { position: relative; width: 104px; height: 104px; border: 0; padding: 0; border-radius: 999px; background: color-mix(in srgb, var(--g) 14%, transparent); color: var(--g); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .cp-av { position: relative; width: 104px; height: 104px; border: 0; padding: 0; border-radius: 999px; background: var(--lv-soft); color: var(--b); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 4px var(--lv-line); transition: transform .2s ease; }
+    .cp-av:active { transform: scale(.95); }
+    .cp-av::after { content: ""; position: absolute; inset: -4px; border-radius: 999px; border: 2px solid var(--lv); opacity: 0; animation: cpRing 2.8s ease-out infinite; pointer-events: none; }
+    @keyframes cpRing { 0% { transform: scale(1); opacity: .7; } 100% { transform: scale(1.22); opacity: 0; } }
     .cp-av img { width: 100%; height: 100%; border-radius: 999px; object-fit: cover; display: block; }
     .cp-av svg { width: 40px; height: 40px; }
-    .cp-plus { position: absolute; right: -2px; bottom: 2px; width: 32px; height: 32px; border-radius: 999px; background: var(--g); color: #fff !important; border: 3px solid var(--ll-bg, #F5F8F6); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; }
+    .cp-plus { position: absolute; right: -2px; bottom: 2px; width: 32px; height: 32px; border-radius: 999px; background: linear-gradient(135deg, var(--b), var(--v)); color: #fff !important; border: 3px solid var(--ll-bg, #F5F8F6); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; }
     .cp-ph b { margin-top: 12px; font-size: 17px; }
     .cp-ph span { font-size: 13px; color: var(--ll-muted, #5B6B66); font-weight: 600; margin-top: 2px; }
     .cp-f { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
-    .cp-row { display: flex; align-items: flex-start; gap: 14px; padding: 12px 16px; border-radius: 18px; background: var(--ll-surface, #fff); border: 1px solid var(--ll-border, #E3EAE6); }
-    .cp-row:focus-within { border-color: var(--g); }
-    .cp-row svg { width: 22px; height: 22px; flex: none; margin-top: 18px; color: var(--ll-text, #0F172A); opacity: .75; }
+    .cp-row { display: flex; align-items: flex-start; gap: 14px; padding: 12px 16px; border-radius: 18px; background: var(--ll-surface, #fff); border: 1px solid var(--ll-border, #E3EAE6); transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; animation: cpUp .5s cubic-bezier(.2,.8,.2,1) backwards; }
+    .cp-row:nth-child(1) { animation-delay: .05s; } .cp-row:nth-child(2) { animation-delay: .1s; } .cp-row:nth-child(3) { animation-delay: .15s; } .cp-row:nth-child(4) { animation-delay: .2s; } .cp-row:nth-child(5) { animation-delay: .25s; }
+    .cp-row:focus-within { border-color: var(--b); box-shadow: 0 0 0 4px color-mix(in srgb, var(--lv) 35%, transparent); }
+    .cp-row svg { width: 22px; height: 22px; flex: none; margin-top: 18px; color: var(--ll-text, #0F172A); opacity: .75; transition: color .2s ease, opacity .2s ease; }
+    .cp-row:focus-within svg { color: var(--b); opacity: 1; }
     .cp-row label { display: block; font-size: 14px; font-weight: 700; }
     .cp-row label em { font-style: normal; font-weight: 600; color: var(--ll-muted, #7A8883); }
     .cp-row input, .cp-row select, .cp-row textarea { width: 100%; border: 0; outline: 0; background: transparent; padding: 4px 0 2px; font: inherit; font-size: 15px; font-weight: 600; color: var(--ll-text, #0F172A); resize: none; }
     .cp-row input::placeholder, .cp-row textarea::placeholder { color: var(--ll-muted, #8A9792); font-weight: 500; }
     .cp-cnt { text-align: right; font-size: 12px; color: var(--ll-muted, #7A8883); font-weight: 600; }
     .cp-w { flex: 1; min-width: 0; }
-    .cp-err { display: none; margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: #FFF1F2; border: 1px solid #FECDD3; color: #9F1239; font-size: 14px; font-weight: 700; }
-    .cp-btn { margin-top: 22px; width: 100%; height: 56px; border: 0; border-radius: 999px; background: var(--g); color: #fff; font: inherit; font-size: 17px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .cp-err { display: none; margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: #FFF1F2; border: 1px solid #FECDD3; color: #9F1239; font-size: 14px; font-weight: 700; animation: cpUp .3s ease; }
+    .cp-btn { position: relative; overflow: hidden; margin-top: 22px; width: 100%; height: 56px; border: 0; border-radius: 999px; background: linear-gradient(135deg, var(--b) 0%, var(--v) 100%); color: #fff; font: inherit; font-size: 17px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 24px rgba(47,107,255,.28); transition: transform .15s ease, box-shadow .2s ease; }
+    .cp-btn:active { transform: scale(.98); }
+    .cp-btn::after { content: ""; position: absolute; top: 0; bottom: 0; width: 60px; left: -80px; background: linear-gradient(100deg, transparent, rgba(255,255,255,.35), transparent); transform: skewX(-18deg); animation: cpSheen 4.5s ease-in-out 1.2s infinite; }
+    @keyframes cpSheen { 0% { left: -80px; } 28%, 100% { left: 120%; } }
+    .cp-btn svg { animation: cpNudge 1.8s ease-in-out infinite; }
+    @keyframes cpNudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
     .cp-btn[disabled] { opacity: .6; }
     .cp-skip { margin: 14px auto 0; background: none; border: 0; font: inherit; font-size: 14px; font-weight: 700; color: var(--ll-muted, #5B6B66); cursor: pointer; padding: 8px 12px; }
     .cp-note { text-align: center; font-size: 12.5px; color: var(--ll-muted, #7A8883); font-weight: 600; margin: 4px 0 0; }
+
+    /* ---------- step 2 cards ---------- */
+    .cp-cards { display: flex; flex-direction: column; gap: 14px; margin-top: 18px; }
+    .cp-card { overflow: hidden; border-radius: 22px; padding: 16px; background: var(--ll-surface, #fff); border: 1px solid var(--lv-line); box-shadow: 0 6px 22px rgba(124,108,240,.10); max-height: 900px; animation: cpUp .55s cubic-bezier(.2,.8,.2,1) backwards; animation-delay: calc(var(--i, 0) * 110ms + 120ms); transition: max-height .42s ease, opacity .3s ease, padding .42s ease, margin .42s ease, transform .3s ease, border-width .42s ease; }
+    .cp-card.gone { opacity: 0; transform: scale(.96); padding-top: 0; padding-bottom: 0; margin-top: -14px; border-width: 0; }
+    .cp-ch { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .cp-ch b { display: block; font-size: 16px; font-weight: 800; }
+    .cp-ch span { display: block; font-size: 12.5px; font-weight: 600; color: var(--ll-muted, #5B6B66); margin-top: 2px; }
+    .cp-cskip { flex: none; border: 0; border-radius: 999px; padding: 6px 12px; background: var(--lv-soft); color: var(--v); font: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; transition: transform .15s ease; }
+    html[data-theme="dark"] .cp-cskip { color: #C4B8FA; }
+    .cp-cskip:active { transform: scale(.94); }
+
+    .cp-ban { position: relative; width: 100%; aspect-ratio: 2 / 1; border: 2px dashed var(--b2); border-radius: 18px; background: var(--lv-soft) center / cover no-repeat; color: var(--b); font: inherit; font-weight: 800; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; overflow: hidden; animation: cpDash 2.4s ease-in-out infinite; transition: transform .2s ease; }
+    .cp-ban:active { transform: scale(.985); }
+    @keyframes cpDash { 0%, 100% { border-color: var(--b2); } 50% { border-color: var(--lv); } }
+    .cp-ban-in { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .cp-ban-in svg { width: 34px; height: 34px; animation: cpBob 2.4s ease-in-out infinite; }
+    @keyframes cpBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+    .cp-ban.has { border-style: solid; border-color: transparent; animation: none; }
+    .cp-ban.has .cp-ban-in { display: none; }
+    .cp-ban.up::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 20%, rgba(255,255,255,.55), transparent 80%); background-size: 200% 100%; animation: cpShim 1s linear infinite; }
+    @keyframes cpShim { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+    .cp-ban-chg { position: absolute; right: 10px; bottom: 10px; padding: 7px 14px; border-radius: 999px; background: rgba(255,255,255,.92); color: var(--b); font-size: 12.5px; font-weight: 800; box-shadow: 0 4px 14px rgba(0,0,0,.18); animation: cpPop .4s ease; }
+    .cp-ban-chg[hidden] { display: none; }
+
+    .cp-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .cp-chip { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px 7px 8px; border-radius: 999px; border: 1.5px solid var(--lv-line); background: var(--lv-soft); color: var(--ll-text, #0F172A); font: inherit; font-size: 13.5px; font-weight: 800; cursor: pointer; animation: cpUp .45s ease backwards; animation-delay: var(--d, 0ms); transition: background .25s ease, color .25s ease, border-color .25s ease, transform .15s ease, box-shadow .25s ease; }
+    .cp-chip img { width: 24px; height: 24px; border-radius: 999px; object-fit: cover; }
+    .cp-chip .ck { width: 0; height: 16px; overflow: hidden; display: inline-flex; align-items: center; transition: width .25s ease; }
+    .cp-chip .ck svg { width: 16px; height: 16px; flex: none; }
+    .cp-chip[aria-pressed="true"] { background: linear-gradient(135deg, var(--b), var(--v)); border-color: transparent; color: #fff; box-shadow: 0 6px 16px rgba(47,107,255,.3); }
+    .cp-chip[aria-pressed="true"] .ck { width: 16px; }
+    .cp-chip.pop { animation: cpPop .35s ease; }
+    @keyframes cpPop { 0% { transform: scale(1); } 45% { transform: scale(1.12); } 100% { transform: scale(1); } }
+    .cp-sel { margin-top: 10px; font-size: 13px; font-weight: 800; color: var(--b); }
+    html[data-theme="dark"] .cp-sel { color: #8FB0FF; }
+    .cp-sel.bump { animation: cpPop .3s ease; }
+    .cp-empty { font-size: 13.5px; font-weight: 600; color: var(--ll-muted, #5B6B66); }
+
+    .cp-wal { background: linear-gradient(135deg, rgba(47,107,255,.14), rgba(184,166,248,.30), rgba(47,107,255,.10)); background-size: 220% 220%; animation: cpUp .55s cubic-bezier(.2,.8,.2,1) backwards, cpDrift 9s ease-in-out infinite alternate; animation-delay: calc(var(--i, 0) * 110ms + 120ms), 0s; }
+    @keyframes cpDrift { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+    .cp-bonus { margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.65); color: #4338CA; font-weight: 700; font-size: 13px; }
+    html[data-theme="dark"] .cp-bonus { background: rgba(255,255,255,.08); color: #C4B8FA; }
+    .cp-amts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .cp-amts button { height: 42px; border-radius: 14px; border: 1.5px solid var(--lv-line); background: var(--ll-surface, #fff); color: var(--ll-text, #0F172A); font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; transition: background .2s ease, color .2s ease, transform .15s ease, border-color .2s ease; }
+    .cp-amts button:active { transform: scale(.94); }
+    .cp-amts button.on { background: var(--b); border-color: var(--b); color: #fff; animation: cpPop .3s ease; }
+    .cp-amt { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 0 14px; height: 48px; border-radius: 14px; background: var(--ll-surface, #fff); border: 1.5px solid var(--lv-line); transition: border-color .2s ease, box-shadow .2s ease; }
+    .cp-amt:focus-within { border-color: var(--b); box-shadow: 0 0 0 4px color-mix(in srgb, var(--lv) 35%, transparent); }
+    .cp-amt b { font-size: 16px; color: var(--b); }
+    .cp-amt input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 16px; font-weight: 700; color: var(--ll-text, #0F172A); }
+    .cp-add { width: 100%; height: 48px; margin-top: 10px; border: 0; border-radius: 14px; background: var(--b); color: #fff; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; transition: transform .15s ease, opacity .2s ease; }
+    .cp-add:active { transform: scale(.98); }
+    .cp-add[disabled] { opacity: .6; }
+    .cp-ok { display: none; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 10px 0 4px; }
+    .cp-wal.funded .cp-wbody { display: none; }
+    .cp-wal.funded .cp-ok { display: flex; }
+    .cp-ok svg { width: 64px; height: 64px; }
+    .cp-ok circle { fill: none; stroke: var(--b); stroke-width: 3; stroke-dasharray: 151; stroke-dashoffset: 151; animation: cpDraw .6s ease forwards; }
+    .cp-ok path { fill: none; stroke: var(--v); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 40; stroke-dashoffset: 40; animation: cpDraw .45s ease .45s forwards; }
+    @keyframes cpDraw { to { stroke-dashoffset: 0; } }
+    .cp-ok b { font-size: 16px; font-weight: 800; }
+    .cp-ok span { font-size: 13px; font-weight: 600; color: var(--ll-muted, #5B6B66); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .cp *, .cp *::before, .cp *::after, .cp-bg i { animation: none !important; transition-duration: .01ms !important; }
+    }
   </style>
 </head>
 <body data-ll-page="complete-profile" data-ll-role="customer">
   <main class="cp">
+    <div class="cp-bg" aria-hidden="true"><i></i><i></i><i></i></div>
     <div class="cp-top">
-      <img class="cp-logo" src="images/lifelink-logo.png" alt="LifeLink">
+      <div class="cp-l">
+        <button class="cp-back" id="cpBack" type="button" aria-label="Back" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+        <img class="cp-logo" src="images/lifelink-logo.png" alt="LifeLink">
+      </div>
       <button class="cp-x" id="cpX" type="button" aria-label="Skip for now">&times;</button>
     </div>
-    <h1>Complete Your Profile</h1>
-    <p class="cp-sub">Let's get to know you better. Add a few details to personalise your experience.</p>
-    <div class="cp-pr">
-      <div class="cp-pr-h"><span>Profile completion</span><span id="cpPct">0%</span></div>
-      <div class="cp-bar" role="progressbar" id="cpBar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="cpFill"></i></div>
-    </div>
 
-    <div class="cp-ph">
-      <button class="cp-av" id="cpAv" type="button" aria-label="Add profile photo">
-        <span id="cpAvIn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
-        <span class="cp-plus">+</span>
-      </button>
-      <b>Add Profile Photo</b>
-      <span>Help people recognise you. You can change this anytime.</span>
-      <input type="file" id="cpFile" accept="image/*" hidden>
-    </div>
+    <div class="cp-steps" aria-hidden="true"><div class="cp-seg on" id="cpSeg1"><i></i></div><div class="cp-seg" id="cpSeg2"><i></i></div></div>
+    <div class="cp-stept" id="cpStepT">Step 1 of 2</div>
 
-    <div class="cp-f">
-      <div class="cp-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>
-        <div class="cp-w"><label for="cpName">Full Name</label><input id="cpName" maxlength="120" autocomplete="name" placeholder="Enter your full name"></div></div>
-      <div class="cp-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
-        <div class="cp-w"><label for="cpDob">Date of Birth <em>(Optional)</em></label><input id="cpDob" type="date" min="1900-01-01"></div></div>
-      <div class="cp-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5"/><path d="M12 14v8M9 19h6"/></svg>
-        <div class="cp-w"><label for="cpGender">Gender <em>(Optional)</em></label><select id="cpGender"><option value="">Select your gender</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option><option value="prefer_not_to_say">Prefer not to say</option></select></div></div>
-      <div class="cp-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 01-11.6 7.1L3 21l1.9-6.4A8 8 0 1121 12z"/></svg>
-        <div class="cp-w"><label for="cpAbout">About Me <em>(Optional)</em></label><textarea id="cpAbout" rows="3" maxlength="200" placeholder="Tell us a little about yourself..."></textarea><div class="cp-cnt"><span id="cpCnt">0</span>/200</div></div></div>
-      <div class="cp-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11a7 7 0 0114 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
-        <div class="cp-w"><label for="cpArea">Location <em>(Optional)</em></label><input id="cpArea" maxlength="160" autocomplete="address-level2" placeholder="e.g. Benin City, Edo State"></div></div>
-    </div>
+    <!-- ===== STEP 1: basic details ===== -->
+    <section class="cp-pane" id="cpS1">
+      <h1>Complete Your Profile</h1>
+      <p class="cp-sub">Let's get to know you better. Add a few details to personalise your experience.</p>
+      <div class="cp-pr">
+        <div class="cp-pr-h"><span>Profile completion</span><span id="cpPct">0%</span></div>
+        <div class="cp-bar" role="progressbar" id="cpBar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="cpFill"></i></div>
+      </div>
 
-    <div class="cp-err" id="cpErr" role="alert"></div>
-    <button class="cp-btn" id="cpSave" type="button"><span id="cpSaveLbl">Complete Profile</span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
-    <button class="cp-skip" id="cpSkip" type="button">Skip for now</button>
-    <p class="cp-note">You can always update your information later.</p>
+      <div class="cp-ph">
+        <button class="cp-av" id="cpAv" type="button" aria-label="Add profile photo">
+          <span id="cpAvIn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
+          <span class="cp-plus">+</span>
+        </button>
+        <b>Add Profile Photo</b>
+        <span>Help people recognise you. You can change this anytime.</span>
+        <input type="file" id="cpFile" accept="image/*" hidden>
+      </div>
+
+      <div class="cp-f">
+        <div class="cp-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>
+          <div class="cp-w"><label for="cpName">Full Name</label><input id="cpName" maxlength="120" autocomplete="name" placeholder="Enter your full name"></div></div>
+        <div class="cp-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+          <div class="cp-w"><label for="cpDob">Date of Birth <em>(Optional)</em></label><input id="cpDob" type="date" min="1900-01-01"></div></div>
+        <div class="cp-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5"/><path d="M12 14v8M9 19h6"/></svg>
+          <div class="cp-w"><label for="cpGender">Gender <em>(Optional)</em></label><select id="cpGender"><option value="">Select your gender</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option><option value="prefer_not_to_say">Prefer not to say</option></select></div></div>
+        <div class="cp-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 01-11.6 7.1L3 21l1.9-6.4A8 8 0 1121 12z"/></svg>
+          <div class="cp-w"><label for="cpAbout">About Me <em>(Optional)</em></label><textarea id="cpAbout" rows="3" maxlength="200" placeholder="Tell us a little about yourself..."></textarea><div class="cp-cnt"><span id="cpCnt">0</span>/200</div></div></div>
+        <div class="cp-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11a7 7 0 0114 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          <div class="cp-w"><label for="cpArea">Location <em>(Optional)</em></label><input id="cpArea" maxlength="160" autocomplete="address-level2" placeholder="e.g. Benin City, Edo State"></div></div>
+      </div>
+
+      <div class="cp-err" id="cpErr" role="alert"></div>
+      <button class="cp-btn" id="cpSave" type="button"><span id="cpSaveLbl">Continue</span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      <button class="cp-skip" id="cpSkip" type="button">Skip for now</button>
+      <p class="cp-note">You can always update your information later.</p>
+    </section>
+
+    <!-- ===== STEP 2: make it yours (all optional) ===== -->
+    <section class="cp-pane" id="cpS2" hidden>
+      <h1>Make it yours</h1>
+      <p class="cp-sub">Everything here is optional. Add what you like now, or skip and do it any time later.</p>
+
+      <div class="cp-cards">
+        <div class="cp-card" id="cdBan" style="--i:0">
+          <div class="cp-ch"><div><b>Banner photo</b><span>Shown at the top of your profile</span></div><button class="cp-cskip" type="button" data-skip="cdBan">Skip</button></div>
+          <button class="cp-ban" id="cpBan" type="button" aria-label="Upload a banner photo">
+            <span class="cp-ban-in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>Tap to upload a banner</span>
+            <span class="cp-ban-chg" id="cpBanChg" hidden>Change</span>
+          </button>
+          <input type="file" id="cpBanFile" accept="image/*" hidden>
+        </div>
+
+        <div class="cp-card" id="cdCats" style="--i:1">
+          <div class="cp-ch"><div><b>Services you like</b><span>We'll show you more of what you pick</span></div><button class="cp-cskip" type="button" data-skip="cdCats">Skip</button></div>
+          <div class="cp-chips" id="cpCats"><span class="cp-empty">Loading services…</span></div>
+          <div class="cp-sel" id="cpSel">0 selected</div>
+        </div>
+
+        <div class="cp-card cp-wal" id="cdWal" style="--i:2">
+          <div class="cp-ch"><div><b>Add funds to your wallet</b><span>Top up now so booking is quicker</span></div><button class="cp-cskip" type="button" data-skip="cdWal">Skip</button></div>
+          <div class="cp-wbody">
+            <p class="cp-bonus" id="cpBonus" hidden></p>
+            <div class="cp-amts" id="cpAmts"></div>
+            <div class="cp-amt"><b>₦</b><input id="cpAmt" inputmode="numeric" autocomplete="off" placeholder="Enter another amount"></div>
+            <button class="cp-add" id="cpAdd" type="button">Add Funds</button>
+          </div>
+          <div class="cp-ok" id="cpOk" role="status">
+            <svg viewBox="0 0 56 56"><circle cx="28" cy="28" r="24"/><path d="M17 29l8 8 14-17"/></svg>
+            <b>Wallet funded</b><span id="cpOkAmt"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="cp-err" id="cpErr2" role="alert"></div>
+      <button class="cp-btn" id="cpFinish" type="button"><span id="cpFinishLbl">Finish</span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      <button class="cp-skip" id="cpSkip2" type="button">Skip for now</button>
+      <p class="cp-note">You can change any of this later from your profile.</p>
+    </section>
   </main>
 <script src="supabase-config.js"></script>
 <script src="supabase-client.js"></script>

@@ -1,7 +1,7 @@
 {
-  "versionCode": 17,
-  "versionName": "1.3.8",
+  "versionCode": 19,
+  "versionName": "1.4.0",
   "apkUrl": "https://github.com/danielighocode-afk/lifelink.apk-2/releases/latest/download/LifeLink.apk",
-  "notes": "You can now Sign-in with Google.",
+  "notes": "New: add a banner, pick your services and fund your wallet right after sign-up",
   "force": false
 }
