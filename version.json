@@ -1,7 +1,7 @@
 {
-  "versionCode": 16,
-  "versionName": "1.3.7",
+  "versionCode": 17,
+  "versionName": "1.3.8",
   "apkUrl": "https://github.com/danielighocode-afk/lifelink.apk-2/releases/latest/download/LifeLink.apk",
-  "notes": "Daily morning greetings you can switch off in Settings, plus smoother update alerts.",
+  "notes": "You can now Sign-in with Google.",
   "force": false
 }
