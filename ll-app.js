@@ -104,6 +104,7 @@
     paint(); document.body.appendChild(b);
   }
 
+  var curTabs = null, curNav = null;
   function mountTabs(profile) {
     if (HIDE[page] || document.querySelector('.ll-tabbar')) return;
     var role = profile ? profile.role : null;
@@ -120,6 +121,8 @@
     }).join('');
     document.body.appendChild(nav);
     document.body.classList.add('ll-has-tabbar');
+    curTabs = tabs; curNav = nav;
+    prefetchTabs(tabs, file);
 
     if (!role) return;
     var wrap = document.createElement('div'); wrap.className = 'll-sheet-wrap';
@@ -142,8 +145,11 @@
   /* ---------------- app-style extras (read-only; no business logic) ---------------- */
   function quickActions(role) {
     var pg = (location.pathname.split('/').pop() || ''); if (pg !== 'dashboard.html' && pg !== 'provider-dashboard.html') return;
-    var host = document.getElementById('app'); if (!host || !host.parentNode || document.querySelector('.ll-quick')) return;
-    var sec = new URLSearchParams(location.search).get('section') || 'overview'; if (sec !== 'overview') return;
+    var host = document.getElementById('app'); if (!host || !host.parentNode) return;
+    var sec = new URLSearchParams(location.search).get('section') || 'overview';
+    var old = document.querySelector('.ll-quick');
+    if (sec !== 'overview') { if (old && old.parentNode) old.parentNode.removeChild(old); return; }
+    if (old) return;
     var items = role === 'customer' ? [
       ['Book service', I.plus, 'request.html'], ['Find pros', I.search, 'discovery.html'], ['Bookings', I.jobs, 'dashboard.html?section=bookings'], ['Wallet', I.wallet, 'dashboard.html?section=wallet']
     ] : [
@@ -178,60 +184,46 @@
     applyTheme(getPref());
   }
 
-  /* ---------------- swipe left / right between the bottom-bar sections ---------------- */
-  /* Swipe left = next tab, swipe right = previous tab, in the order of the bar for this role. It "taps" the neighbouring tab,
-     so the existing slide animation and active-tab highlight work exactly as when tapping. Only on the main tab screens, and
-     never when the finger starts on something that scrolls sideways, a map, an input, a sheet or a sub-screen. */
-  function mountSwipe(profile) {
-    if (!profile || (profile.role !== 'customer' && profile.role !== 'provider') || window.__llSwipe) return;
-    var nav = document.querySelector('.ll-tabbar'); if (!nav) return;
-    window.__llSwipe = true;
-    var ROOTS = { 'home.html': 1, 'dashboard.html': 1, 'provider-dashboard.html': 1, 'provider-request.html': 1, 'profile.html': 1 };
-    var file = location.pathname.split('/').pop() || 'index.html';
-    var sx = 0, sy = 0, st = 0, live = false;
-    function onRoot() {
-      if (!ROOTS[file]) return false;
-      var ks = new URLSearchParams(location.search).keys(), k;
-      while (!(k = ks.next()).done) { if (k.value !== 'section') return false; }            // an open chat, request or detail has more in the address
-      if (history.state && history.state.pf && history.state.pf !== 'overview') return false;   // profile sub-screens
-      if (document.body.style.overflow === 'hidden' || document.querySelector('.ll-sheet-wrap.open, .dc-sheet.open, [role="dialog"][aria-modal="true"]')) return false;
-      return true;
+  /* ---------------- fluid navigation (no full reload between dashboard sections) ---------------- */
+  window.LLTabs = { refresh: function () {   // re-mark the active tab for the current address
+    if (!curTabs || !curNav) return;
+    var file = location.pathname.split('/').pop() || 'index.html', section = new URLSearchParams(location.search).get('section') || '';
+    var els = curNav.children;
+    for (var i = 0; i < curTabs.length && i < els.length; i++) {
+      var cur = curTabs[i].m && curTabs[i].m(file, section);
+      if (cur) els[i].setAttribute('aria-current', 'page'); else els[i].removeAttribute('aria-current');
     }
-    function blocked(el) {
-      if (!el || !el.closest) return false;
-      if (el.closest('input, textarea, select, [contenteditable="true"], .leaflet-container, [data-noswipe], .ll-tabbar')) return true;
-      for (var n = el; n && n !== document.body && n.nodeType === 1; n = n.parentElement) {
-        var ox = getComputedStyle(n).overflowX;
-        if ((ox === 'auto' || ox === 'scroll') && n.scrollWidth > n.clientWidth + 2) return true;   // carousels, chip rows, wide tables
-      }
-      return false;
-    }
-    document.addEventListener('touchstart', function (e) {
-      live = false;
-      if (e.touches.length !== 1 || !onRoot() || blocked(e.target)) return;
-      var t = e.touches[0], w = window.innerWidth;
-      if (t.clientX < 24 || t.clientX > w - 24) return;     // leave the phone's own edge-swipe (back gesture) alone
-      sx = t.clientX; sy = t.clientY; st = Date.now(); live = true;
-    }, { passive: true });
-    document.addEventListener('touchend', function (e) {
-      if (!live) return; live = false;
-      var t = e.changedTouches && e.changedTouches[0]; if (!t) return;
-      var dx = t.clientX - sx, dy = t.clientY - sy;
-      if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.8 || Date.now() - st > 800) return;
-      var sel = window.getSelection && String(window.getSelection()); if (sel) return;       // they were selecting text
-      var tabs = [].slice.call(nav.querySelectorAll('a.ll-tab')), cur = -1;
-      tabs.forEach(function (a, i) { if (a.getAttribute('aria-current') === 'page') cur = i; });
-      if (cur < 0) return;
-      var to = tabs[dx < 0 ? cur + 1 : cur - 1];
-      if (to) to.click();
-    }, { passive: true });
-    document.addEventListener('touchcancel', function () { live = false; }, { passive: true });
+  } };
+  window.LLApp.syncQuick = quickActions;
+  // While you are on dashboard.html, any link to another dashboard section switches in place (page-dashboard.js owns LLDash).
+  document.addEventListener('click', function (e) {
+    if (e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+    if (!a || a.target || a.hasAttribute('download') || !window.LLDash || !LLDash.ready) return;
+    var u; try { u = new URL(a.getAttribute('href'), location.href); } catch (x) { return; }
+    if (u.origin !== location.origin || u.pathname.split('/').pop() !== 'dashboard.html') return;
+    if ((location.pathname.split('/').pop() || '') !== 'dashboard.html') return;
+    e.preventDefault(); LLDash.go(u.search);
+  }, true);
+  // Quietly fetch the other tab pages when the phone is idle, so tapping them opens faster (skipped on Data Saver / 2G and in the app).
+  function prefetchTabs(tabs, file) {
+    if (NATIVE) return;
+    var c = navigator.connection; if (c && (c.saveData || /(^|-)2g$/.test(c.effectiveType || ''))) return;
+    (window.requestIdleCallback || function (f) { setTimeout(f, 2500); })(function () {
+      var seen = {};
+      tabs.forEach(function (t) {
+        if (!t.h || t.more) return;
+        var u; try { u = new URL(t.h, location.href); } catch (x) { return; }
+        if (u.pathname.split('/').pop() === file || seen[u.href]) return; seen[u.href] = 1;
+        var l = document.createElement('link'); l.rel = 'prefetch'; l.href = u.href; document.head.appendChild(l);
+      });
+    });
   }
 
   function init(retries) {
     mountThemeFab();
     if (!window.LL || !LL.whenAuth) { if (retries > 0) return setTimeout(function () { init(retries - 1); }, 150); mountTabs(null); return nativeGlue(null); }
-    LL.whenAuth(function (p) { mountTabs(p); mountSwipe(p); if (p) { quickActions(p.role); unreadBadge(p); } nativeGlue(p); });
+    LL.whenAuth(function (p) { mountTabs(p); if (p) { quickActions(p.role); unreadBadge(p); } nativeGlue(p); });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { init(20); }); else init(20);
 })();

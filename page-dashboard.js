@@ -171,16 +171,18 @@
     function ckey(s) { return 'cust:' + profile.id + ':' + s; }
     var shown = null;
     function paint(quiet) {
-      document.body.classList.toggle('pv-msg', section === 'messages');
-      document.body.classList.toggle('pv-msg-list', section === 'messages' && !LL.q('c'));
-      var cached = (!quiet && cacheable(section)) ? LL.cache.get(ckey(section)) : null;
-      if (!quiet) { app.innerHTML = cached != null ? cached : LL.loading(TITLES[section].toLowerCase()); shown = cached; }
-      return S[section]().then(function (h) {
-        if (cacheable(section)) LL.cache.set(ckey(section), h);
+      var sec = section;   // the section this paint is for (the section can change while data is loading)
+      document.body.classList.toggle('pv-msg', sec === 'messages');
+      document.body.classList.toggle('pv-msg-list', sec === 'messages' && !LL.q('c'));
+      var cached = (!quiet && cacheable(sec)) ? LL.cache.get(ckey(sec)) : null;
+      if (!quiet) { app.innerHTML = cached != null ? cached : LL.loading(TITLES[sec].toLowerCase()); shown = cached; }
+      return S[sec]().then(function (h) {
+        if (cacheable(sec)) LL.cache.set(ckey(sec), h);
+        if (sec !== section) return;   // you already moved to another section: keep the data for next time, do not overwrite the screen
         if (h !== shown) { app.innerHTML = h; shown = h; }
         bindMsgSearch();
         var m = document.getElementById('markAll'); if (m) m.onclick = function () { LLApi.notifications.markAllRead().then(function () { location.reload(); }); };
-      }).catch(function (e) { if (!quiet && cached == null) app.innerHTML = LL.error(e.message); });
+      }).catch(function (e) { if (sec === section && !quiet && cached == null) app.innerHTML = LL.error(e.message); });
     }
     paint(false);
     // Preload the other sections quietly once this one has settled, so tapping them opens instantly.
@@ -196,6 +198,35 @@
       })();
     }
     (window.requestIdleCallback ? requestIdleCallback : function (f) { setTimeout(f, 1200); })(function () { setTimeout(warm, 800); });
-    if (section !== 'messages' && section !== 'wallet') LL.onLive(function () { LL.quiet(app, function () { return paint(true); }); });
+    LL.onLive(function () { if (section !== 'messages' && section !== 'wallet') LL.quiet(app, function () { return paint(true); }); });
+
+    /* ---- switch sections in place: no page reload, the bars stay put, back button steps through sections ---- */
+    var firstName = String(profile.full_name || '').split(' ')[0] || 'there';
+    function setActive() {
+      document.querySelectorAll('#sideNav [data-nav]').forEach(function (a) { a.classList.toggle('nav-item-active', a.getAttribute('data-nav') === section); });
+      document.querySelectorAll('#mobileNav a').forEach(function (c) {
+        var on = false; try { on = (new URL(c.getAttribute('href'), location.href).searchParams.get('section') || 'overview') === section; } catch (e) {}
+        c.className = 'shrink-0 px-3 py-1.5 rounded-xl text-xs font-extrabold border ' + (on ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-white text-slate-600 border-slate-200');
+      });
+    }
+    function go(search, fromHistory) {
+      var sp = new URLSearchParams(search || ''), next = sp.get('section') || 'overview'; if (!S[next]) next = 'overview';
+      var rel = 'dashboard.html' + (search ? (search.charAt(0) === '?' ? search : '?' + search) : '');
+      var here = (location.pathname.split('/').pop() || 'dashboard.html') + location.search;
+      if (!fromHistory) {
+        if (rel === here) { window.scrollTo(0, 0); return; }   // tapped the screen you are already on: nothing to reload
+        try { history.pushState({ ll: 1 }, '', rel); } catch (e) { location.href = rel; return; }
+      }
+      if (chat && chat.destroy) { try { chat.destroy(); } catch (e) {} } chat = null;
+      section = next;
+      LL.setHeader(TITLES[section], 'Hi ' + firstName);
+      setActive();
+      if (window.LLTabs) LLTabs.refresh();
+      if (window.LLApp && LLApp.syncQuick) LLApp.syncQuick(profile.role);
+      window.scrollTo(0, 0);
+      paint(false);
+    }
+    window.addEventListener('popstate', function () { go(location.search, true); });
+    window.LLDash = { go: function (s) { go(s, false); }, ready: true };
   });
 })();
