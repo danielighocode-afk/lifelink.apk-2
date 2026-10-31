@@ -1,7 +1,7 @@
 {
-  "versionCode": 19,
-  "versionName": "1.4.0",
+  "versionCode": 20,
+  "versionName": "1.4.1",
   "apkUrl": "https://github.com/danielighocode-afk/lifelink.apk-2/releases/latest/download/LifeLink.apk",
-  "notes": "New: add a banner, pick your services and fund your wallet right after sign-up",
+  "notes": "Smoother switching between sections",
   "force": false
 }
