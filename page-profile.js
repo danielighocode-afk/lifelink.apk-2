@@ -219,7 +219,10 @@
   function vPrivacy() {
     app.innerHTML = '<div class="pf-v pf-sub">' + bar('Privacy & Security') + '<div class="pf-pad"><div class="pf-list">' + row(I.lock, 'Change Password', 'Keep your account safe', 'pPw') + '</div>' +
       '<h3 class="pf-h">Data & Privacy</h3><div class="pf-list">' + row(I.db, 'Delete My Account', 'Permanently remove your account and data', 'pDel') +
-      '<a class="pf-li" href="trust-safety.html"><span class="pf-ic">' + I.shield + '</span><div><b>Trust & Safety</b><small>How we protect your data</small></div>' + I.next + '</a></div>' +
+      '<a class="pf-li" href="trust-safety.html"><span class="pf-ic">' + I.shield + '</span><div><b>Trust & Safety</b><small>How we protect your data</small></div>' + I.next + '</a>' +
+      '<a class="pf-li" href="support.html"><span class="pf-ic">' + I.shield + '</span><div><b>Help & Support</b><small>WhatsApp, email and answers</small></div>' + I.next + '</a>' +
+      '<a class="pf-li" href="privacy.html"><span class="pf-ic">' + I.lock + '</span><div><b>Privacy Policy</b><small>What we collect and why</small></div>' + I.next + '</a>' +
+      '<a class="pf-li" href="terms.html"><span class="pf-ic">' + I.shield + '</span><div><b>Terms of Service</b><small>The rules of using LifeLink</small></div>' + I.next + '</a></div>' +
       '<p class="pf-hint" style="margin-top:12px">Your date of birth, gender and about-me details are private to you. Providers only see your name and the details you put in a request.</p></div></div>';
     document.getElementById('pfBack').onclick = back;
     document.getElementById('pPw').onclick = openPw;
