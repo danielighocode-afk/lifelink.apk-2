@@ -373,6 +373,7 @@
     var ini = LL.initials(profile.full_name);
     document.querySelectorAll('header img[src$="lifelink-logo.png"], header .ll-me').forEach(function (node) {
       var a = node.closest('a'); if (!a || a.classList.contains('nav-logo')) return;
+      var hd = node.closest('header'); if (hd && hd.querySelector('[data-ll-account]')) return;   // the account chip on the right is the profile shortcut here: do not add a second one
       var me;
       function initialsEl() { var s = document.createElement('span'); s.className = 'll-me'; s.textContent = ini; return s; }
       if (profile.avatar_url) {

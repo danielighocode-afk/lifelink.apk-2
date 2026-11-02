@@ -263,7 +263,8 @@
     P = Object.assign({}, profile);
     window.LLAuth.getProfile().then(function (r) { user = r.user; if (r.profile) P = Object.assign({}, P, r.profile); render(); });
     window.addEventListener('popstate', function (e) { show((e.state && e.state.pf) || 'overview'); });
-    try { history.replaceState({ pf: 'overview' }, ''); } catch (e) {}
+    var pf0 = history.state && history.state.pf; if (pf0 && pf0 !== 'overview') view = pf0;   // coming back from Trust & Safety etc.: reopen the screen you left
+    try { history.replaceState({ pf: view }, ''); } catch (e) {}
     render();
   });
 })();

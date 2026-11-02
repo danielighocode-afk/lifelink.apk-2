@@ -205,6 +205,14 @@
     if ((location.pathname.split('/').pop() || '') !== 'dashboard.html') return;
     e.preventDefault(); LLDash.go(u.search);
   }, true);
+  // Back arrow on info pages (Trust & Safety, Support, Privacy, Terms): go back to where you came from, else to the fallback page.
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest ? e.target.closest('[data-ll-back]') : null; if (!b) return;
+    e.preventDefault();
+    var inApp = NATIVE || !!(navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches));
+    var same = false; try { same = !!document.referrer && new URL(document.referrer).origin === location.origin; } catch (x) {}
+    if (history.length > 1 && (same || inApp)) history.back(); else location.href = b.getAttribute('data-ll-back') || 'home.html';
+  });
   // Quietly fetch the other tab pages when the phone is idle, so tapping them opens faster (skipped on Data Saver / 2G and in the app).
   function prefetchTabs(tabs, file) {
     if (NATIVE) return;

@@ -31,6 +31,8 @@
     location.href = 'discovery.html' + (q ? '?q=' + encodeURIComponent(q) : '');
   });
 
+  if (window.LLSuggest) LLSuggest.attach($('q'), { onPick: function () { $('searchForm').dispatchEvent(new Event('submit', { cancelable: true })); } });
+
   /* ---------- banner carousel (swipe + slow auto-advance) ---------- */
   var track = $('bnTrack'), slides = [].slice.call(track.children), dots = [].slice.call($('bnDots').children), cur = 0, timer = 0, touching = false;
   function show(i) {
@@ -61,6 +63,7 @@
   function href(c) { return 'discovery.html?category=' + encodeURIComponent(c.slug || c.name); }
 
   function render(cats) {
+    try { if (window.LLSuggest) LLSuggest.add(cats.map(function (c) { return c.name; }), 'Category'); } catch (e) {}
     // quick row: three favourites if present, else the first three, then "More"
     var want = ['home-services', 'repair-maintenance', 'beauty-personal-care'], pick = [];
     want.forEach(function (s) { cats.forEach(function (c) { if (c.slug === s) pick.push(c); }); });

@@ -7,6 +7,7 @@
   var NATIVE = !!(window.Capacitor && typeof Capacitor.isNativePlatform === 'function' && Capacitor.isNativePlatform());
   var ICON_TOOL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 00-5 5L3 18l3 3 6.7-6.7a4 4 0 005-5l-2.5 2.5-2.4-.6-.6-2.4z"/></svg>';
   var ICON_PIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.2 7-11.5A7 7 0 005 9.5C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.4"/></svg>';
+  var TICK = '<svg viewBox="0 0 24 24" role="img" aria-label="Verified provider"><title>Verified provider</title><circle cx="12" cy="12" r="11" fill="#7C3AED"/><path d="M7.3 12.4l3.3 3.3 6.1-6.6" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var ICON_OK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>';
 
   function photo(p) {
@@ -22,7 +23,7 @@
     return '<article class="pc" style="animation-delay:' + Math.min(i, 8) * 45 + 'ms">' +
       '<a href="provider-profile.html?id=' + id + '" aria-label="View ' + LL.esc(p.business_name) + '">' + photo(p) + '</a>' +
       '<div class="pc-b">' +
-        '<div class="pc-n"><a href="provider-profile.html?id=' + id + '">' + LL.esc(p.business_name) + '</a><span class="pc-v">' + ICON_OK + 'Verified</span></div>' +
+        '<div class="pc-n"><a href="provider-profile.html?id=' + id + '">' + LL.esc(p.business_name) + '</a><span class="pc-tick" title="Verified provider">' + TICK + '</span></div>' +
         '<p class="pc-r">' + rating + (p.service_area ? '<span class="dot">•</span><span>' + LL.esc(p.service_area) + '</span>' : '') + avail + '</p>' +
         '<p class="pc-c">' + ICON_TOOL + LL.esc(p.category || 'Service provider') + '</p>' +
         (p.min_price_kobo != null ? '<p class="pc-p">From ' + LL.naira(p.min_price_kobo) + '</p>' : '<p class="pc-r">' + (p.jobs_done || 0) + ' jobs done</p>') +
@@ -76,6 +77,11 @@
     $('results').innerHTML = '<div class="pc-sk"></div><div class="pc-sk"></div><div class="pc-sk"></div>';
     Promise.all([LLApi.catalog.providers(), LLApi.catalog.categories()]).then(function (r) {
       all = r[0];
+      if (window.LLSuggest) {
+        LLSuggest.add(r[1].map(function (c) { return c.name; }), 'Category');
+        LLSuggest.add(LLApi.uniq(all.map(function (p) { return p.business_name; })), 'Provider');
+        var sk = []; all.forEach(function (p) { (p.skills || []).forEach(function (x) { sk.push(x); }); }); LLSuggest.add(LLApi.uniq(sk), 'Skill');
+      }
       var cats = LLApi.uniq(all.map(function (p) { return p.category; })).sort();
       $('cat').innerHTML = '<option value="">All categories</option>' + cats.map(function (c) { return '<option>' + LL.esc(c) + '</option>'; }).join('');
       buildChips(cats);
@@ -86,6 +92,7 @@
       var qa = (LL.q('area') || '').toLowerCase(); if (qa) { areas.forEach(function (x) { if (String(x).toLowerCase().indexOf(qa) >= 0 && !$('area').value) $('area').value = x; }); }
       draw();
     }).catch(function (e) { $('results').innerHTML = '<div style="grid-column:1/-1">' + LL.error(e.message) + '</div>'; });
+    if (window.LLSuggest) LLSuggest.attach($('search'));
     ['search', 'cat', 'area', 'avail', 'sort'].forEach(function (id) { $(id).addEventListener(id === 'search' ? 'input' : 'change', draw); });
 
     /* app-bar and filter sheet controls */
