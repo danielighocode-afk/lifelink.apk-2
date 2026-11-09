@@ -1,6 +1,6 @@
 {
-  "versionCode": 22,
-  "versionName": "1.5.1",
+  "versionCode": 23,
+  "versionName": "1.6.0",
   "apkUrl": "https://github.com/danielighocode-afk/lifelink.apk-2/releases/latest/download/LifeLink.apk",
   "notes": "Search bar navigation, verified profile and more.",
   "force": false
