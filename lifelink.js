@@ -44,7 +44,19 @@
 
   var LL = (window.LL = {
     q: function (k) { return new URLSearchParams(location.search).get(k); },
-    go: function (url) { try { document.body.classList.add('ll-leaving'); } catch (e) {} setTimeout(function () { location.href = url; }, 120); },
+    go: function (url) { try { document.body.classList.add('ll-leaving'); } catch (e) {} setTimeout(function () { LL.nav(url); }, 120); },
+    // In-app jump. Inside the app shell: tab pages switch tabs, other screens slide over the tab, sign-in / other roles leave the shell.
+    nav: function (url) {
+      try {
+        var sh = window.LLShell || (window.parent !== window && window.parent.LLShell);
+        if (sh) {
+          if (sh.isTab(url)) { sh.show(url); return; }
+          if (window.name !== 'llover' && sh.push && sh.push(url)) return;
+          if (sh.isExit(url)) { window.parent.location.href = url; return; }
+        }
+      } catch (e) {}
+      location.href = url;
+    },
     esc: function (s) {
       return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
         return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -206,8 +218,13 @@
     },
     home: function (role) {
       if (role === 'admin') return 'admin.html';
-      if (role === 'provider') return 'provider-dashboard.html';
-      return LL.appLike() ? 'home.html' : 'dashboard.html';
+      if (role === 'provider') {
+        try { if (LL.appLike() && localStorage.getItem('ll-shell-p') === '1') return 'provider-app.html'; } catch (e) {}   // opt-in: set by opening provider-app.html, cleared by provider-app.html?off=1
+        return 'provider-dashboard.html';
+      }
+      if (!LL.appLike()) return 'dashboard.html';
+      try { if (localStorage.getItem('ll-shell') === '1') return 'app.html'; } catch (e) {}   // opt-in: set by opening app.html, cleared by app.html?off=1
+      return 'home.html';
     },
     me: null,        // { id, role, name, email, profile } once known
     _waiters: [],
@@ -222,7 +239,7 @@
     },
     signOut: function () {
       try { LL.cache.clear(); } catch (e) {}
-      var done = function () { location.href = 'index.html'; };
+      var done = function () { LL.nav('index.html'); };
       if (window.LLAuth && window.LLAuth.signOut) window.LLAuth.signOut().then(done, done); else done();
     },
     _resolveAuth: function (profile, user) {

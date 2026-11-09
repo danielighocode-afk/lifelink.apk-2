@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>LifeLink Provider</title>
+  <meta name="theme-color" content="#F5F8F6">
+  <script>try { var q = new URLSearchParams(location.search); if (q.get('off') === '1') { localStorage.removeItem('ll-shell-p'); location.replace('provider-dashboard.html'); } else { localStorage.setItem("ll-shell-p", "1"); } } catch (e) {}</script>
+  <script src="ll-theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="ll-app.css">
+  <style>
+    html, body { height: 100%; margin: 0; overflow: hidden; background: var(--ll-bg, #F5F8F6); }
+    #llFrames { position: fixed; left: 0; right: 0; top: var(--ll-safe-t, 0px); bottom: var(--sh-tab, 64px); }
+    .sh-f { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: var(--ll-bg, #F5F8F6); visibility: hidden; pointer-events: none; }
+    .sh-f.on { visibility: visible; pointer-events: auto; }
+    .sh-over { z-index: 5; visibility: visible; transform: translateX(100%); transition: transform .22s ease; box-shadow: -8px 0 24px rgba(0,0,0,.12); }
+    .sh-over.on { transform: none; }
+    @media (prefers-reduced-motion: reduce) { .sh-over { transition: none; } }
+  </style>
+</head>
+<body data-ll-page="shell" data-ll-role="provider" data-ll-strip>
+  <div id="llFrames"></div>
+  <script src="supabase-config.js"></script>
+  <script src="supabase-client.js"></script>
+  <script src="supabase-auth.js"></script>
+  <script src="ll-api.js"></script>
+  <script src="lifelink.js"></script>
+  <script src="ll-shell.js"></script>
+  <script src="ll-app.js" defer></script>
+</body>
+</html>

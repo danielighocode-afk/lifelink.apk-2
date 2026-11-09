@@ -96,7 +96,7 @@
         return LLApi.messages.summaries(convs, me.id).then(function (sum) {
           var sel = LL.q('c') || convs[0].id, cur = convs.filter(function (c) { return c.id === sel; })[0] || convs[0];
           var nameOf = function (c) { return (nm[c.customer_id] || {}).display_name || 'Customer'; };
-          setTimeout(function () { var el = document.getElementById('chatMount'); if (el) LLChat.mount(el, cur.id); }, 0);
+          setTimeout(function () { var el = document.getElementById('chatMount'); if (el) chatH = LLChat.mount(el, cur.id); }, 0);
           if (window.matchMedia && window.matchMedia('(max-width: 767.98px)').matches) return pmMobile(convs, nm, sum);
           return '<div class="grid lg:grid-cols-3 gap-4"><div class="space-y-2">' + convs.map(function (c) { var s = sum[c.id] || {}; return '<a href="?section=messages&c=' + LL.esc(c.id) + '" class="flex items-center gap-3 p-3 rounded-2xl border ' + (c.id === cur.id ? 'border-emerald-400 bg-emerald-50/50' : 'border-slate-200 bg-white') + '">' + LL.avatar(nameOf(c), null, 'w-10 h-10') + '<div class="min-w-0 flex-1"><p class="font-extrabold text-sm truncate">' + LL.esc(nameOf(c)) + '</p><p class="text-xs text-slate-500 truncate">' + LL.esc(s.last ? s.last.body : 'No messages yet') + '</p></div>' + (s.unread ? '<span class="bg-emerald-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">' + s.unread + '</span>' : '') + '</a>'; }).join('') + '</div><div class="lg:col-span-2">' + card('<div class="flex justify-between"><h2 class="font-extrabold">' + LL.esc(nameOf(cur)) + '</h2>' + (cur.request_id ? '<a class="text-xs font-extrabold text-emerald-700" href="provider-request.html?id=' + LL.esc(cur.request_id) + '">View request</a>' : '') + '</div><div id="chatMount"></div>') + '</div></div>';
         });
@@ -287,7 +287,7 @@
       var cur = sel ? convs.filter(function (c) { return c.id === sel; })[0] : null;
       /* 3) one open conversation: read it and reply */
       if (cur) {
-        setTimeout(function () { var el = document.getElementById('chatMount'); if (el) LLChat.mount(el, cur.id); }, 0);
+        setTimeout(function () { var el = document.getElementById('chatMount'); if (el) chatH = LLChat.mount(el, cur.id); }, 0);
         return '<div class="pm-chat"><div class="pm-chat-h"><a href="?section=messages&cu=' + LL.esc(cur.customer_id) + '" class="pm-back" aria-label="Back to this customer\'s chats">' + PM.back + '</a>' + avOf(cur) +
           '<div class="pm-chat-t"><b>' + LL.esc(nameOf(cur)) + '</b><em>' + LL.esc(ctx(cur) || 'Customer') + '</em></div>' + (cur.request_id ? '<a class="pm-view" href="provider-request.html?id=' + LL.esc(cur.request_id) + '">View request</a>' : '') + '</div><div class="pm-chat-b"><div id="chatMount"></div></div></div>';
       }
@@ -626,6 +626,34 @@
       S[x]().then(function (h) { if (k) LL.cache.set(k, h); }, function () {}).then(function () { setTimeout(next, 250); });
     })();
   }
+  /* Inside the app shell (provider-app.html) the sections switch in place, the same way the customer dashboard does.
+     On its own page nothing changes: this only runs when the page is a tab frame of the shell. */
+  var chatH = null, FR = false; try { FR = window.parent !== window && !!window.parent.LLShell; } catch (e) {}
+  function pgo(search, fromHistory) {
+    var sp = new URLSearchParams(search || ''), next = sp.get('section') || 'overview'; if (!S[next]) next = 'overview';
+    var rel = 'provider-dashboard.html' + (search ? (search.charAt(0) === '?' ? search : '?' + search) : '');
+    if (!fromHistory) {
+      if (next === section && (sp.get('c') || '') === (LL.q('c') || '') && (sp.get('cu') || '') === (LL.q('cu') || '')) { window.scrollTo(0, 0); return; }   // already on this screen
+      try { history.pushState({ ll: 1 }, '', rel); } catch (e) { location.href = rel; return; }
+    }
+    if (chatH && chatH.destroy) { try { chatH.destroy(); } catch (e) {} } chatH = null;
+    section = next; shown = null;
+    if (prov) LL.setHeader(TITLES[section], prov.business_name);
+    if (window.LLTabs) LLTabs.refresh();
+    window.scrollTo(0, 0);
+    render();
+  }
+  if (FR) {
+    document.addEventListener('click', function (e) {
+      if (e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+      if (!a || a.target || a.hasAttribute('download') || !window.LLPDash) return;
+      var u; try { u = new URL(a.getAttribute('href'), location.href); } catch (x) { return; }
+      if (u.origin !== location.origin || u.pathname.split('/').pop() !== 'provider-dashboard.html') return;
+      e.preventDefault(); pgo(u.search, false);
+    }, true);
+    window.addEventListener('popstate', function () { if (window.LLPDash) pgo(location.search, true); });
+  }
   LL.ready(function (profile) {
     me = profile;
     if (!S[section]) section = 'overview';
@@ -638,8 +666,9 @@
       pvHeader(p, profile);
       LLApi.messages.unreadTotal(profile.id).then(function (n) { LL.setBadge('navMsgBadge', n); }, function () {});
       render();
+      if (FR) window.LLPDash = { go: function (q) { pgo(q, false); }, ready: true };   // inside the app shell, sections switch in place
       (window.requestIdleCallback ? requestIdleCallback : function (f) { setTimeout(f, 1200); })(function () { setTimeout(warmSections, 800); });
-      if (section !== 'messages' && section !== 'profile' && section !== 'services' && section !== 'wallet') LL.onLive(function () { LL.quiet(app, function () { return render(true); }); });
+      LL.onLive(function () { if (section === 'messages' || section === 'profile' || section === 'services' || section === 'wallet') return; LL.quiet(app, function () { return render(true); }); });
       setInterval(syncSharing, 30000);
     }).catch(function (e) { app.innerHTML = LL.error(e.message); });
   });

@@ -77,7 +77,7 @@
       }
       waitForAuth(function () {
         window.LLAuth.getProfile().then(function (r) {
-          if (r.error || !r.profile) { location.href = 'signin.html?next=settings.html'; return; }
+          if (r.error || !r.profile) { LL.nav('signin.html?next=settings.html'); return; }
           var profile = r.profile;
           sName.value = profile.full_name || '';
           sEmail.value = profile.email || (r.user && r.user.email) || '';
@@ -86,7 +86,7 @@
           sPhone.value = profile.phone || '';
           backLink.addEventListener('click', function (e) {
             e.preventDefault();
-            location.href = profile.role === 'provider' ? 'provider-dashboard.html' : (profile.role === 'admin' ? 'admin.html' : 'dashboard.html');
+            LL.nav(profile.role === 'provider' ? 'provider-dashboard.html' : (profile.role === 'admin' ? 'admin.html' : 'dashboard.html'));
           });
           // Recovery landing: Supabase redirects here with ?type=recovery.
           if (new URLSearchParams(location.search).get('type') === 'recovery') {
@@ -125,12 +125,12 @@
             }).catch(function (err) { toast((err && err.message) || 'Password update failed.'); });
           };
           signOut.onclick = function () {
-            window.LLAuth.signOut().then(function () { location.href = 'index.html'; });
+            window.LLAuth.signOut().then(function () { LL.nav('index.html'); });
           };
           delAcct.onclick = function () {
             LL.confirm({ title: 'Delete your account?', body: 'This permanently removes your account and data. Accounts that have bookings cannot be deleted automatically because booking history must be kept.', confirmText: 'Delete account', danger: true }).then(function (ok) {
               if (!ok) return;
-              LLApi.deleteAccount().then(function () { return window.LLAuth.signOut().catch(function () {}); }).then(function () { location.href = 'index.html'; }, function (e) { LL.toast(LLApi.friendly(e), true); });
+              LLApi.deleteAccount().then(function () { return window.LLAuth.signOut().catch(function () {}); }).then(function () { LL.nav('index.html'); }, function (e) { LL.toast(LLApi.friendly(e), true); });
             });
           };
         });

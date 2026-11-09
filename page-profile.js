@@ -43,13 +43,13 @@
     document.getElementById('pfGear').onclick = function () { go('account'); };
     document.getElementById('pfCam').onclick = function () { go('photo'); };
     document.getElementById('pfEdit').onclick = function () { go('edit'); };
-    document.getElementById('pfAdd').onclick = function () { location.href = 'dashboard.html?section=wallet'; };
-    document.getElementById('pfBk').onclick = function () { location.href = 'dashboard.html?section=bookings'; };
-    app.querySelectorAll('[data-go]').forEach(function (b) { b.onclick = function () { var t = b.getAttribute('data-go'); if (t === '#account') go('account'); else location.href = t; }; });
+    document.getElementById('pfAdd').onclick = function () { LL.nav('dashboard.html?section=wallet'); };
+    document.getElementById('pfBk').onclick = function () { LL.nav('dashboard.html?section=bookings'); };
+    app.querySelectorAll('[data-go]').forEach(function (b) { b.onclick = function () { var t = b.getAttribute('data-go'); if (t === '#account') go('account'); else LL.nav(t); }; });
     document.getElementById('rAcc').onclick = function () { go('account'); };
     document.getElementById('rPriv').onclick = function () { go('privacy'); };
     document.getElementById('rApp').onclick = function () { go('appearance'); };
-    document.getElementById('rOut').onclick = function () { window.LLAuth.signOut().then(function () { location.href = 'index.html'; }); };
+    document.getElementById('rOut').onclick = function () { window.LLAuth.signOut().then(function () { LL.nav('index.html'); }); };
     try {
       var uk = user && user.id ? user.id : (P && P.id), kb = 'pf-bal:' + uk, kc = 'pf-cnt:' + uk;
       var cb = LL.cache.get(kb), cc = LL.cache.get(kc), eb = document.getElementById('pfBal'), ec = document.getElementById('pfCnt');
@@ -229,7 +229,7 @@
     document.getElementById('pDel').onclick = function () {
       LL.confirm({ title: 'Delete your account?', body: 'This permanently removes your account and data. Accounts that have bookings cannot be deleted automatically because booking history must be kept.', confirmText: 'Delete account', danger: true }).then(function (ok) {
         if (!ok) return;
-        LLApi.deleteAccount().then(function () { return window.LLAuth.signOut().catch(function () {}); }).then(function () { location.href = 'index.html'; }, function (e) { LL.toast(LLApi.friendly(e), true); });
+        LLApi.deleteAccount().then(function () { return window.LLAuth.signOut().catch(function () {}); }).then(function () { LL.nav('index.html'); }, function (e) { LL.toast(LLApi.friendly(e), true); });
       });
     };
   }
@@ -258,8 +258,8 @@
   }
 
   LL.whenAuth(function (profile) {
-    if (!profile) { location.href = 'signin.html?next=profile.html'; return; }
-    if (profile.role !== 'customer') { location.href = LL.home(profile.role); return; }
+    if (!profile) { LL.nav('signin.html?next=profile.html'); return; }
+    if (profile.role !== 'customer') { LL.nav(LL.home(profile.role)); return; }
     P = Object.assign({}, profile);
     window.LLAuth.getProfile().then(function (r) { user = r.user; if (r.profile) P = Object.assign({}, P, r.profile); render(); });
     window.addEventListener('popstate', function (e) { show((e.state && e.state.pf) || 'overview'); });

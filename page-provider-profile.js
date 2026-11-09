@@ -110,14 +110,14 @@
     document.getElementById('pcClose').onclick = close;
     var cb = document.getElementById('pcChat');
     if (cb) cb.onclick = function () {
-      if (!me) { location.href = 'signin.html?next=' + encodeURIComponent('provider-profile.html?id=' + id); return; }
+      if (!me) { LL.nav('signin.html?next=' + encodeURIComponent('provider-profile.html?id=' + id)); return; }
       LL.confirm({ title: 'Start a chat about this product?', body: '₦' + CHAT_FEE + ' will be taken from your wallet and ₦' + CHAT_FEE + ' from the seller. If the seller does not reply within 24 hours, your ₦' + CHAT_FEE + ' is returned. Reopening the same chat later is free.', confirmText: 'Start chat' }).then(function (ok) {
         if (!ok) return;
         LL.busy(cb, 'Opening…', function () { return LLApi.messages.openProduct(it.id); }).then(function (convId) {
-          location.href = 'dashboard.html?section=messages&c=' + encodeURIComponent(convId);
+          LL.nav('dashboard.html?section=messages&c=' + encodeURIComponent(convId));
         }, function (er) {
           var m = (er && er.message) || 'Could not open the chat.';
-          if (/wallet needs at least/i.test(m)) { LL.toast(m, true); setTimeout(function () { location.href = 'dashboard.html?section=wallet'; }, 1600); }
+          if (/wallet needs at least/i.test(m)) { LL.toast(m, true); setTimeout(function () { LL.nav('dashboard.html?section=wallet'); }, 1600); }
           else LL.toast(m, true);
         });
       });

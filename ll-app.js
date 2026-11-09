@@ -6,10 +6,14 @@
   var HIDE = { signin: 1, admin: 1, welcome: 1, 'add-phone': 1, 'complete-profile': 1 };
   var cap = window.Capacitor, NATIVE = !!(cap && typeof cap.isNativePlatform === 'function' && cap.isNativePlatform());
   if (NATIVE) document.documentElement.classList.add('ll-native');
+  var FRAMED = false; try { FRAMED = window.parent !== window && !!window.parent.LLShell; } catch (e) {}   // this page is a tab inside app.html: the shell owns the tab bar, theme button and native plugins
+  if (FRAMED) document.documentElement.classList.add('ll-framed');
+  if (FRAMED) { try { var hb = History.prototype.back; try { Object.defineProperty(window.history, 'length', { get: function () { return 2; } }); } catch (e) {}
+    window.history.back = function () { try { if (window.parent.LLShell.popFrom(window)) return; } catch (e) {} hb.call(window.history); }; } catch (e) {} }   // a back press must never leave the shell
   function plug(n) { return NATIVE && cap.Plugins && cap.Plugins[n] ? cap.Plugins[n] : null; }
-  if (NATIVE && !window.LLOAuth) { try { var os = document.createElement('script'); os.src = 'll-oauth.js'; os.defer = true; document.head.appendChild(os); } catch (e) {} }   // catches the Google sign-in return link (Android app only)
-  if (NATIVE) { try { var ps = document.createElement('script'); ps.src = 'll-push.js'; ps.defer = true; document.head.appendChild(ps); } catch (e) {} }   // push notifications (Android app only)
-  if (NATIVE) { try { var us = document.createElement('script'); us.src = 'll-update.js'; us.defer = true; document.head.appendChild(us); } catch (e) {} }   // update prompt (Android app only)
+  if (NATIVE && !FRAMED && !window.LLOAuth) { try { var os = document.createElement('script'); os.src = 'll-oauth.js'; os.defer = true; document.head.appendChild(os); } catch (e) {} }   // catches the Google sign-in return link (Android app only)
+  if (NATIVE && !FRAMED) { try { var ps = document.createElement('script'); ps.src = 'll-push.js'; ps.defer = true; document.head.appendChild(ps); } catch (e) {} }   // push notifications (Android app only)
+  if (NATIVE && !FRAMED) { try { var us = document.createElement('script'); us.src = 'll-update.js'; us.defer = true; document.head.appendChild(us); } catch (e) {} }   // update prompt (Android app only)
 
   /* ---------------- theme ---------------- */
   var mq = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
@@ -173,6 +177,7 @@
     if (app && app.addListener) {
       var roots = { 'index.html': 1, 'home.html': 1, 'dashboard.html': 1, 'provider-dashboard.html': 1, 'welcome.html': 1, 'admin.html': 1 };
       app.addListener('backButton', function () {
+        if (window.LLShell && LLShell.back && LLShell.back()) return;
         var sheet = document.querySelector('.ll-sheet-wrap.open');
         if (sheet) { sheet.classList.remove('open'); return; }
         var fs = document.querySelector('.dc-sheet.open'); if (fs) { fs.classList.remove('open'); document.body.style.overflow = ''; return; }
@@ -186,6 +191,7 @@
 
   /* ---------------- fluid navigation (no full reload between dashboard sections) ---------------- */
   window.LLTabs = { refresh: function () {   // re-mark the active tab for the current address
+    if (FRAMED) { try { window.parent.LLShell.sync(); } catch (e) {} return; }
     if (!curTabs || !curNav) return;
     var file = location.pathname.split('/').pop() || 'index.html', section = new URLSearchParams(location.search).get('section') || '';
     var els = curNav.children;
@@ -195,6 +201,18 @@
     }
   } };
   window.LLApp.syncQuick = quickActions;
+  // Inside the shell, links to another tab page switch tabs instead of reloading this frame.
+  if (FRAMED) document.addEventListener('click', function (e) {
+    if (e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+    if (!a || a.target || a.hasAttribute('download')) return;
+    var sh = window.parent && window.parent.LLShell, u; if (!sh) return;
+    try { u = new URL(a.getAttribute('href'), location.href); } catch (x) { return; }
+    if (u.origin !== location.origin) return;
+    var cur = location.pathname.split('/').pop() || '', f = u.pathname.split('/').pop();
+    if (sh.isTab(u.href)) { if (f === cur) return; e.preventDefault(); sh.show(u.href); return; }
+    if (window.name !== 'llover' && sh.push && sh.push(u.href)) e.preventDefault();   // other screens slide over the tab instead of replacing it
+  }, true);
   // While you are on dashboard.html, any link to another dashboard section switches in place (page-dashboard.js owns LLDash).
   document.addEventListener('click', function (e) {
     if (e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
@@ -229,6 +247,10 @@
   }
 
   function init(retries) {
+    if (FRAMED) {   // a tab inside the shell: only the page's own quick actions, nothing global
+      if (!window.LL || !LL.whenAuth) { if (retries > 0) setTimeout(function () { init(retries - 1); }, 150); return; }
+      LL.whenAuth(function (p) { if (p) quickActions(p.role); }); return;
+    }
     mountThemeFab();
     if (!window.LL || !LL.whenAuth) { if (retries > 0) return setTimeout(function () { init(retries - 1); }, 150); mountTabs(null); return nativeGlue(null); }
     LL.whenAuth(function (p) { mountTabs(p); if (p) { quickActions(p.role); unreadBadge(p); } nativeGlue(p); });

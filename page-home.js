@@ -28,7 +28,7 @@
   $('searchForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var q = ($('q').value || '').trim();
-    location.href = 'discovery.html' + (q ? '?q=' + encodeURIComponent(q) : '');
+    LL.nav('discovery.html' + (q ? '?q=' + encodeURIComponent(q) : ''));
   });
 
   if (window.LLSuggest) LLSuggest.attach($('q'), { onPick: function () { $('searchForm').dispatchEvent(new Event('submit', { cancelable: true })); } });
